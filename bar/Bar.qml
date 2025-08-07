@@ -122,6 +122,7 @@ Scope {
           spacing: 8
 
           Blocks.SystemTray { id: systemTray }
+          Blocks.CPU { id: cpuBlk }
           Blocks.Memory { id: memoryBlk }
           Blocks.Sound { id: soundBlk }
           Blocks.Battery { id: batteryBlk }
