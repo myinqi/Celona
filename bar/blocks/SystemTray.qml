@@ -46,10 +46,19 @@ RowLayout {
         item.scroll(points, false);
       }
 
+      function sanitizeIcon(src) {
+        // Some tray icons (e.g., Steam) include a query string like
+        // "steam_tray_mono?path=/home/..." which triggers a warning.
+        // Strip the query part so the theme icon name is used.
+        if (!src) return src;
+        const qIndex = src.indexOf("?");
+        return qIndex >= 0 ? src.slice(0, qIndex) : src;
+      }
+
       IconImage {
         id: icon
         anchors.centerIn: parent
-        source: item.icon
+        source: sanitizeIcon(item.icon)
         implicitSize: 16
       }
 

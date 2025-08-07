@@ -57,8 +57,8 @@ LazyLoader {
     Region { id: emptyRegion }
     mask: root.hoverable ? null : emptyRegion
 
-    width: body.implicitWidth
-    height: body.implicitHeight
+    implicitWidth: body.implicitWidth
+    implicitHeight: body.implicitHeight
 
     MouseArea {
       id: body
