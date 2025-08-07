@@ -24,8 +24,9 @@ RowLayout {
       required property SystemTrayItem modelData
       property alias item: delegate.modelData
 
-      Layout.fillHeight: true
-      implicitWidth: icon.implicitWidth + 5
+      // Match BarBlock height for visual consistency with Time/Date blocks
+      Layout.preferredHeight: 24
+      implicitWidth: icon.width + 5
 
       acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
       hoverEnabled: true
@@ -55,11 +56,15 @@ RowLayout {
         return qIndex >= 0 ? src.slice(0, qIndex) : src;
       }
 
+      // Systray icon sized to match text symbol visual size (~18px on 24px bar)
       IconImage {
         id: icon
         anchors.centerIn: parent
+        property int iconSize: Math.round(delegate.height * 0.75) // ~18px for 24px height
         source: sanitizeIcon(item.icon)
-        implicitSize: 16
+        width: iconSize
+        height: iconSize
+        smooth: true
       }
 
       QsMenuAnchor {
