@@ -47,8 +47,8 @@ BarBlock {
 
     PopupWindow {
         id: menuWindow
-        width: 200
-        height: 150
+        implicitWidth: 200
+        implicitHeight: 150
         visible: false
 
         anchor {

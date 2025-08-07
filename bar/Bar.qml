@@ -34,79 +34,99 @@ Scope {
 
       color: "transparent"
 
-      Rectangle {
-        id: highlight
-        anchors.fill: parent
-        color: Theme.get.barBgColor
-      }
-
-      height: 30
-
+      implicitHeight: 34
       visible: true
-
       anchors {
-        top: Theme.get.onTop
-        bottom: !Theme.get.onTop
+        top: true
         left: true
         right: true
       }
-    
-      RowLayout {
-        id: allBlocks
-        spacing: 0
+
+      Rectangle {
+        id: barRect
         anchors.fill: parent
-  
-        // Left side
-        RowLayout {
-          id: leftBlocks
-          spacing: 10
-          Layout.alignment: Qt.AlignLeft
-          Layout.fillWidth: true
+        anchors.margins: 2
+        color: "#40000000"
+        radius: 11
+        border.color: "#00bee7"
+        border.width: 2
 
-          //Blocks.Icon {}
-          Blocks.Workspaces {}
-        }
+        Row {
+          id: workspacesRow
+          anchors {
+            left: parent.left
+            verticalCenter: parent.verticalCenter
+            leftMargin: 16
+          }
+          spacing: 5
 
-        Blocks.ActiveWorkspace {
-          id: activeWorkspace
-          Layout.leftMargin: 10
-          anchors.centerIn: undefined
+          Repeater {
+            model: Hyprland.workspaces
 
-          chopLength: {
-            var space = Math.floor(bar.width - (rightBlocks.implicitWidth + leftBlocks.implicitWidth))
-            return space * 0.08;
+            Rectangle {
+              width: 35
+              height: 22
+              radius: 10
+              color: modelData.active ? "#00bee7" : "#333333"
+              border.color: modelData.active ? "#00d6d8" : "#575757"
+              border.width: 1
+
+              MouseArea {
+                anchors.fill: parent
+                onClicked: Hyprland.dispatch("workspace " + modelData.id)
+              }
+
+              Text {
+                text: modelData.id
+                anchors.centerIn: parent
+                color: modelData.active ? "#000000" : "#cccccc"
+                font.pixelSize: 14
+                font.bold: modelData.active
+                font.family: "JetBrains Mono Nerd Font, sans-serif"
+              }
+            }
           }
 
-          text: {
-            var str = activeWindowTitle
-            return str.length > chopLength ? str.slice(0, chopLength) + '...' : str;
-          }
-
-          color: {
-            return Hyprland.focusedMonitor == Hyprland.monitorFor(screen)
-              ? "#FFFFFF" : "#CCCCCC"
+          Text {
+            visible: Hyprland.workspaces.length === 0
+            text: "No workspaces"
+            color: "#cccccc"
+            font.pixelSize: 12
+            font.family: "JetBrains Mono Nerd Font, sans-serif"
           }
         }
 
-        // Without this filler item, the active window block will be centered
-        // despite setting left alignment
-        Item {
-          Layout.fillWidth: true
+        Text {
+          id: windowTitle
+          anchors {
+            horizontalCenter: parent.horizontalCenter
+            verticalCenter: parent.verticalCenter
+          }
+          text: Hyprland.activeToplevel ? Hyprland.activeToplevel.title : "Desktop"
+          color: "#ffffff"
+          font.bold: true
+          font.pixelSize: 14
+          font.family: "JetBrains Mono Nerd Font, sans-serif"
+          width: Math.min(implicitWidth, parent.width - 300)
+          elide: Text.ElideRight
         }
-  
-        // Right side
+
+        // Right side: use RowLayout so BarBlock.Layout.* sizing is respected
         RowLayout {
           id: rightBlocks
-          spacing: 0
-          Layout.alignment: Qt.AlignRight
-          Layout.fillWidth: true
-  
-          Blocks.SystemTray {}
-          Blocks.Memory {}
-          Blocks.Sound {}
-          Blocks.Battery {}
-          Blocks.Date {}
-          Blocks.Time {}
+          anchors {
+            right: parent.right
+            verticalCenter: parent.verticalCenter
+            rightMargin: 12
+          }
+          spacing: 8
+
+          Blocks.SystemTray { id: systemTray }
+          Blocks.Memory { id: memoryBlk }
+          Blocks.Sound { id: soundBlk }
+          Blocks.Battery { id: batteryBlk }
+          Blocks.Date { id: dateBlk }
+          Blocks.Time { id: timeBlk }
         }
       }
     }
