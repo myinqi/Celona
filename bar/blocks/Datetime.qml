@@ -10,7 +10,7 @@ Singleton {
 
   Process {
     id: dateProc
-    command: ["date", "+%a %e %b|%R"]
+    command: ["date", "+%a %e %b|%T"]
     running: true
 
     stdout: SplitParser {
@@ -28,4 +28,3 @@ Singleton {
     onTriggered: dateProc.running = true
   }
 }
-
