@@ -50,11 +50,22 @@ BarBlock {
         implicitWidth: 200
         implicitHeight: 150
         visible: false
+        // Ensure the window background is transparent so rounded corners show correctly
+        color: "transparent"
 
         anchor {
+            // Align and behave like Tooltip: pop downward from the bar block
             window: root.QsWindow?.window
-            edges: Edges.Bottom
-            gravity: Edges.Top
+            edges: Edges.Top
+            gravity: Edges.Bottom
+            onAnchoring: {
+                const win = root.QsWindow?.window;
+                if (win) {
+                    // Anchor to the area directly below this bar block
+                    const rect = win.contentItem.mapFromItem(root, 0, root.height, root.width, root.height);
+                    menuWindow.anchor.rect = rect;
+                }
+            }
         }
 
         MouseArea {
@@ -75,10 +86,11 @@ BarBlock {
 
             Rectangle {
                 anchors.fill: parent
-                color: "#2c2c2c"
-                border.color: "#3c3c3c"
+                // Match tooltip styling
+                color: palette.active.toolTipBase
+                border.color: palette.active.light
                 border.width: 1
-                radius: 4
+                radius: 8
 
                 Column {
                     anchors.fill: parent
@@ -140,8 +152,8 @@ BarBlock {
                         Rectangle {
                             width: parent.width
                             height: 35
-                            color: mouseArea.containsMouse ? "#3c3c3c" : "transparent"
-                            radius: 4
+                            color: mouseArea.containsMouse ? Qt.rgba(palette.active.toolTipBase.r, palette.active.toolTipBase.g, palette.active.toolTipBase.b, Math.min(palette.active.toolTipBase.a + 0.1, 1.0)) : "transparent"
+                            radius: 6
 
                             Text {
                                 anchors.fill: parent
