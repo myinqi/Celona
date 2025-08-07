@@ -6,6 +6,7 @@ import "../"
 
 BarBlock {
   id: root
+  signal toggleNmAppletRequested()
 
   // Display: network icon + percent for Wi‑Fi, cable icon only for Ethernet
   content: BarText {
@@ -102,7 +103,17 @@ BarBlock {
   }
 
   // Tooltip
-  MouseArea { id: hoverArea; anchors.fill: parent; hoverEnabled: true }
+  MouseArea {
+    id: hoverArea
+    anchors.fill: parent
+    hoverEnabled: true
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    onClicked: ev => {
+      if (ev.button === Qt.RightButton) {
+        root.toggleNmAppletRequested()
+      }
+    }
+  }
   Tooltip {
     relativeItem: hoverArea.containsMouse ? hoverArea : null
     Column {

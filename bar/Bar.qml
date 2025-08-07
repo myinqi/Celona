@@ -122,7 +122,10 @@ Scope {
           spacing: 8
 
           Blocks.SystemTray { id: systemTray }
-          Blocks.Network { id: networkBlk }
+          Blocks.Network {
+            id: networkBlk
+            onToggleNmAppletRequested: systemTray.toggleNetworkApplet()
+          }
           Blocks.CPU { id: cpuBlk }
           Blocks.GPU { id: gpuBlk }
           Blocks.Memory { id: memoryBlk }
