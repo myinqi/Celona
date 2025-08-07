@@ -5,7 +5,7 @@ import Quickshell
 Rectangle {
   id: root
   Layout.preferredWidth: contentContainer.implicitWidth + 10
-  Layout.preferredHeight: 30
+  Layout.preferredHeight: 24
 
   property Item content
   property Item mouseArea: mouseArea
@@ -17,7 +17,7 @@ Rectangle {
   property int leftPadding
   property int rightPadding
 
-  property string hoveredBgColor: "#666666"
+  property string hoveredBgColor: "#00bee7"
 
   // Background color
   color: {
