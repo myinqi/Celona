@@ -129,8 +129,8 @@ BarBlock {
       spacing: 2
       Label { text: "CPU: " + Math.floor(root.cpuPercent) + "%  |  Cores: " + root.logicalCores }
       Label { text: "Freq: " + (root.cpuFreqGHz !== "-" ? root.cpuFreqGHz + " GHz" : "-") }
-      Label { text: "Temp: " + (root.cpuTempC !== "-" ? root.cpuTempC + " °C" : "-") }
       Label { text: "Load: " + root.loadavg1 + ", " + root.loadavg5 + ", " + root.loadavg15 }
+      Label { text: "Temp: " + (root.cpuTempC !== "-" ? root.cpuTempC + " °C" : "-") }
     }
   }
 }
