@@ -122,6 +122,7 @@ Scope {
           spacing: 8
 
           Blocks.SystemTray { id: systemTray }
+          Blocks.Network { id: networkBlk }
           Blocks.CPU { id: cpuBlk }
           Blocks.GPU { id: gpuBlk }
           Blocks.Memory { id: memoryBlk }
