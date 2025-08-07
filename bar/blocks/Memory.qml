@@ -7,18 +7,24 @@ import "../"
 BarBlock {
   id: text
   content: BarText {
-    symbolText: `- ${Math.floor(percentFree)}%`
+    // Template literals can be finicky depending on Qt version; use string concat
+    symbolText: "- " + Math.floor(percentUsed) + "%"
   }
 
-  property real percentFree
+  // Show used memory percent based on MemTotal and MemAvailable
+  property real percentUsed: 0
 
   Process {
     id: memProc
-    command: ["sh", "-c", "free | grep Mem | awk '{print $3/$2 * 100.0}'"]
+    // More robust across locales: compute from /proc/meminfo and output an integer percent
+    command: [
+      "sh", "-c",
+      "awk '/MemTotal/ {t=$2} /MemAvailable/ {a=$2} END {printf(\"%.0f\\n\", (t-a)/t*100)}' /proc/meminfo"
+    ]
     running: true
 
     stdout: SplitParser {
-      onRead: data => percentFree = data
+      onRead: data => percentUsed = Number(data)
     }
   }
 
