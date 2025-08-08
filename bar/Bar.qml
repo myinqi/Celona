@@ -126,6 +126,7 @@ Scope {
             id: networkBlk
             onToggleNmAppletRequested: systemTray.toggleNetworkApplet()
           }
+          Blocks.Bluetooth { id: bluetoothBlk }
           Blocks.CPU { id: cpuBlk }
           Blocks.GPU { id: gpuBlk }
           Blocks.Memory { id: memoryBlk }
