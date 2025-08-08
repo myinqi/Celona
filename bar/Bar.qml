@@ -51,15 +51,25 @@ Scope {
         border.color: "#00bee7"
         border.width: 2
 
-        // Left: window title module
-        Blocks.WindowTitle {
-          id: windowTitle
+        // Left: Welcome icon + window title (use RowLayout so BarBlock sizing is respected)
+        RowLayout {
+          id: leftRow
           anchors {
             left: parent.left
             verticalCenter: parent.verticalCenter
-            leftMargin: 16
+            leftMargin: 12
           }
-          maxWidth: Math.max(200, barRect.width * 0.35)
+          spacing: 12
+          z: 2
+
+          Blocks.Welcome { id: welcomeBlkLeft; z: 3 }
+
+          Blocks.WindowTitle {
+            id: windowTitle
+            maxWidth: Math.max(200, barRect.width * 0.35)
+            z: 1
+            Layout.preferredWidth: implicitWidth
+          }
         }
 
         // Center: workspaces module
@@ -97,7 +107,7 @@ Scope {
           Blocks.Date { id: dateBlk }
           Blocks.Time { id: timeBlk }
           Blocks.Power { id: powerBlk }
-          Blocks.Welcome { id: welcomeBlk; Layout.leftMargin: 8 }
+          // Welcome moved to leftRow
         }
       }
     }
