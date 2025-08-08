@@ -40,6 +40,28 @@ Singleton {
   // SystemTray icons tint (empty = no tint)
   property string trayIconColor: ""
 
+  // Module visibility toggles (default: shown)
+  // Left/center
+  property bool showWelcome: true
+  property bool showWindowTitle: true
+  property bool showWorkspaces: true
+  // Right side
+  property bool showSystemTray: true
+  property bool showUpdates: true
+  property bool showNetwork: true
+  property bool showBluetooth: true
+  property bool showCPU: true
+  property bool showGPU: true
+  property bool showMemory: true
+  property bool showPowerProfiles: true
+  property bool showClipboard: true
+  property bool showNotifications: true
+  property bool showSound: true
+  property bool showBattery: true
+  property bool showDate: true
+  property bool showTime: true
+  property bool showPower: true
+
   // Window title
   property string windowTitleColor: "#00bee7"
 
@@ -68,6 +90,25 @@ Singleton {
     popupBorder = ""
     // SystemTray
     trayIconColor = ""
+    // Module toggles
+    showWelcome = true
+    showWindowTitle = true
+    showWorkspaces = true
+    showSystemTray = true
+    showUpdates = true
+    showNetwork = true
+    showBluetooth = true
+    showCPU = true
+    showGPU = true
+    showMemory = true
+    showPowerProfiles = true
+    showClipboard = true
+    showNotifications = true
+    showSound = true
+    showBattery = true
+    showDate = true
+    showTime = true
+    showPower = true
     // Window title
     windowTitleColor = "#00bee7"
   }
@@ -75,7 +116,8 @@ Singleton {
   // Apply keys from a loaded theme object safely
   function applyTheme(obj) {
     if (!obj) return
-    function setIf(k) { if (obj[k] !== undefined) Globals[k] = String(obj[k]) }
+    // Preserve original types from JSON (booleans must stay booleans)
+    function setIf(k) { if (obj[k] !== undefined) Globals[k] = obj[k] }
     setIf("barBgColor")
     setIf("barBorderColor")
     setIf("hoverHighlightColor")
@@ -93,6 +135,25 @@ Singleton {
     setIf("popupText")
     setIf("popupBorder")
     setIf("trayIconColor")
+    // toggles
+    setIf("showWelcome")
+    setIf("showWindowTitle")
+    setIf("showWorkspaces")
+    setIf("showSystemTray")
+    setIf("showUpdates")
+    setIf("showNetwork")
+    setIf("showBluetooth")
+    setIf("showCPU")
+    setIf("showGPU")
+    setIf("showMemory")
+    setIf("showPowerProfiles")
+    setIf("showClipboard")
+    setIf("showNotifications")
+    setIf("showSound")
+    setIf("showBattery")
+    setIf("showDate")
+    setIf("showTime")
+    setIf("showPower")
     setIf("windowTitleColor")
   }
 
@@ -118,6 +179,25 @@ Singleton {
       popupText,
       popupBorder,
       trayIconColor,
+      // toggles
+      showWelcome,
+      showWindowTitle,
+      showWorkspaces,
+      showSystemTray,
+      showUpdates,
+      showNetwork,
+      showBluetooth,
+      showCPU,
+      showGPU,
+      showMemory,
+      showPowerProfiles,
+      showClipboard,
+      showNotifications,
+      showSound,
+      showBattery,
+      showDate,
+      showTime,
+      showPower,
       windowTitleColor
     }
     const json = JSON.stringify(obj, null, 2)

@@ -77,7 +77,7 @@ BarBlock {
   PopupWindow {
     id: setupPopup
     visible: false
-    implicitWidth: 330
+    implicitWidth: 565
     implicitHeight: 830
     color: "transparent"
 
@@ -113,11 +113,24 @@ BarBlock {
           Layout.fillWidth: true
         }
 
-        Text {
-          text: "Colors:"
-          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-          wrapMode: Text.WordWrap
+        // Headings row: Colors (left) and Modules (right) aligned on same baseline
+        RowLayout {
           Layout.fillWidth: true
+          spacing: 4
+          Label {
+            text: "Colors:"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.bold: true
+            font.italic: true
+            Layout.preferredWidth: 340 // left column width
+          }
+          Item { Layout.preferredWidth: 20 } // gap so right header starts at ~420px
+          Label {
+            text: "Modules:"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.bold: true
+            font.italic: true
+          }
         }
 
         // THEME EDITOR
@@ -142,6 +155,141 @@ BarBlock {
               const a = h.length >= 8 ? parseInt(h.slice(6,8), 16) : 255
               return { r, g, b, a }
             }
+
+          // --- Module Toggles ---
+          Rectangle {
+            Layout.fillWidth: true
+            Layout.leftMargin: 360
+            radius: 6
+            color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+            border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+            border.width: 1
+            anchors.margins: 0
+            ColumnLayout {
+              anchors.fill: parent
+              anchors.margins: 10
+              spacing: 8
+              // heading moved to the shared header row above
+              GridLayout {
+                Layout.fillWidth: true
+                columns: 1
+                rowSpacing: 6
+                columnSpacing: 10
+
+                // Left column
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Welcome"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showWelcome; onToggled: Globals.showWelcome = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Window Title"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showWindowTitle; onToggled: Globals.showWindowTitle = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Workspaces"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showWorkspaces; onToggled: Globals.showWorkspaces = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "System Tray"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showSystemTray; onToggled: Globals.showSystemTray = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Updates"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showUpdates; onToggled: Globals.showUpdates = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Network"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showNetwork; onToggled: Globals.showNetwork = checked }
+                }
+
+                // Right column
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Bluetooth"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showBluetooth; onToggled: Globals.showBluetooth = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "CPU"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showCPU; onToggled: Globals.showCPU = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "GPU"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showGPU; onToggled: Globals.showGPU = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Memory"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showMemory; onToggled: Globals.showMemory = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Power Profiles"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showPowerProfiles; onToggled: Globals.showPowerProfiles = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Clipboard"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showClipboard; onToggled: Globals.showClipboard = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Notifications"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showNotifications; onToggled: Globals.showNotifications = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Sound"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showSound; onToggled: Globals.showSound = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Battery"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showBattery; onToggled: Globals.showBattery = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Date"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showDate; onToggled: Globals.showDate = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Time"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showTime; onToggled: Globals.showTime = checked }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Power"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showPower; onToggled: Globals.showPower = checked }
+                }
+              }
+            }
+          }
             function rgbaToHex(r,g,b,a) {
               function cc(v){ return ("0" + Math.max(0, Math.min(255, v|0)).toString(16)).slice(-2) }
               return "#" + cc(r) + cc(g) + cc(b) + (a === 255 ? "" : cc(a))

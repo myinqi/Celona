@@ -63,7 +63,7 @@ Scope {
           spacing: 12
           z: 2
 
-          Blocks.Welcome { id: welcomeBlkLeft; z: 3 }
+          Blocks.Welcome { id: welcomeBlkLeft; z: 3; visible: Globals.showWelcome }
           Blocks.Setup { id: setupBlkLeft }
 
           Blocks.WindowTitle {
@@ -71,6 +71,7 @@ Scope {
             maxWidth: Math.max(200, barRect.width * 0.35)
             z: 1
             Layout.preferredWidth: implicitWidth
+            visible: Globals.showWindowTitle
           }
         }
 
@@ -79,6 +80,7 @@ Scope {
           id: workspaces
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.verticalCenter: parent.verticalCenter
+          visible: Globals.showWorkspaces
         }
 
         // Right side: use RowLayout so BarBlock.Layout.* sizing is respected
@@ -91,24 +93,25 @@ Scope {
           }
           spacing: 8
 
-          Blocks.SystemTray { id: systemTray }
-          Blocks.Updates { id: updatesBlk }          
+          Blocks.SystemTray { id: systemTray; visible: Globals.showSystemTray }
+          Blocks.Updates { id: updatesBlk; visible: Globals.showUpdates }          
           Blocks.Network {
             id: networkBlk
             onToggleNmAppletRequested: systemTray.toggleNetworkApplet()
+            visible: Globals.showNetwork
           }
-          Blocks.Bluetooth { id: bluetoothBlk }
-          Blocks.CPU { id: cpuBlk }
-          Blocks.GPU { id: gpuBlk }
-          Blocks.Memory { id: memoryBlk }
-          Blocks.PowerProfiles { id: powerProfilesBlk }
-          Blocks.Clipboard { id: clipboardBlk }
-          Blocks.Notifications { id: notificationsBlk }
-          Blocks.Sound { id: soundBlk }
-          Blocks.Battery { id: batteryBlk }
-          Blocks.Date { id: dateBlk }
-          Blocks.Time { id: timeBlk }
-          Blocks.Power { id: powerBlk }
+          Blocks.Bluetooth { id: bluetoothBlk; visible: Globals.showBluetooth }
+          Blocks.CPU { id: cpuBlk; visible: Globals.showCPU }
+          Blocks.GPU { id: gpuBlk; visible: Globals.showGPU }
+          Blocks.Memory { id: memoryBlk; visible: Globals.showMemory }
+          Blocks.PowerProfiles { id: powerProfilesBlk; visible: Globals.showPowerProfiles }
+          Blocks.Clipboard { id: clipboardBlk; visible: Globals.showClipboard }
+          Blocks.Notifications { id: notificationsBlk; visible: Globals.showNotifications }
+          Blocks.Sound { id: soundBlk; visible: Globals.showSound }
+          Blocks.Battery { id: batteryBlk; visible: Globals.showBattery }
+          Blocks.Date { id: dateBlk; visible: Globals.showDate }
+          Blocks.Time { id: timeBlk; visible: Globals.showTime }
+          Blocks.Power { id: powerBlk; visible: Globals.showPower }
           // Welcome moved to leftRow
         }
       }
