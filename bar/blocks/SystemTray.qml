@@ -4,6 +4,8 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Services.SystemTray
+import Qt5Compat.GraphicalEffects
+import "root:/"
 import "root:/bar"
 
 RowLayout {
@@ -119,6 +121,15 @@ RowLayout {
         width: iconSize
         height: iconSize
         smooth: true
+      }
+
+      // Optional color tint for tray icons
+      ColorOverlay {
+        anchors.fill: icon
+        source: icon
+        color: Globals.trayIconColor !== "" ? Globals.trayIconColor : "transparent"
+        visible: Globals.trayIconColor !== ""
+        antialiasing: true
       }
 
       QsMenuAnchor {

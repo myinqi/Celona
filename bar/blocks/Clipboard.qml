@@ -321,8 +321,8 @@ BarBlock {
 
     Rectangle {
       anchors.fill: parent
-      color: palette.active.toolTipBase
-      border.color: palette.active.light
+      color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+      border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
       border.width: 1
       radius: 8
       // Keep the popup open; ESC closes. This avoids any hover/timer interference with typing.
@@ -350,8 +350,18 @@ BarBlock {
             required property var modelData
             width: listView.width
             height: 34
+            // Hover background
+            property bool hovered: false
+            Rectangle {
+              anchors.fill: parent
+              color: hovered ? Globals.hoverHighlightColor : "transparent"
+              radius: 4
+            }
             MouseArea {
               anchors.fill: parent
+              hoverEnabled: true
+              onEntered: parent.hovered = true
+              onExited: parent.hovered = false
               onClicked: { if (modelData && modelData.id) root.copyEntry(modelData.id); menuWindow.visible = false }
             }
             RowLayout {
@@ -360,13 +370,14 @@ BarBlock {
               // Show sequential row number (1-based) to avoid confusion after wipes
               Label {
                 text: (typeof index !== 'undefined' ? (index + 1).toString() : "")
-                color: "#cccccc"
+                color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                opacity: 0.7
                 horizontalAlignment: Text.AlignRight
                 Layout.preferredWidth: 10
               }
               Label {
                 text: modelData && modelData.text ? modelData.text : ""
-                color: "#ffffff"
+                color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
                 elide: Text.ElideRight
                 padding: 0
                 leftPadding: 0
@@ -389,7 +400,8 @@ BarBlock {
             anchors.fill: parent
             anchors.margins: 8
             text: root.entries && root.entries.length === 0 ? "Keine Einträge" : "Keine Treffer"
-            color: "#cccccc"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            opacity: 0.7
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
           }

@@ -1,0 +1,20 @@
+{
+  "barBgColor": "#72000000",
+  "barBorderColor": "#00bee7",
+  "hoverHighlightColor": "#6c7086",
+  "moduleIconColor": "#f5c2e7",
+  "moduleValueColor": "#cdd6f4",
+  "workspaceActiveBg": "#4000bee7",
+  "workspaceActiveBorder": "#00bee7",
+  "workspaceInactiveBg": "#00000000",
+  "workspaceInactiveBorder": "#00bee7",
+  "workspaceTextColor": "#cdd6f4",
+  "tooltipBg": "#313244",
+  "tooltipText": "#cdd6f4",
+  "tooltipBorder": "#89b4fa",
+  "popupBg": "#313244",
+  "popupText": "#cdd6f4",
+  "popupBorder": "#89b4fa",
+  "trayIconColor": "#85c1dc",
+  "windowTitleColor": "#cdd6f4"
+}

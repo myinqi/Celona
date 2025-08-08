@@ -78,7 +78,7 @@ BarBlock {
     id: setupPopup
     visible: false
     implicitWidth: 330
-    implicitHeight: 800
+    implicitHeight: 830
     color: "transparent"
 
     anchor {
@@ -162,7 +162,7 @@ BarBlock {
                 visible: false
                 color: "transparent"
                 implicitWidth: 380
-                implicitHeight: 280
+                implicitHeight: 320
 
                 anchor.window: setupPopup.QsWindow?.window
 
@@ -240,22 +240,23 @@ BarBlock {
             // Helper component: one line editor with preview
             Repeater {
               model: [
-                { label: "Bar Bg", key: "barBgColor" },
+                { label: "Bar Background", key: "barBgColor" },
                 { label: "Bar Border", key: "barBorderColor" },
                 { label: "Hover Highlight", key: "hoverHighlightColor" },
                 { label: "Module Icon", key: "moduleIconColor" },
                 { label: "Module Value", key: "moduleValueColor" },
-                { label: "WS Active Bg", key: "workspaceActiveBg" },
-                { label: "WS Active Border", key: "workspaceActiveBorder" },
-                { label: "WS Inactive Bg", key: "workspaceInactiveBg" },
-                { label: "WS Inactive Border", key: "workspaceInactiveBorder" },
-                { label: "WS Text", key: "workspaceTextColor" },
+                { label: "Workspace Active Bg", key: "workspaceActiveBg" },
+                { label: "Workspace Active Border", key: "workspaceActiveBorder" },
+                { label: "Workspace Inactive Bg", key: "workspaceInactiveBg" },
+                { label: "Workspace Inactive Border", key: "workspaceInactiveBorder" },
+                { label: "Workspace Text", key: "workspaceTextColor" },
                 { label: "Tooltip Bg", key: "tooltipBg" },
                 { label: "Tooltip Text", key: "tooltipText" },
                 { label: "Tooltip Border", key: "tooltipBorder" },
                 { label: "Popup Bg", key: "popupBg" },
                 { label: "Popup Text", key: "popupText" },
                 { label: "Popup Border", key: "popupBorder" },
+                { label: "Tray Icon", key: "trayIconColor" },
                 { label: "Window Title", key: "windowTitleColor" }
               ]
               delegate: RowLayout {
@@ -343,11 +344,15 @@ BarBlock {
         RowLayout {
           Layout.fillWidth: true
           spacing: 8
-          // push buttons to the right
-          Item { Layout.fillWidth: true }
+          // Reset links, Save/Close rechts
           Button {
             text: "Reset"
             onClicked: Globals.resetTheme()
+          }
+          Item { Layout.fillWidth: true }
+          Button {
+            text: "Save"
+            onClicked: Globals.saveTheme()
           }
           Button {
             text: "Close"

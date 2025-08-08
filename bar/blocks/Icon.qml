@@ -79,10 +79,10 @@ BarBlock {
 
         Rectangle {
           anchors.fill: parent
-          color: "#2E3440"  // Using Nord theme color
-          border.color: "#4C566A"
+          color: Globals.popupBg !== "" ? Globals.popupBg : "#2E3440"
+          border.color: Globals.popupBorder !== "" ? Globals.popupBorder : "#4C566A"
           border.width: 1
-          radius: 4
+          radius: 8
 
           ColumnLayout {
             anchors.fill: parent
@@ -98,14 +98,14 @@ BarBlock {
               delegate: Rectangle {
                 width: parent.width
                 height: 35
-                color: mouseArea.containsMouse ? "#4C566A" : "transparent"
+                color: mouseArea.containsMouse ? Globals.hoverHighlightColor : "transparent"
                 radius: 4
 
                 Text {
                   anchors.fill: parent
                   anchors.leftMargin: 10
                   text: model.name
-                  color: "white"
+                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
                   font.pixelSize: 12
                   verticalAlignment: Text.AlignVCenter
                 }

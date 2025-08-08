@@ -131,8 +131,8 @@ BarBlock {
 
             Rectangle {
                 anchors.fill: parent
-                color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
-                border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+                border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
                 border.width: 1
                 radius: 8
 
@@ -196,14 +196,14 @@ BarBlock {
                         Rectangle {
                             width: parent.width
                             height: 35
-                            color: mouseArea.containsMouse ? Qt.rgba(palette.active.toolTipBase.r, palette.active.toolTipBase.g, palette.active.toolTipBase.b, Math.min(palette.active.toolTipBase.a + 0.1, 1.0)) : "transparent"
+                            color: mouseArea.containsMouse ? Globals.hoverHighlightColor : "transparent"
                             radius: 6
 
                             Text {
                                 anchors.fill: parent
                                 anchors.leftMargin: 10
                                 text: modelData.text
-                                color: "white"
+                                color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
                                 font.pixelSize: 12
                                 verticalAlignment: Text.AlignVCenter
                             }
