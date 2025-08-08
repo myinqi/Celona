@@ -1,12 +1,13 @@
 import QtQuick
 import Quickshell.Hyprland
+import "root:/"
 
 Item {
   id: root
   implicitWidth: title.implicitWidth
   implicitHeight: title.implicitHeight
 
-  property color color: "#00bee7"
+  property color color: Globals.windowTitleColor
   property bool bold: true
   property int pixelSize: 14
   property string family: "JetBrains Mono Nerd Font, sans-serif"

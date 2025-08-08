@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
+import "root:/"
 
 Text {
   property string mainFont: "FiraCode"
@@ -15,9 +16,12 @@ Text {
   property int symbolSpacing: 5
   property string symbolText
   property bool dim
+  // Colors
+  property color iconColor: Globals.moduleIconColor
+  property color valueColor: Globals.moduleValueColor
   text: wrapSymbols(symbolText)
   anchors.centerIn: parent
-  color: dim ? "#CCCCCC" : "white"
+  color: dim ? "#CCCCCC" : valueColor
   textFormat: Text.RichText
   font {
     family: mainFont
@@ -50,10 +54,14 @@ Text {
      || (codePoint >= 0xF0000  && codePoint <= 0xFFFFF) // Supplementary Private Use Area-A
      || (codePoint >= 0x100000 && codePoint <= 0x10FFFF); // Supplementary Private Use Area-B
 
-    return text.replace(/./gu, (c) => isSymbol(c.codePointAt(0))
-      ? `<span style='font-family: ${symbolFont}; letter-spacing: ${symbolSpacing}px; font-size: ${symbolSize}px'>${c}</span>`
-      // ? c
-      : c);
+    return text.replace(/./gu, (c) => {
+      const cp = c.codePointAt(0)
+      if (isSymbol(cp)) {
+        return `<span style='font-family: ${symbolFont}; letter-spacing: ${symbolSpacing}px; font-size: ${symbolSize}px; color: ${iconColor}'>${c}</span>`
+      }
+      // wrap normal characters so we can color them independently
+      return `<span style='color: ${valueColor}'>${c}</span>`
+    });
   }
 }
 

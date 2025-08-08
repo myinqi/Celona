@@ -3,6 +3,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
+import "root:/"
 import "blocks" as Blocks
 import "root:/"
 
@@ -48,7 +49,7 @@ Scope {
         anchors.margins: 2
         color: "#40000000"
         radius: 11
-        border.color: "#00bee7"
+        border.color: Globals.barBorderColor
         border.width: 2
 
         // Left: Welcome + Setup + WindowTitle (use RowLayout so BarBlock sizing is respected)

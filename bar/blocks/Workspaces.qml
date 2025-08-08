@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Hyprland
 import "../utils" as Utils
+import "root:/"
 
 Item {
   id: root
@@ -8,12 +9,12 @@ Item {
   implicitWidth: row.implicitWidth
   implicitHeight: row.implicitHeight
 
-  property color activeColor: "#00bee7"
-  property color inactiveColor: "#333333"
-  property color activeBorder: "#00d6d8"
-  property color inactiveBorder: "#575757"
-  property color activeText: "#000000"
-  property color inactiveText: "#cccccc"
+  property color activeColor: Globals.workspaceActiveBg
+  property color inactiveColor: Globals.workspaceInactiveBg
+  property color activeBorder: Globals.workspaceActiveBorder
+  property color inactiveBorder: Globals.workspaceInactiveBorder
+  property color activeText: Globals.workspaceTextColor
+  property color inactiveText: Globals.workspaceTextColor
 
   Row {
     id: row
@@ -49,7 +50,7 @@ Item {
     Text {
       visible: Utils.HyprlandUtils.workspaces.length === 0
       text: "No workspaces"
-      color: "#cccccc"
+      color: Globals.workspaceTextColor
       font.pixelSize: 12
       font.family: "JetBrains Mono Nerd Font, sans-serif"
     }

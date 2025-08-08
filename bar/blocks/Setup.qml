@@ -58,8 +58,8 @@ BarBlock {
 
     Rectangle {
       anchors.fill: parent
-      color: palette.active.toolTipBase
-      border.color: palette.active.light
+      color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+      border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
       border.width: 1
       radius: 8
 
@@ -67,7 +67,7 @@ BarBlock {
         anchors.fill: parent
         anchors.margins: 10
         text: "Bar Setup"
-        color: "#ffffff"
+        color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         verticalAlignment: Text.AlignVCenter
       }
     }
@@ -77,8 +77,8 @@ BarBlock {
   PopupWindow {
     id: setupPopup
     visible: false
-    implicitWidth: 550
-    implicitHeight: 350
+    implicitWidth: 950
+    implicitHeight: 750
     color: "transparent"
 
     anchor {
@@ -96,8 +96,8 @@ BarBlock {
 
     Rectangle {
       anchors.fill: parent
-      color: palette.active.toolTipBase
-      border.color: palette.active.light
+      color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+      border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
       border.width: 1
       radius: 8
 
@@ -107,20 +107,103 @@ BarBlock {
         spacing: 10
 
         Text {
-          text: "Bar Setup (Dummy)"
-          color: "#ffffff"
+          text: "Bar Settings"
+          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
           font.bold: true
           Layout.fillWidth: true
         }
 
         Text {
-          text: "Hier können später Einstellungen für die Bar erfolgen."
-          color: "#dddddd"
+          text: "Colors:"
+          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
           wrapMode: Text.WordWrap
           Layout.fillWidth: true
         }
 
-        Item { Layout.fillHeight: true }
+        // THEME EDITOR
+        Flickable {
+          Layout.fillWidth: true
+          Layout.fillHeight: true
+          contentWidth: parent.width
+          clip: true
+
+          ColumnLayout {
+            id: editor
+            spacing: 10
+            width: parent.width
+
+            // Helper component: one line editor with preview
+            Repeater {
+              model: [
+                { label: "Bar Border", key: "barBorderColor" },
+                { label: "Module Icon", key: "moduleIconColor" },
+                { label: "Module Value", key: "moduleValueColor" },
+                { label: "WS Active Bg", key: "workspaceActiveBg" },
+                { label: "WS Active Border", key: "workspaceActiveBorder" },
+                { label: "WS Inactive Bg", key: "workspaceInactiveBg" },
+                { label: "WS Inactive Border", key: "workspaceInactiveBorder" },
+                { label: "WS Text", key: "workspaceTextColor" },
+                { label: "Tooltip Bg", key: "tooltipBg" },
+                { label: "Tooltip Text", key: "tooltipText" },
+                { label: "Tooltip Border", key: "tooltipBorder" },
+                { label: "Popup Bg", key: "popupBg" },
+                { label: "Popup Text", key: "popupText" },
+                { label: "Popup Border", key: "popupBorder" },
+                { label: "Window Title", key: "windowTitleColor" }
+              ]
+              delegate: RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                // Elementname
+                Text {
+                  text: modelData.label
+                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                  elide: Text.ElideRight
+                  wrapMode: Text.NoWrap
+                  horizontalAlignment: Text.AlignLeft
+                  Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                  Layout.preferredWidth: 140
+                  Layout.minimumWidth: 140
+                  Layout.maximumWidth: 140
+                }
+
+                // Hexcode Eingabefeld
+                TextField {
+                  id: tf
+                  text: String(Globals[modelData.key])
+                  Layout.preferredWidth: 100
+                  Layout.minimumWidth: 100
+                  Layout.maximumWidth: 100
+                  // Manual hex validation (#RRGGBB or #RRGGBBAA)
+                  onEditingFinished: {
+                    const re = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
+                    if (re.test(text)) {
+                      Globals[modelData.key] = text
+                    } else {
+                      text = String(Globals[modelData.key])
+                    }
+                  }
+                }
+
+                // Farbanzeige
+                Rectangle {
+                  width: 40; height: 22
+                  radius: 4
+                  color: Globals[modelData.key]
+                  border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+                  Layout.alignment: Qt.AlignVCenter
+                  Layout.preferredWidth: 40
+                  Layout.minimumWidth: 40
+                  Layout.maximumWidth: 40
+                }
+
+                // take remaining space so alignment stays tidy
+                Item { Layout.fillWidth: true; Layout.preferredWidth: 1 }
+              }
+            }
+          }
+        }
 
         Button {
           text: "Close"
