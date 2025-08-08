@@ -131,11 +131,11 @@ Scope {
           Blocks.Memory { id: memoryBlk }
           Blocks.Clipboard { id: clipboardBlk }
           Blocks.Sound { id: soundBlk }
-          Blocks.Power { id: powerBlk }
-          Blocks.Welcome { id: welcomeBlk }
           Blocks.Battery { id: batteryBlk }
           Blocks.Date { id: dateBlk }
           Blocks.Time { id: timeBlk }
+          Blocks.Power { id: powerBlk }
+          Blocks.Welcome { id: welcomeBlk; Layout.leftMargin: 8 }
         }
       }
     }
