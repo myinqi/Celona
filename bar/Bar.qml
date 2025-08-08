@@ -131,6 +131,7 @@ Scope {
           Blocks.Memory { id: memoryBlk }
           Blocks.Clipboard { id: clipboardBlk }
           Blocks.Sound { id: soundBlk }
+          Blocks.Power { id: powerBlk }
           Blocks.Battery { id: batteryBlk }
           Blocks.Date { id: dateBlk }
           Blocks.Time { id: timeBlk }
