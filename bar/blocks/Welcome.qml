@@ -13,7 +13,7 @@ BarBlock {
   // Path relative to this file (bar/blocks -> bar/assets)
   property url iconSource: "../assets/hyprland-icon.png"
   // Fine-tune visual alignment to match glyph-based icons
-  property int iconSize: 22   // typical visual size matching text glyphs
+  property int iconSize: 20   // typical visual size matching text glyphs
   property int iconYOffset: 0 // nudge up/down if needed
   property int iconXOffset: -6 // nudge left/right if needed
 

@@ -19,6 +19,44 @@ BarBlock {
     symbolText: `${root.iconGlyph} ${root.entryCount}`
   }
 
+  // Hover tooltip under the bar
+  PopupWindow {
+    id: tipWindow
+    visible: false
+    implicitWidth: 180
+    implicitHeight: 60
+    color: "transparent"
+
+    anchor {
+      window: root.QsWindow?.window
+      edges: Edges.Top
+      gravity: Edges.Bottom
+      onAnchoring: {
+        const win = root.QsWindow?.window
+        if (win) {
+          tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
+          tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
+        }
+      }
+    }
+
+    Rectangle {
+      anchors.fill: parent
+      color: palette.active.toolTipBase
+      border.color: palette.active.light
+      border.width: 1
+      radius: 8
+
+      Text {
+        anchors.fill: parent
+        anchors.margins: 10
+        text: "Left: Clipboard history\nRight: Delete history"
+        color: "#ffffff"
+        verticalAlignment: Text.AlignVCenter
+      }
+    }
+  }
+
   // Small management popup for right-click actions (e.g., clear history)
   PopupWindow {
     id: manageWindow
@@ -236,7 +274,11 @@ BarBlock {
     id: clickArea
     anchors.fill: parent
     acceptedButtons: Qt.LeftButton | Qt.RightButton
+    hoverEnabled: true
+    onEntered: tipWindow.visible = true
+    onExited: tipWindow.visible = false
     onClicked: (mouse) => {
+      tipWindow.visible = false
       if (!root.QsWindow?.window?.contentItem) return
       const rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, root.height, root.width, root.height)
       if (mouse.button === Qt.LeftButton) {

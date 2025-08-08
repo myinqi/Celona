@@ -35,10 +35,51 @@ BarBlock {
 
     MouseArea {
         anchors.fill: parent
-        onClicked: toggleMenu()
+        hoverEnabled: true
+        onEntered: tipWindow.visible = true
+        onExited: tipWindow.visible = false
+        onClicked: { tipWindow.visible = false; toggleMenu() }
         onWheel: function(event) {
             if (sink?.audio) {
                 sink.audio.volume = Math.max(0, Math.min(1, sink.audio.volume + (event.angleDelta.y / 120) * 0.05))
+            }
+        }
+    }
+
+    // Hover tooltip under the bar
+    PopupWindow {
+        id: tipWindow
+        visible: false
+        implicitWidth: 135
+        implicitHeight: 40
+        color: "transparent"
+
+        anchor {
+            window: root.QsWindow?.window
+            edges: Edges.Top
+            gravity: Edges.Bottom
+            onAnchoring: {
+                const win = root.QsWindow?.window
+                if (win) {
+                    tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
+                    tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
+                }
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: palette.active.toolTipBase
+            border.color: palette.active.light
+            border.width: 1
+            radius: 8
+
+            Text {
+                anchors.fill: parent
+                anchors.margins: 10
+                text: "Volume controls"
+                color: "#ffffff"
+                verticalAlignment: Text.AlignVCenter
             }
         }
     }
