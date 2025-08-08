@@ -3,9 +3,10 @@ import Quickshell.Io
 import "../"
 
 BarBlock {
-  property string battery
+  property string battery: ""
   property bool hasBattery: false
-  visible: hasBattery
+  // Only show when a battery exists AND we have computed a display string
+  visible: hasBattery && battery.length > 0
   
   content: BarText {
     symbolText: battery

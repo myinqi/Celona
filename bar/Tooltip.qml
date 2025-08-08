@@ -33,9 +33,9 @@ LazyLoader {
 
   PopupWindow {
     anchor {
-      window: root.displayItem.QsWindow.window
-      rect.y: anchor.window.height + 3
-      rect.x: anchor.window.contentItem.mapFromItem(root.displayItem, root.displayItem.width / 2, 0).x
+      window: root.displayItem && root.displayItem.QsWindow ? root.displayItem.QsWindow.window : null
+      rect.y: anchor.window ? (anchor.window.height + 3) : 0
+      rect.x: (anchor.window && root.displayItem) ? anchor.window.contentItem.mapFromItem(root.displayItem, root.displayItem.width / 2, 0).x : 0
       edges: Edges.Top
       gravity: Edges.Bottom
     }

@@ -131,6 +131,13 @@ BarBlock {
             font.bold: true
             font.italic: true
           }
+          Item { width: 8 }
+          Button {
+            text: Globals.reorderMode ? "Finish" : "Reorder"
+            onClicked: Globals.reorderMode = !Globals.reorderMode
+            ToolTip.visible: hovered
+            ToolTip.text: Globals.reorderMode ? "Finish: order will be saved" : "Enable: reorder modules directly in the bar"
+          }
         }
 
         // THEME EDITOR
@@ -290,6 +297,8 @@ BarBlock {
               }
             }
           }
+
+          // Reorder button moved to Modules header row
             function rgbaToHex(r,g,b,a) {
               function cc(v){ return ("0" + Math.max(0, Math.min(255, v|0)).toString(16)).slice(-2) }
               return "#" + cc(r) + cc(g) + cc(b) + (a === 255 ? "" : cc(a))

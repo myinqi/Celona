@@ -5,7 +5,7 @@ import "root:/"
 
 Rectangle {
   id: root
-  Layout.preferredWidth: contentContainer.implicitWidth + 10
+  Layout.preferredWidth: contentContainer.implicitWidth + leftPadding + rightPadding
   Layout.preferredHeight: 26
 
   property Item content
@@ -15,8 +15,8 @@ Rectangle {
   property bool dim: false
   property bool underline
   property var onClicked: function() {}
-  property int leftPadding
-  property int rightPadding
+  property int leftPadding: 5
+  property int rightPadding: 5
 
   property string hoveredBgColor: Globals.hoverHighlightColor
 
@@ -47,7 +47,9 @@ Rectangle {
     id: contentContainer
     implicitWidth:  content.implicitWidth
     implicitHeight: content.implicitHeight
-    anchors.centerIn: parent
+    anchors.left: parent.left
+    anchors.leftMargin: leftPadding
+    anchors.verticalCenter: parent.verticalCenter
     children: content
   }
 

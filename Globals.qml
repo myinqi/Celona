@@ -62,6 +62,16 @@ Singleton {
   property bool showTime: true
   property bool showPower: true
 
+  // Reorder mode: when true, bar shows drag UI and allows reordering directly
+  property bool reorderMode: false
+
+  // Custom order for right-side modules (used for dynamic rendering)
+  // Default matches current static order
+  property var rightModulesOrder: [
+    "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
+    "PowerProfiles","Clipboard","Notifications","Sound","Battery","Date","Time","Power"
+  ]
+
   // Window title
   property string windowTitleColor: "#00bee7"
 
@@ -109,6 +119,12 @@ Singleton {
     showDate = true
     showTime = true
     showPower = true
+    // Reorder defaults
+    reorderMode = false
+    rightModulesOrder = [
+      "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
+      "PowerProfiles","Clipboard","Notifications","Sound","Battery","Date","Time","Power"
+    ]
     // Window title
     windowTitleColor = "#00bee7"
   }
@@ -135,6 +151,8 @@ Singleton {
     setIf("popupText")
     setIf("popupBorder")
     setIf("trayIconColor")
+    setIf("reorderMode")
+    setIf("rightModulesOrder")
     // toggles
     setIf("showWelcome")
     setIf("showWindowTitle")
@@ -179,6 +197,8 @@ Singleton {
       popupText,
       popupBorder,
       trayIconColor,
+      reorderMode,
+      rightModulesOrder,
       // toggles
       showWelcome,
       showWindowTitle,
