@@ -129,6 +129,7 @@ Scope {
           Blocks.CPU { id: cpuBlk }
           Blocks.GPU { id: gpuBlk }
           Blocks.Memory { id: memoryBlk }
+          Blocks.Clipboard { id: clipboardBlk }
           Blocks.Sound { id: soundBlk }
           Blocks.Battery { id: batteryBlk }
           Blocks.Date { id: dateBlk }
