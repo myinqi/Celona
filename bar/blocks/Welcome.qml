@@ -44,7 +44,7 @@ BarBlock {
 
   MouseArea {
     anchors.fill: parent
-    acceptedButtons: Qt.LeftButton
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
     hoverEnabled: true
 
     onEntered: tipWindow.visible = true
@@ -52,7 +52,11 @@ BarBlock {
 
     onClicked: (mouse) => {
       tipWindow.visible = false
-      if (mouse.button === Qt.LeftButton) sidebarProc.running = true
+      if (mouse.button === Qt.LeftButton) {
+        sidebarProc.running = true
+      } else if (mouse.button === Qt.RightButton) {
+        rofiProc.running = true
+      }
     }
   }
 
@@ -61,7 +65,7 @@ BarBlock {
     id: tipWindow
     visible: false
     implicitWidth: 155
-    implicitHeight: 44
+    implicitHeight: 60
     color: "transparent"
 
     anchor {
@@ -88,7 +92,7 @@ BarBlock {
       Text {
         anchors.fill: parent
         anchors.margins: 10
-        text: "Open Settings App"
+        text: "Left: Settings APP\nRight: Applauncher"
         color: "#ffffff"
         verticalAlignment: Text.AlignVCenter
       }
@@ -101,5 +105,12 @@ BarBlock {
     command: ["sh", "-c", "flatpak run com.ml4w.sidebar"]
     stdout: SplitParser { onRead: data => console.log(`[Welcome] OUT: ${String(data)}`) }
     stderr: SplitParser { onRead: data => console.log(`[Welcome] ERR: ${String(data)}`) }
+  }
+
+  // Right-click: rofi app launcher (Waybar-like behavior)
+  Process {
+    id: rofiProc
+    running: false
+    command: ["sh", "-c", "sleep 0.2; pkill rofi || rofi -show drun -replace >/dev/null 2>&1 & disown || true"]
   }
 }

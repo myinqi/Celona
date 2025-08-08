@@ -29,7 +29,7 @@ BarBlock {
   PopupWindow {
     id: tipWindow
     visible: false
-    implicitWidth: 128
+    implicitWidth: 85
     implicitHeight: 40
     color: "transparent"
 
@@ -56,7 +56,7 @@ BarBlock {
       Text {
         anchors.fill: parent
         anchors.margins: 10
-        text: "Open Calendar"
+        text: "Calendar"
         color: "#ffffff"
         verticalAlignment: Text.AlignVCenter
       }
