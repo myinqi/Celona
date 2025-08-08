@@ -22,7 +22,7 @@ BarBlock {
   // Fine-tune visual alignment to match glyph-based icons
   property int iconSize: 20   // typical visual size matching text glyphs
   property int iconYOffset: 0 // nudge up/down if needed
-  property int iconXOffset: -1 // nudge left/right if needed
+  property int iconXOffset: 5 // nudge left/right if needed
 
   // Render image centered, with consistent size relative to 34px bar height
   content: Item {
