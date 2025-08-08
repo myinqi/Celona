@@ -107,6 +107,7 @@ Scope {
           Blocks.Date { id: dateBlk }
           Blocks.Time { id: timeBlk }
           Blocks.Power { id: powerBlk }
+          Blocks.Setup { id: setupBlk }
           // Welcome moved to leftRow
         }
       }
