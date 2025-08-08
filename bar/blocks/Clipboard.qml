@@ -15,8 +15,67 @@ BarBlock {
   content: BarText {
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
-    // Show icon and the total number of cliphist entries (from countProc)
+    // Show icon and the current number of history entries
     symbolText: `${root.iconGlyph} ${root.entryCount}`
+  }
+
+  // Small management popup for right-click actions (e.g., clear history)
+  PopupWindow {
+    id: manageWindow
+    implicitWidth: 260
+    implicitHeight: 120
+    visible: false
+    color: "transparent"
+
+    anchor {
+      window: root.QsWindow?.window
+      edges: Edges.Top
+      gravity: Edges.Bottom
+    }
+
+    Rectangle {
+      anchors.fill: parent
+      color: palette.active.toolTipBase
+      border.color: palette.active.light
+      border.width: 1
+      radius: 8
+
+      ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: 10
+        spacing: 8
+
+        Label {
+          text: "Delete clipboard history?"
+          color: "#ffffff"
+          Layout.fillWidth: true
+          horizontalAlignment: Text.AlignHCenter
+          Layout.alignment: Qt.AlignHCenter
+        }
+
+        RowLayout {
+          Layout.alignment: Qt.AlignHCenter
+          spacing: 8
+          Button {
+            text: "Cancel"
+            onClicked: manageWindow.visible = false
+          }
+          Button {
+            text: "Delete"
+            onClicked: { manageWindow.visible = false; wipeProc.running = true }
+          }
+        }
+      }
+    }
+  }
+
+  // Periodically refresh the latest entry ID so the badge updates without opening the popup
+  Timer {
+    id: badgeTimer
+    interval: 4000
+    repeat: true
+    running: true
+    onTriggered: { refreshLastId(); refreshCount() }
   }
 
   // Data
@@ -26,10 +85,16 @@ BarBlock {
   property var _buf: []
   // Live count of cliphist entries (kept in sync independently of popup)
   property int entryCount: 0
+  // Latest entry ID from cliphist
+  property int entryLastId: 0
 
   function refreshCount() {
     if (countProc.running) countProc.running = false
     Qt.callLater(() => countProc.running = true)
+  }
+  function refreshLastId() {
+    if (lastIdProc.running) lastIdProc.running = false
+    Qt.callLater(() => lastIdProc.running = true)
   }
 
   function updateFiltered() {
@@ -93,6 +158,22 @@ BarBlock {
     stderr: SplitParser { onRead: data => console.log(`[Clipboard] COUNT ERR: ${String(data)}`) }
   }
 
+  // Lightweight process to fetch the latest entry ID
+  Process {
+    id: lastIdProc
+    running: false
+    // Take the first line (newest) and extract the first field (ID)
+    command: ["sh", "-c", "/usr/bin/cliphist list | head -n1 | awk '{print $1}'"]
+    stdout: SplitParser {
+      onRead: data => {
+        const s = String(data).trim()
+        const n = parseInt(s)
+        if (!isNaN(n)) root.entryLastId = n
+      }
+    }
+    stderr: SplitParser { onRead: data => console.log(`[Clipboard] LASTID ERR: ${String(data)}`) }
+  }
+
   function refreshList() {
     // Reset entries before fresh read
     root.entries = []
@@ -121,22 +202,45 @@ BarBlock {
         console.log(`[Clipboard] Copy finished`)
         // Update count after copying (new entry in history)
         refreshCount()
+        refreshLastId()
       }
     }
   }
 
-  // Initialize count at startup
-  Component.onCompleted: refreshCount()
+  // Wipe history process
+  Process {
+    id: wipeProc
+    running: false
+    command: ["sh", "-c", "/usr/bin/cliphist wipe && /usr/bin/wl-copy -c"]
+    stdout: SplitParser { onRead: data => console.log(`[Clipboard] WIPE OUT: ${String(data)}`) }
+    stderr: SplitParser { onRead: data => console.log(`[Clipboard] WIPE ERR: ${String(data)}`) }
+    onRunningChanged: {
+      if (!running) {
+        console.log(`[Clipboard] Wipe finished`)
+        root.entries = []
+        root.filtered = []
+        root.entryCount = 0
+        root.entryLastId = 0
+        refreshCount(); refreshLastId()
+        if (menuWindow.visible) menuWindow.visible = false
+        if (manageWindow.visible) manageWindow.visible = false
+      }
+    }
+  }
+
+  // Initialize indicators at startup
+  Component.onCompleted: { refreshCount(); refreshLastId() }
 
   // Popup UI as a separate window (like Sound), anchored unter dem Block
   MouseArea {
     id: clickArea
     anchors.fill: parent
-    acceptedButtons: Qt.LeftButton
-    onClicked: {
-      if (root.QsWindow?.window?.contentItem) {
-        // Anchor to the area directly below this bar block
-        menuWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, root.height, root.width, root.height)
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    onClicked: (mouse) => {
+      if (!root.QsWindow?.window?.contentItem) return
+      const rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, root.height, root.width, root.height)
+      if (mouse.button === Qt.LeftButton) {
+        menuWindow.anchor.rect = rect
         menuWindow.visible = !menuWindow.visible
         if (menuWindow.visible) {
           // Refresh once on open. Disable periodic refresh to avoid stealing focus and resetting scroll.
@@ -144,6 +248,9 @@ BarBlock {
         } else {
           if (listProc.running) listProc.running = false
         }
+      } else if (mouse.button === Qt.RightButton) {
+        manageWindow.anchor.rect = rect
+        manageWindow.visible = true
       }
     }
   }
@@ -154,8 +261,8 @@ BarBlock {
     implicitHeight: 220
     visible: false
     color: "transparent"
-    // Update count on open for accuracy
-    onVisibleChanged: if (visible) refreshCount()
+    // Update indicators on open for accuracy
+    onVisibleChanged: if (visible) { refreshCount(); refreshLastId() }
 
     anchor {
       window: root.QsWindow?.window
@@ -180,7 +287,10 @@ BarBlock {
 
       ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
+        anchors.leftMargin: 10
+        anchors.rightMargin: 6
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
         spacing: 6
 
         // Search field removed for now to avoid focus issues
@@ -204,18 +314,22 @@ BarBlock {
             }
             RowLayout {
               anchors.fill: parent
-              spacing: 4
-              // Show cliphist entry ID as a small column
+              spacing: 2
+              // Show sequential row number (1-based) to avoid confusion after wipes
               Label {
-                text: modelData && modelData.id ? modelData.id : ""
+                text: (typeof index !== 'undefined' ? (index + 1).toString() : "")
                 color: "#cccccc"
                 horizontalAlignment: Text.AlignRight
-                Layout.preferredWidth: 30
+                Layout.preferredWidth: 10
               }
               Label {
                 text: modelData && modelData.text ? modelData.text : ""
                 color: "#ffffff"
                 elide: Text.ElideRight
+                padding: 0
+                leftPadding: 0
+                rightPadding: 0
+                Layout.rightMargin: 0
                 Layout.fillWidth: true
               }
             }
