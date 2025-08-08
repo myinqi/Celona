@@ -122,6 +122,7 @@ Scope {
           spacing: 8
 
           Blocks.SystemTray { id: systemTray }
+          Blocks.Updates { id: updatesBlk }          
           Blocks.Network {
             id: networkBlk
             onToggleNmAppletRequested: systemTray.toggleNetworkApplet()
@@ -132,6 +133,7 @@ Scope {
           Blocks.Memory { id: memoryBlk }
           Blocks.PowerProfiles { id: powerProfilesBlk }
           Blocks.Clipboard { id: clipboardBlk }
+          Blocks.Notifications { id: notificationsBlk }
           Blocks.Sound { id: soundBlk }
           Blocks.Battery { id: batteryBlk }
           Blocks.Date { id: dateBlk }
@@ -142,5 +144,7 @@ Scope {
       }
     }
   }
+
+  // (removed) Custom toast overlay; using swaync for notifications now
 }
 
