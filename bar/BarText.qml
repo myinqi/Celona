@@ -11,6 +11,8 @@ Text {
   property string symbolFont: "Symbols Nerd Font Mono"
   property int pointSize: 12
   property int symbolSize: pointSize * 1.4
+  // Per-module adjustable spacing between icon glyph and following text (in px)
+  property int symbolSpacing: 5
   property string symbolText
   property bool dim
   text: wrapSymbols(symbolText)
@@ -49,7 +51,7 @@ Text {
      || (codePoint >= 0x100000 && codePoint <= 0x10FFFF); // Supplementary Private Use Area-B
 
     return text.replace(/./gu, (c) => isSymbol(c.codePointAt(0))
-      ? `<span style='font-family: ${symbolFont}; letter-spacing: 5px; font-size: ${symbolSize}px'>${c}</span>`
+      ? `<span style='font-family: ${symbolFont}; letter-spacing: ${symbolSpacing}px; font-size: ${symbolSize}px'>${c}</span>`
       // ? c
       : c);
   }

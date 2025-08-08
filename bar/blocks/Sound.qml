@@ -27,7 +27,11 @@ BarBlock {
         }
     }
 
-    content: BarText { symbolText: `${sink?.audio?.muted ? "󰖁" : "󰕾"} ${Math.round(sink?.audio?.volume * 100)}%` }
+    content: BarText {
+        mainFont: "JetBrains Mono Nerd Font"
+        symbolFont: "Symbols Nerd Font Mono"
+        symbolText: `${sink?.audio?.muted ? "󰖁" : "󰕾"} ${Math.round(sink?.audio?.volume * 100)}%`
+    }
 
     MouseArea {
         anchors.fill: parent

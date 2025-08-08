@@ -43,7 +43,7 @@ BarBlock {
   PopupWindow {
     id: tipWindow
     visible: false
-    implicitWidth: 220
+    implicitWidth: 150
     implicitHeight: 60
     color: "transparent"
 
