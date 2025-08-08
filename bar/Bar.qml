@@ -47,7 +47,7 @@ Scope {
         id: barRect
         anchors.fill: parent
         anchors.margins: 2
-        color: "#40000000"
+        color: Globals.barBgColor
         radius: 11
         border.color: Globals.barBorderColor
         border.width: 2

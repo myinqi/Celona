@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import "root:/"
 
 Rectangle {
   id: root
@@ -17,7 +18,7 @@ Rectangle {
   property int leftPadding
   property int rightPadding
 
-  property string hoveredBgColor: "#00bee7"
+  property string hoveredBgColor: Globals.hoverHighlightColor
 
   // Background color
   color: {

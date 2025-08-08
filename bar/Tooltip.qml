@@ -72,16 +72,29 @@ LazyLoader {
       Rectangle {
         anchors.fill: parent
 
-        radius: 5
+        radius: 8
         border.width: 1
-        color: palette.active.toolTipBase
-        border.color: palette.active.light
+        color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+        border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
 
         Loader {
           id: content
           anchors.centerIn: parent
           sourceComponent: contentDelegate
           active: true
+          onLoaded: {
+            // Apply tooltip text color to nested items if set in Globals
+            const c = Globals.tooltipText
+            if (!c || c === "") return
+            function applyColor(it) {
+              if (!it) return
+              if ("color" in it) {
+                it.color = c
+              }
+              if (it.children) for (const ch of it.children) applyColor(ch)
+            }
+            applyColor(content.item)
+          }
         }
       }
     }

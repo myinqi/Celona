@@ -82,8 +82,8 @@ BarBlock {
 
     Rectangle {
       anchors.fill: parent
-      color: palette.active.toolTipBase
-      border.color: palette.active.light
+      color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+      border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
       border.width: 1
       radius: 8
 
@@ -91,7 +91,7 @@ BarBlock {
         anchors.fill: parent
         anchors.margins: 10
         text: "Power profile: " + root.profile
-        color: "#ffffff"
+        color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         verticalAlignment: Text.AlignVCenter
       }
     }
