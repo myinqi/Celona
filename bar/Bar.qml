@@ -51,7 +51,7 @@ Scope {
         border.color: "#00bee7"
         border.width: 2
 
-        // Left: Welcome icon + window title (use RowLayout so BarBlock sizing is respected)
+        // Left: Welcome + Setup + WindowTitle (use RowLayout so BarBlock sizing is respected)
         RowLayout {
           id: leftRow
           anchors {
@@ -63,6 +63,7 @@ Scope {
           z: 2
 
           Blocks.Welcome { id: welcomeBlkLeft; z: 3 }
+          Blocks.Setup { id: setupBlkLeft }
 
           Blocks.WindowTitle {
             id: windowTitle
@@ -107,7 +108,6 @@ Scope {
           Blocks.Date { id: dateBlk }
           Blocks.Time { id: timeBlk }
           Blocks.Power { id: powerBlk }
-          Blocks.Setup { id: setupBlk }
           // Welcome moved to leftRow
         }
       }
