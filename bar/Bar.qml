@@ -51,64 +51,22 @@ Scope {
         border.color: "#00bee7"
         border.width: 2
 
-        Row {
-          id: workspacesRow
+        // Left: window title module
+        Blocks.WindowTitle {
+          id: windowTitle
           anchors {
             left: parent.left
             verticalCenter: parent.verticalCenter
             leftMargin: 16
           }
-          spacing: 5
-
-          Repeater {
-            model: Hyprland.workspaces
-
-            Rectangle {
-              width: 35
-              height: 22
-              radius: 10
-              color: modelData.active ? "#00bee7" : "#333333"
-              border.color: modelData.active ? "#00d6d8" : "#575757"
-              border.width: 1
-
-              MouseArea {
-                anchors.fill: parent
-                onClicked: Hyprland.dispatch("workspace " + modelData.id)
-              }
-
-              Text {
-                text: modelData.id
-                anchors.centerIn: parent
-                color: modelData.active ? "#000000" : "#cccccc"
-                font.pixelSize: 14
-                font.bold: modelData.active
-                font.family: "JetBrains Mono Nerd Font, sans-serif"
-              }
-            }
-          }
-
-          Text {
-            visible: Hyprland.workspaces.length === 0
-            text: "No workspaces"
-            color: "#cccccc"
-            font.pixelSize: 12
-            font.family: "JetBrains Mono Nerd Font, sans-serif"
-          }
+          maxWidth: Math.max(200, barRect.width * 0.35)
         }
 
-        Text {
-          id: windowTitle
-          anchors {
-            horizontalCenter: parent.horizontalCenter
-            verticalCenter: parent.verticalCenter
-          }
-          text: Hyprland.activeToplevel ? Hyprland.activeToplevel.title : "Desktop"
-          color: "#ffffff"
-          font.bold: true
-          font.pixelSize: 14
-          font.family: "JetBrains Mono Nerd Font, sans-serif"
-          width: Math.min(implicitWidth, parent.width - 300)
-          elide: Text.ElideRight
+        // Center: workspaces module
+        Blocks.Workspaces {
+          id: workspaces
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.verticalCenter: parent.verticalCenter
         }
 
         // Right side: use RowLayout so BarBlock.Layout.* sizing is respected

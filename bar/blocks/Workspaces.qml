@@ -1,74 +1,56 @@
 import QtQuick
-import QtQuick.Layouts
-import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Widgets
-import Qt5Compat.GraphicalEffects
-import "../utils" as Utils
-import "root:/"
 
-RowLayout {
-    property HyprlandMonitor monitor: Hyprland.monitorFor(screen)
+Item {
+  id: root
 
-    Rectangle {
-        id: workspaceBar
-        Layout.preferredWidth: Math.max(50, Utils.HyprlandUtils.maxWorkspace * 25)
-        Layout.preferredHeight: 23
-        radius: 7
-        color: Theme.get.barBgColor
+  implicitWidth: row.implicitWidth
+  implicitHeight: row.implicitHeight
 
-        Row {
-            anchors.centerIn: parent
-            spacing: 15
+  property color activeColor: "#00bee7"
+  property color inactiveColor: "#333333"
+  property color activeBorder: "#00d6d8"
+  property color inactiveBorder: "#575757"
+  property color activeText: "#000000"
+  property color inactiveText: "#cccccc"
 
-            Repeater {
-                model: Utils.HyprlandUtils.maxWorkspace || 1
+  Row {
+    id: row
+    spacing: 5
 
-                Item {
-                    required property int index
-                    property bool focused: Hyprland.focusedMonitor?.activeWorkspace?.id === (index + 1)
-                    
-                    width: workspaceText.width
-                    height: workspaceText.height
+    Repeater {
+      model: Hyprland.workspaces
 
-                    Text {
-                        id: workspaceText
-                        text: (index + 1).toString()
-                        color: "white"
-                        font.pixelSize: 15
-                        font.bold: focused
-                    }
+      Rectangle {
+        width: 35
+        height: 22
+        radius: 10
+        color: modelData.active ? root.activeColor : root.inactiveColor
+        border.color: modelData.active ? root.activeBorder : root.inactiveBorder
+        border.width: 1
 
-                    Rectangle {
-                        visible: focused
-                        anchors {
-                            left: workspaceText.left
-                            right: workspaceText.right
-                            top: workspaceText.bottom
-                            topMargin: -3
-                        }
-                        height: 2
-                        color: "white"
-                    }
-
-                    DropShadow {
-                        visible: focused
-                        anchors.fill: workspaceText
-                        horizontalOffset: 2
-                        verticalOffset: 2
-                        radius: 8.0
-                        samples: 20
-                        color: "#000000"
-                        source: workspaceText
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: Utils.HyprlandUtils.switchWorkspace(index + 1)
-                    }
-                }
-            }
+        MouseArea {
+          anchors.fill: parent
+          onClicked: Hyprland.dispatch("workspace " + modelData.id)
         }
+
+        Text {
+          text: modelData.id
+          anchors.centerIn: parent
+          color: modelData.active ? root.activeText : root.inactiveText
+          font.pixelSize: 14
+          font.bold: modelData.active
+          font.family: "JetBrains Mono Nerd Font, sans-serif"
+        }
+      }
     }
+
+    Text {
+      visible: Hyprland.workspaces.length === 0
+      text: "No workspaces"
+      color: "#cccccc"
+      font.pixelSize: 12
+      font.family: "JetBrains Mono Nerd Font, sans-serif"
+    }
+  }
 }
