@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import "../"
@@ -7,6 +8,12 @@ import "root:/"
 
 BarBlock {
   id: root
+  // Enlarge hitbox so hover/click are easy even around the image edges
+  implicitWidth: 30
+  // In RowLayout, implicitWidth may be ignored. Use Layout.* to enforce width.
+  Layout.preferredWidth: 20
+  Layout.minimumWidth: 20
+  Layout.alignment: Qt.AlignVCenter
 
   // Appearance
   // Use custom image instead of font glyph
@@ -15,10 +22,11 @@ BarBlock {
   // Fine-tune visual alignment to match glyph-based icons
   property int iconSize: 20   // typical visual size matching text glyphs
   property int iconYOffset: 0 // nudge up/down if needed
-  property int iconXOffset: -6 // nudge left/right if needed
+  property int iconXOffset: -1 // nudge left/right if needed
 
   // Render image centered, with consistent size relative to 34px bar height
   content: Item {
+    id: iconItem
     width: root.iconSize
     height: root.iconSize
     anchors.verticalCenter: parent.verticalCenter
@@ -63,8 +71,9 @@ BarBlock {
       onAnchoring: {
         const win = root.QsWindow?.window
         if (win) {
+          // Match Power: only adjust x/y to avoid polish loops
           tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
-          tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
+          tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2 + root.iconXOffset, 0).x
         }
       }
     }
