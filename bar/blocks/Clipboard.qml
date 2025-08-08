@@ -15,7 +15,8 @@ BarBlock {
   content: BarText {
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
-    symbolText: root.iconGlyph
+    // Show icon and the total number of cliphist entries (from countProc)
+    symbolText: `${root.iconGlyph} ${root.entryCount}`
   }
 
   // Data
@@ -23,6 +24,13 @@ BarBlock {
   property var filtered: []
   // Internal buffer to coalesce streaming output without resetting scroll/focus repeatedly
   property var _buf: []
+  // Live count of cliphist entries (kept in sync independently of popup)
+  property int entryCount: 0
+
+  function refreshCount() {
+    if (countProc.running) countProc.running = false
+    Qt.callLater(() => countProc.running = true)
+  }
 
   function updateFiltered() {
     // No search for now; show all entries. ListView handles scroll/height.
@@ -70,6 +78,21 @@ BarBlock {
     stderr: SplitParser { onRead: data => console.log(`[Clipboard] STDERR: ${String(data)}`) }
   }
 
+  // Lightweight counter process for accurate icon badge
+  Process {
+    id: countProc
+    running: false
+    command: ["sh", "-c", "/usr/bin/cliphist list | wc -l"]
+    stdout: SplitParser {
+      onRead: data => {
+        const s = String(data).trim()
+        const n = parseInt(s)
+        if (!isNaN(n)) root.entryCount = n
+      }
+    }
+    stderr: SplitParser { onRead: data => console.log(`[Clipboard] COUNT ERR: ${String(data)}`) }
+  }
+
   function refreshList() {
     // Reset entries before fresh read
     root.entries = []
@@ -94,9 +117,16 @@ BarBlock {
     stdout: SplitParser { onRead: data => console.log(`[Clipboard] COPY OUT: ${String(data)}`) }
     stderr: SplitParser { onRead: data => console.log(`[Clipboard] COPY ERR: ${String(data)}`) }
     onRunningChanged: {
-      if (!running) console.log(`[Clipboard] Copy finished`)
+      if (!running) {
+        console.log(`[Clipboard] Copy finished`)
+        // Update count after copying (new entry in history)
+        refreshCount()
+      }
     }
   }
+
+  // Initialize count at startup
+  Component.onCompleted: refreshCount()
 
   // Popup UI as a separate window (like Sound), anchored unter dem Block
   MouseArea {
@@ -117,14 +147,15 @@ BarBlock {
       }
     }
   }
+
   PopupWindow {
     id: menuWindow
-    implicitWidth: 300
+    implicitWidth: 400
     implicitHeight: 220
     visible: false
     color: "transparent"
-    // No auto focus needed since we removed the search field
-    onVisibleChanged: undefined
+    // Update count on open for accuracy
+    onVisibleChanged: if (visible) refreshCount()
 
     anchor {
       window: root.QsWindow?.window
@@ -173,33 +204,40 @@ BarBlock {
             }
             RowLayout {
               anchors.fill: parent
-              spacing: 8
-                Label {
-                  text: modelData && modelData.text ? modelData.text : ""
-                  color: "#ffffff"
-                  elide: Text.ElideRight
-                  Layout.fillWidth: true
-                }
+              spacing: 4
+              // Show cliphist entry ID as a small column
+              Label {
+                text: modelData && modelData.id ? modelData.id : ""
+                color: "#cccccc"
+                horizontalAlignment: Text.AlignRight
+                Layout.preferredWidth: 30
+              }
+              Label {
+                text: modelData && modelData.text ? modelData.text : ""
+                color: "#ffffff"
+                elide: Text.ElideRight
+                Layout.fillWidth: true
               }
             }
-            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOn }
           }
+          ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOn }
+        }
 
-          // Empty state
-          Rectangle {
-            visible: (root.filtered?.length || 0) === 0
-            Layout.fillWidth: true
-            height: 34
-            color: "transparent"
-            Text {
-              anchors.fill: parent
-              anchors.margins: 8
-              text: root.entries && root.entries.length === 0 ? "Keine Einträge" : "Keine Treffer"
-              color: "#cccccc"
-              verticalAlignment: Text.AlignVCenter
-              elide: Text.ElideRight
-            }
+        // Empty state
+        Rectangle {
+          visible: (root.filtered?.length || 0) === 0
+          Layout.fillWidth: true
+          height: 34
+          color: "transparent"
+          Text {
+            anchors.fill: parent
+            anchors.margins: 8
+            text: root.entries && root.entries.length === 0 ? "Keine Einträge" : "Keine Treffer"
+            color: "#cccccc"
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
           }
+        }
 
           // Note: periodic auto-refresh disabled to preserve typing and scroll position.
         }
