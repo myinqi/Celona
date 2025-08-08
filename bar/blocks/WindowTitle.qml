@@ -6,7 +6,7 @@ Item {
   implicitWidth: title.implicitWidth
   implicitHeight: title.implicitHeight
 
-  property color color: "#ffffff"
+  property color color: "#00bee7"
   property bool bold: true
   property int pixelSize: 14
   property string family: "JetBrains Mono Nerd Font, sans-serif"

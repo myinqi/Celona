@@ -25,7 +25,7 @@ Item {
       Rectangle {
         width: 35
         height: 22
-        radius: 10
+        radius: 8
         color: modelData.active ? root.activeColor : root.inactiveColor
         border.color: modelData.active ? root.activeBorder : root.inactiveBorder
         border.width: 1

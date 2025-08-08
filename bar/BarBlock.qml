@@ -5,7 +5,7 @@ import Quickshell
 Rectangle {
   id: root
   Layout.preferredWidth: contentContainer.implicitWidth + 10
-  Layout.preferredHeight: 24
+  Layout.preferredHeight: 26
 
   property Item content
   property Item mouseArea: mouseArea
