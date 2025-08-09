@@ -187,7 +187,7 @@ BarBlock {
             font.bold: true
             font.italic: true
           }
-          Item { width: 8 }
+          Item { width: 20 }
           Button {
             text: Globals.reorderMode ? "Finish" : "Reorder"
             onClicked: Globals.reorderMode = !Globals.reorderMode
