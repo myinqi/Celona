@@ -415,15 +415,15 @@ BarBlock {
                       }
                       Item { Layout.fillWidth: true }
                       Button {
-                        text: "Abbrechen"
-                        onClicked: picker.visible = false
-                      }
-                      Button {
-                        text: "Übernehmen"
+                        text: "set color"
                         onClicked: {
                           if (picker.onApply) picker.onApply(hexOut.text)
                           picker.visible = false
                         }
+                      }
+                      Button {
+                        text: "cancel"
+                        onClicked: picker.visible = false
                       }
                     }
                   }
@@ -470,40 +470,29 @@ BarBlock {
                   Layout.maximumWidth: 140
                 }
 
-                // Hexcode Eingabefeld
-                TextField {
-                  id: tf
-                  text: String(Globals[modelData.key])
+                // Hexcode Anzeige (nicht editierbar)
+                Item {
                   Layout.preferredWidth: 100
                   Layout.minimumWidth: 100
                   Layout.maximumWidth: 100
-                  // Manual hex validation (#RRGGBB or #RRGGBBAA)
-                  onEditingFinished: {
-                    let t = text.trim()
-                    // allow plain 6/8 hex without '#'
-                    const plain = /^([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
-                    if (plain.test(t)) t = '#' + t
-                    const re = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
-                    if (re.test(t)) {
-                      text = t
-                      Globals[modelData.key] = t
-                      Globals.saveTheme()
-                    } else {
-                      text = String(Globals[modelData.key])
-                    }
+                  width: 100; height: 24
+                  Rectangle {
+                    anchors.fill: parent
+                    radius: 4
+                    color: palette.active.window
+                    border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
                   }
-                  onAccepted: {
-                    let t = text.trim()
-                    const plain = /^([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
-                    if (plain.test(t)) t = '#' + t
-                    const re = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
-                    if (re.test(t)) {
-                      text = t
-                      Globals[modelData.key] = t
-                      Globals.saveTheme()
-                    } else {
-                      text = String(Globals[modelData.key])
-                    }
+                  Label {
+                    anchors.fill: parent
+                    anchors.margins: 2
+                    text: String(Globals[modelData.key])
+                    color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    font.family: "monospace"
+                    elide: Text.ElideRight
+                    Accessible.role: Accessible.StaticText
+                    focusPolicy: Qt.NoFocus
                   }
                 }
 
