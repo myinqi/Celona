@@ -607,7 +607,7 @@ BarBlock {
           Slider {
             id: sideMarginSlider
             from: 0
-            to: 12
+            to: 200
             stepSize: 1
             wheelEnabled: true
             Layout.preferredWidth: 180
