@@ -156,8 +156,9 @@ RowLayout {
       PopupWindow {
         id: tipWindow
         visible: false
-        implicitWidth: 200
-        implicitHeight: 40
+        // Auto size to content: text implicit size + margins (10 left/right, 10 top/bottom)
+        implicitWidth: tipLabel.implicitWidth + 20
+        implicitHeight: tipLabel.implicitHeight + 20
         color: "transparent"
 
         anchor {
@@ -184,11 +185,13 @@ RowLayout {
           radius: 8
 
           Text {
+            id: tipLabel
             anchors.fill: parent
             anchors.margins: 10
             text: delegate.item.tooltipTitle || delegate.item.id
             color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
             verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.NoWrap
           }
         }
       }
