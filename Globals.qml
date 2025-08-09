@@ -17,6 +17,8 @@ Singleton {
   property string barPosition: "top"
   // Distance (px) from chosen screen edge to the bar (0–10 typical)
   property int barEdgeMargin: 0
+  // Horizontal side margins (px) to shorten the bar from left and right equally (0–10 typical)
+  property int barSideMargin: 0
   // Hover highlight for blocks (e.g., Time)
   property string hoverHighlightColor: "#00bee7"
 
@@ -86,6 +88,7 @@ Singleton {
     barBorderColor = "#00bee7"
     barPosition = "top"
     barEdgeMargin = 0
+    barSideMargin = 0
     hoverHighlightColor = "#00bee7"
     // Modules
     moduleIconColor = "#FFFFFF"
@@ -144,6 +147,7 @@ Singleton {
     setIf("barBorderColor")
     setIf("barPosition")
     setIf("barEdgeMargin")
+    setIf("barSideMargin")
     setIf("hoverHighlightColor")
     setIf("moduleIconColor")
     setIf("moduleValueColor")
@@ -191,6 +195,8 @@ Singleton {
       // Preferred top-level positioning keys
       barPosition,
       barEdgeMargin,
+      // Secondary positioning
+      barSideMargin,
       // Colors
       barBgColor,
       barBorderColor,

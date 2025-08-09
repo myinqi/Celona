@@ -49,8 +49,8 @@ Scope {
         id: barRect
         anchors.fill: parent
         // Apply visual gap inside the window: extra top/bottom margin depending on bar position
-        anchors.leftMargin: 2
-        anchors.rightMargin: 2
+        anchors.leftMargin: (Globals.barSideMargin !== undefined ? Globals.barSideMargin : 0) + 2
+        anchors.rightMargin: (Globals.barSideMargin !== undefined ? Globals.barSideMargin : 0) + 2
         anchors.topMargin: (Globals.barPosition === "top" ? ((Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + 2) : 2)
         anchors.bottomMargin: (Globals.barPosition === "bottom" ? ((Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + 2) : 2)
         color: Globals.barBgColor

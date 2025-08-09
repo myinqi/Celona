@@ -570,7 +570,7 @@ BarBlock {
           Slider {
             id: marginSlider
             from: 0
-            to: 10
+            to: 12
             stepSize: 1
             wheelEnabled: true
             Layout.preferredWidth: 180
@@ -585,6 +585,43 @@ BarBlock {
             onValueChanged: marginValue.text = String(Math.round(value)) + " px"
             ToolTip.visible: hovered
             ToolTip.text: (Globals.barPosition === "top" ? "Margin from top" : "Margin from bottom")
+          }
+        }
+
+        // Bar side margins (shorten from left/right)
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "Bar Margin (left/right):"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          }
+          Item { Layout.fillWidth: true }
+          Text {
+            id: sideMarginValue
+            text: String(Globals.barSideMargin !== undefined ? Globals.barSideMargin : 0) + " px"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            Layout.preferredWidth: 60
+            horizontalAlignment: Text.AlignRight
+          }
+          Slider {
+            id: sideMarginSlider
+            from: 0
+            to: 12
+            stepSize: 1
+            wheelEnabled: true
+            Layout.preferredWidth: 180
+            value: Globals.barSideMargin !== undefined ? Globals.barSideMargin : 0
+            onMoved: {
+              const v = Math.round(value)
+              if (Globals.barSideMargin !== v) {
+                Globals.barSideMargin = v
+                Globals.saveTheme()
+              }
+            }
+            onValueChanged: sideMarginValue.text = String(Math.round(value)) + " px"
+            ToolTip.visible: hovered
+            ToolTip.text: "Margin from left/right"
           }
         }
 
