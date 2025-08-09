@@ -5,10 +5,13 @@ import "../"
 BarBlock {
   property string battery: ""
   property bool hasBattery: false
-  // Only show when a battery exists AND we have computed a display string
-  visible: hasBattery && battery.length > 0
+  // Show when we have any display string (also for no-battery placeholder)
+  visible: battery.length > 0
   
   content: BarText {
+    // Ensure consistent fonts and icon coloring
+    mainFont: "JetBrains Mono Nerd Font"
+    symbolFont: "Symbols Nerd Font Mono"
     symbolText: battery
   }
 
@@ -16,7 +19,13 @@ BarBlock {
     id: batteryCheck
     command: ["sh", "-c", "test -d /sys/class/power_supply/BAT*"]
     running: true
-    onExited: function(exitCode) { hasBattery = exitCode === 0 }
+    onExited: function(exitCode) {
+      hasBattery = exitCode === 0
+      // If no battery present, show mains power plug as placeholder (PUA glyph so BarText colors it with iconColor)
+      if (!hasBattery) {
+        battery = "" // Font Awesome plug (PUA), rendered from Nerd Font, gets iconColor
+      }
+    }
   }
 
   Process {
@@ -36,7 +45,8 @@ BarBlock {
         else if (capacity <= 80) batteryIcon = "󰂁"
         else batteryIcon = "󰂂"
         
-        const symbol = status === "Charging" ? "🔌" : batteryIcon
+        // Use PUA plug so BarText applies iconColor; avoids emoji fallback coloring
+        const symbol = status === "Charging" ? "" : batteryIcon
         battery = `${symbol} ${capacity}%`
       }
     }

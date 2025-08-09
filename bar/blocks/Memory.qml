@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import "../"
+import "root:/"
 
 BarBlock {
   id: text
@@ -53,20 +54,52 @@ BarBlock {
     id: hoverArea
     anchors.fill: parent
     hoverEnabled: true
+    acceptedButtons: Qt.NoButton
+    onEntered: tipWindow.visible = true
+    onExited: tipWindow.visible = false
   }
 
-  Tooltip {
-    relativeItem: hoverArea.containsMouse ? hoverArea : null
+  PopupWindow {
+    id: tipWindow
+    visible: false
+    implicitWidth: 110
+    implicitHeight: 65
+    color: "transparent"
 
-    Column {
-      spacing: 2
-      Label {
-        readonly property real usedGB: (Math.max(totalKB - availKB, 0)) / 1024.0 / 1024.0
-        readonly property real totalGB: totalKB / 1024.0 / 1024.0
-        text: usedGB.toFixed(1) + " / " + totalGB.toFixed(1) + " GB"
+    anchor {
+      window: text.QsWindow?.window
+      edges: Edges.Top
+      gravity: Edges.Bottom
+      onAnchoring: {
+        const win = text.QsWindow?.window
+        if (win) {
+          tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
+          tipWindow.anchor.rect.x = win.contentItem.mapFromItem(text, text.width / 2, 0).x
+        }
       }
-      Label {
-        text: Math.floor(percentUsed) + "%"
+    }
+
+    Rectangle {
+      anchors.fill: parent
+      color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+      border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+      border.width: 1
+      radius: 8
+
+      Column {
+        anchors.fill: parent
+        anchors.margins: 10
+        spacing: 2
+        Text {
+          // compute GB inline: KB -> GB (divide by 1024^2)
+          text: ((Math.max(totalKB - availKB, 0)) / 1048576).toFixed(1)
+                + " / " + (totalKB / 1048576).toFixed(1) + " GB"
+          color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+        }
+        Text {
+          text: Math.floor(percentUsed) + "%"
+          color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+        }
       }
     }
   }

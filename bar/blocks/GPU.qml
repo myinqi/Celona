@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import "../"
+import "root:/"
 
 BarBlock {
   id: root
@@ -197,16 +198,52 @@ BarBlock {
     }
   }
 
-  // Tooltip with details
-  MouseArea { id: hoverArea; anchors.fill: parent; hoverEnabled: true }
-  Tooltip {
-    relativeItem: hoverArea.containsMouse ? hoverArea : null
-    Column {
-      spacing: 2
-      Label { text: "Model: " + root.gpuModel }
-      Label { text: "Driver: " + root.gpuDriver }
-      Label { text: "VRAM: " + (root.usedGB !== "-" ? (root.usedGB + " / " + root.totalGB + " GB") : "-") }
-      Label { text: "Temp: " + (root.tempC !== "-" ? (root.tempC + " °C") : "-") }
+  // Tooltip like Date module using PopupWindow
+  MouseArea {
+    id: hoverArea
+    anchors.fill: parent
+    hoverEnabled: true
+    acceptedButtons: Qt.NoButton
+    onEntered: tipWindow.visible = true
+    onExited: tipWindow.visible = false
+  }
+
+  PopupWindow {
+    id: tipWindow
+    visible: false
+    implicitWidth: 305
+    implicitHeight: 110
+    color: "transparent"
+
+    anchor {
+      window: root.QsWindow?.window
+      edges: Edges.Top
+      gravity: Edges.Bottom
+      onAnchoring: {
+        const win = root.QsWindow?.window
+        if (win) {
+          tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
+          tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
+        }
+      }
+    }
+
+    Rectangle {
+      anchors.fill: parent
+      color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+      border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+      border.width: 1
+      radius: 8
+
+      Column {
+        anchors.fill: parent
+        anchors.margins: 10
+        spacing: 2
+        Text { text: "Model: " + root.gpuModel; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Driver: " + root.gpuDriver; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "VRAM: " + (root.usedGB !== "-" ? (root.usedGB + " / " + root.totalGB + " GB") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Temp: " + (root.tempC !== "-" ? (root.tempC + " °C") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+      }
     }
   }
 }

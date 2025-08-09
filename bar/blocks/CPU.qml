@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import "../"
+import "root:/"
 
 BarBlock {
   id: root
@@ -40,6 +41,56 @@ BarBlock {
 
     stdout: SplitParser {
       onRead: data => root.cpuPercent = Number(String(data).trim())
+    }
+  }
+
+  // Tooltip like Date/GPU using PopupWindow
+  MouseArea {
+    id: hoverArea
+    anchors.fill: parent
+    hoverEnabled: true
+    acceptedButtons: Qt.NoButton
+    onEntered: tipWindow.visible = true
+    onExited: tipWindow.visible = false
+  }
+
+  PopupWindow {
+    id: tipWindow
+    visible: false
+    implicitWidth: 195
+    implicitHeight: 135
+    color: "transparent"
+
+    anchor {
+      window: root.QsWindow?.window
+      edges: Edges.Top
+      gravity: Edges.Bottom
+      onAnchoring: {
+        const win = root.QsWindow?.window
+        if (win) {
+          tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
+          tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
+        }
+      }
+    }
+
+    Rectangle {
+      anchors.fill: parent
+      color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+      border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+      border.width: 1
+      radius: 8
+
+      Column {
+        anchors.fill: parent
+        anchors.margins: 10
+        spacing: 2
+        Text { text: "Usage: " + (isNaN(root.cpuPercent) ? "-" : (Math.floor(root.cpuPercent) + "%")); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Loadavg: " + root.loadavg1 + ", " + root.loadavg5 + ", " + root.loadavg15; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Freq: " + root.cpuFreqGHz + " GHz"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Cores: " + root.logicalCores; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Temp: " + (root.cpuTempC !== "-" ? (root.cpuTempC + " °C") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+      }
     }
   }
 
@@ -115,22 +166,4 @@ BarBlock {
     onTriggered: { cpuProc.running = true; loadProc.running = true; freqProc.running = true; coresProc.running = true; tempProc.running = true }
   }
 
-  // Tooltip with details
-  MouseArea {
-    id: hoverArea
-    anchors.fill: parent
-    hoverEnabled: true
-  }
-
-  Tooltip {
-    relativeItem: hoverArea.containsMouse ? hoverArea : null
-
-    Column {
-      spacing: 2
-      Label { text: "CPU: " + Math.floor(root.cpuPercent) + "%  |  Cores: " + root.logicalCores }
-      Label { text: "Freq: " + (root.cpuFreqGHz !== "-" ? root.cpuFreqGHz + " GHz" : "-") }
-      Label { text: "Load: " + root.loadavg1 + ", " + root.loadavg5 + ", " + root.loadavg15 }
-      Label { text: "Temp: " + (root.cpuTempC !== "-" ? root.cpuTempC + " °C" : "-") }
-    }
-  }
 }

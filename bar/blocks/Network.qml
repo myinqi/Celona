@@ -3,6 +3,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import "../"
+import "root:/"
 
 BarBlock {
   id: root
@@ -108,21 +109,52 @@ BarBlock {
     anchors.fill: parent
     hoverEnabled: true
     acceptedButtons: Qt.LeftButton | Qt.RightButton
+    onEntered: tipWindow.visible = true
+    onExited: tipWindow.visible = false
     onClicked: ev => {
       if (ev.button === Qt.RightButton) {
         root.toggleNmAppletRequested()
       }
     }
   }
-  Tooltip {
-    relativeItem: hoverArea.containsMouse ? hoverArea : null
-    Column {
-      spacing: 2
-      Label { text: "Interface: " + root.ifname }
-      Label { text: "Type: " + (root.connType !== "-" ? root.connType : "-") }
-      Label { visible: root.connType === "wifi"; text: "SSID: " + root.ssid }
-      Label { visible: root.connType === "wifi"; text: "Signal: " + (root.signal >= 0 ? root.signal + "%" : "-") }
-      Label { text: "IP: " + root.ip4 }
+
+  PopupWindow {
+    id: tipWindow
+    visible: false
+    implicitWidth: 180
+    implicitHeight: 135
+    color: "transparent"
+
+    anchor {
+      window: root.QsWindow?.window
+      edges: Edges.Top
+      gravity: Edges.Bottom
+      onAnchoring: {
+        const win = root.QsWindow?.window
+        if (win) {
+          tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
+          tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
+        }
+      }
+    }
+
+    Rectangle {
+      anchors.fill: parent
+      color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+      border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+      border.width: 1
+      radius: 8
+
+      Column {
+        anchors.fill: parent
+        anchors.margins: 10
+        spacing: 2
+        Text { text: "Interface: " + root.ifname; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Type: " + (root.connType !== "-" ? root.connType : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { visible: root.connType === "wifi"; text: "SSID: " + root.ssid; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { visible: root.connType === "wifi"; text: "Signal: " + (root.signal >= 0 ? root.signal + "%" : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "IP: " + root.ip4; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+      }
     }
   }
 }
