@@ -551,6 +551,43 @@ BarBlock {
           }
         }
 
+        // Bar edge margin (distance from screen edge to bar)
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "Bar Margin (" + (Globals.barPosition === "top" ? "top" : "bottom") + "):"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          }
+          Item { Layout.fillWidth: true }
+          Text {
+            id: marginValue
+            text: String(Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + " px"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            Layout.preferredWidth: 60
+            horizontalAlignment: Text.AlignRight
+          }
+          Slider {
+            id: marginSlider
+            from: 0
+            to: 10
+            stepSize: 1
+            wheelEnabled: true
+            Layout.preferredWidth: 180
+            value: Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0
+            onMoved: {
+              const v = Math.round(value)
+              if (Globals.barEdgeMargin !== v) {
+                Globals.barEdgeMargin = v
+                Globals.saveTheme()
+              }
+            }
+            onValueChanged: marginValue.text = String(Math.round(value)) + " px"
+            ToolTip.visible: hovered
+            ToolTip.text: (Globals.barPosition === "top" ? "Margin from top" : "Margin from bottom")
+          }
+        }
+
         RowLayout {
           Layout.fillWidth: true
           spacing: 8

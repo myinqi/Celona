@@ -34,7 +34,9 @@ Scope {
 
       color: "transparent"
 
-      implicitHeight: 38
+      // Keep actual bar height constant and grow the window by the edge margin so the bar shifts
+      property int baseBarHeight: 38
+      implicitHeight: baseBarHeight + (Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0)
       visible: true
       anchors {
         top: Globals.barPosition === "top"
@@ -46,7 +48,11 @@ Scope {
       Rectangle {
         id: barRect
         anchors.fill: parent
-        anchors.margins: 2
+        // Apply visual gap inside the window: extra top/bottom margin depending on bar position
+        anchors.leftMargin: 2
+        anchors.rightMargin: 2
+        anchors.topMargin: (Globals.barPosition === "top" ? ((Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + 2) : 2)
+        anchors.bottomMargin: (Globals.barPosition === "bottom" ? ((Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + 2) : 2)
         color: Globals.barBgColor
         radius: 11
         border.color: Globals.barBorderColor

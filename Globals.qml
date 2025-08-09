@@ -15,6 +15,8 @@ Singleton {
   property string barBorderColor: "#00bee7"
   // Bar position: "top" or "bottom"
   property string barPosition: "top"
+  // Distance (px) from chosen screen edge to the bar (0–10 typical)
+  property int barEdgeMargin: 0
   // Hover highlight for blocks (e.g., Time)
   property string hoverHighlightColor: "#00bee7"
 
@@ -83,6 +85,7 @@ Singleton {
     barBgColor = "#40000000"
     barBorderColor = "#00bee7"
     barPosition = "top"
+    barEdgeMargin = 0
     hoverHighlightColor = "#00bee7"
     // Modules
     moduleIconColor = "#FFFFFF"
@@ -140,6 +143,7 @@ Singleton {
     setIf("barBgColor")
     setIf("barBorderColor")
     setIf("barPosition")
+    setIf("barEdgeMargin")
     setIf("hoverHighlightColor")
     setIf("moduleIconColor")
     setIf("moduleValueColor")
@@ -184,8 +188,9 @@ Singleton {
   // Save current theme to file
   function saveTheme() {
     const obj = {
-      // Preferred top-level positioning key
+      // Preferred top-level positioning keys
       barPosition,
+      barEdgeMargin,
       // Colors
       barBgColor,
       barBorderColor,

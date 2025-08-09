@@ -1,5 +1,6 @@
 {
-  "barPosition": "top",
+  "barPosition": "bottom",
+  "barEdgeMargin": 0,
   "barBgColor": "#72000000",
   "barBorderColor": "#00bee7",
   "hoverHighlightColor": "#6c7086",
