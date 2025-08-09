@@ -50,8 +50,8 @@ BarBlock {
   PopupWindow {
     id: tipWindow
     visible: false
-    implicitWidth: 158
-    implicitHeight: 40
+    implicitWidth: tipLabel.implicitWidth + 20
+    implicitHeight: tipLabel.implicitHeight + 20
     color: "transparent"
 
     anchor {
@@ -78,11 +78,13 @@ BarBlock {
       radius: 8
 
       Text {
+        id: tipLabel
         anchors.fill: parent
         anchors.margins: 10
         text: "Bluetooth Manager"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#ffffff"
         verticalAlignment: Text.AlignVCenter
+        wrapMode: Text.NoWrap
       }
     }
   }

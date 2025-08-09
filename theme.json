@@ -42,7 +42,7 @@
   "showSystemTray": true,
   "showUpdates": true,
   "showNetwork": true,
-  "showBluetooth": false,
+  "showBluetooth": true,
   "showCPU": true,
   "showGPU": true,
   "showMemory": true,
@@ -50,7 +50,7 @@
   "showClipboard": true,
   "showNotifications": true,
   "showSound": true,
-  "showBattery": false,
+  "showBattery": true,
   "showDate": true,
   "showTime": true,
   "showPower": true

@@ -121,8 +121,8 @@ BarBlock {
   PopupWindow {
     id: tipWindow
     visible: false
-    implicitWidth: 180
-    implicitHeight: 135
+    implicitWidth: contentCol.implicitWidth + 20
+    implicitHeight: contentCol.implicitHeight + 20
     color: "transparent"
 
     anchor {
@@ -149,6 +149,7 @@ BarBlock {
       radius: 8
 
       Column {
+        id: contentCol
         anchors.fill: parent
         anchors.margins: 10
         spacing: 2

@@ -10,4 +10,3 @@ BarBlock {
     symbolText: ` ${Datetime.time}`
   }
 }
-
