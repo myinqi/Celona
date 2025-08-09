@@ -197,6 +197,7 @@ Singleton {
       popupText,
       popupBorder,
       trayIconColor,
+      windowTitleColor,
       reorderMode,
       rightModulesOrder,
       // toggles
@@ -217,8 +218,7 @@ Singleton {
       showBattery,
       showDate,
       showTime,
-      showPower,
-      windowTitleColor
+      showPower
     }
     const json = JSON.stringify(obj, null, 2)
     // Avoid complex shell escaping by writing base64 and decoding
