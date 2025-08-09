@@ -83,7 +83,7 @@ BarBlock {
     id: setupPopup
     visible: false
     implicitWidth: 565
-    implicitHeight: 840
+    implicitHeight: 880
     color: "transparent"
 
     anchor {
@@ -159,27 +159,8 @@ BarBlock {
             font.italic: true
             Layout.preferredWidth: 80 // left column width
           }
-          // Center control: Bar position (top/bottom)
+          // Center spacer
           Item { Layout.fillWidth: true }
-          RowLayout {
-            spacing: 6
-            Layout.alignment: Qt.AlignVCenter
-            Label {
-              text: "Bar position (top/bottom):"
-              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-            }
-            Switch {
-              // checked = bottom, unchecked = top
-              checked: Globals.barPosition === "bottom"
-              onToggled: {
-                Globals.barPosition = checked ? "bottom" : "top"
-                // Save immediately so theme.json reflects the new position
-                Globals.saveTheme()
-              }
-              ToolTip.visible: hovered
-              ToolTip.text: checked ? "Bottom" : "Top"
-            }
-          }
           Item { Layout.fillWidth: true }
           Label {
             text: "Modules:"
@@ -553,6 +534,31 @@ BarBlock {
                 Item { Layout.fillWidth: true; Layout.preferredWidth: 1 }
               }
             }
+          }
+        }
+
+        // Bar position control (top/bottom) — placed under colors/modules, before Reset/Close
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "Bar Position (top/bottom):"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          }
+          Item { Layout.fillWidth: true }
+          Switch {
+            id: posSwitch
+            checked: Globals.barPosition === "bottom"
+            onToggled: {
+              Globals.barPosition = checked ? "bottom" : "top"
+              Globals.saveTheme()
+            }
+            ToolTip.visible: hovered
+            ToolTip.text: checked ? "Bottom" : "Top"
+          }
+          Text {
+            text: posSwitch.checked ? "Bottom" : "Top"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
           }
         }
 
