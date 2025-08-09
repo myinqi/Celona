@@ -21,6 +21,7 @@
   "reorderMode": false,
   "rightModulesOrder": [
     "Bluetooth",
+    "Battery",
     "SystemTray",
     "Updates",
     "Network",
@@ -31,7 +32,6 @@
     "Sound",
     "Clipboard",
     "Notifications",
-    "Battery",
     "Date",
     "Time",
     "Power"
@@ -42,7 +42,7 @@
   "showSystemTray": true,
   "showUpdates": true,
   "showNetwork": true,
-  "showBluetooth": true,
+  "showBluetooth": false,
   "showCPU": true,
   "showGPU": true,
   "showMemory": true,
@@ -50,7 +50,7 @@
   "showClipboard": true,
   "showNotifications": true,
   "showSound": true,
-  "showBattery": true,
+  "showBattery": false,
   "showDate": true,
   "showTime": true,
   "showPower": true

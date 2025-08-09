@@ -171,7 +171,11 @@ BarBlock {
             Switch {
               // checked = bottom, unchecked = top
               checked: Globals.barPosition === "bottom"
-              onToggled: Globals.barPosition = checked ? "bottom" : "top"
+              onToggled: {
+                Globals.barPosition = checked ? "bottom" : "top"
+                // Save immediately so theme.json reflects the new position
+                Globals.saveTheme()
+              }
               ToolTip.visible: hovered
               ToolTip.text: checked ? "Bottom" : "Top"
             }
@@ -502,6 +506,7 @@ BarBlock {
                     if (re.test(t)) {
                       text = t
                       Globals[modelData.key] = t
+                      Globals.saveTheme()
                     } else {
                       text = String(Globals[modelData.key])
                     }
@@ -514,6 +519,7 @@ BarBlock {
                     if (re.test(t)) {
                       text = t
                       Globals[modelData.key] = t
+                      Globals.saveTheme()
                     } else {
                       text = String(Globals[modelData.key])
                     }
@@ -536,7 +542,7 @@ BarBlock {
                       const cur = editor.hexToRgba(String(Globals[modelData.key]))
                       const p = colorPicker.createObject(setupPopup, {
                         r: cur.r, g: cur.g, b: cur.b, a: cur.a,
-                        onApply: function(hex) { Globals[modelData.key] = hex }
+                        onApply: function(hex) { Globals[modelData.key] = hex; Globals.saveTheme() }
                       })
                       p.visible = true
                     }
@@ -559,10 +565,6 @@ BarBlock {
             onClicked: Globals.resetTheme()
           }
           Item { Layout.fillWidth: true }
-          Button {
-            text: "Save"
-            onClicked: Globals.saveTheme()
-          }
           Button {
             text: "Close"
             onClicked: setupPopup.visible = false
