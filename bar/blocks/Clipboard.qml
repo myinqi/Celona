@@ -29,12 +29,15 @@ BarBlock {
 
     anchor {
       window: root.QsWindow?.window
-      edges: Edges.Top
-      gravity: Edges.Bottom
+      edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+      gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
       onAnchoring: {
         const win = root.QsWindow?.window
         if (win) {
-          tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
+          const gap = 3
+          tipWindow.anchor.rect.y = (Globals.barPosition === "top")
+            ? (tipWindow.anchor.window.height + gap)
+            : (-gap)
           tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
         }
       }
@@ -67,8 +70,20 @@ BarBlock {
 
     anchor {
       window: root.QsWindow?.window
-      edges: Edges.Top
-      gravity: Edges.Bottom
+      edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+      gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
+      onAnchoring: {
+        const win = root.QsWindow?.window
+        if (win) {
+          const gap = 5
+          const y = (Globals.barPosition === "top")
+            ? (root.height + gap)
+            : (-(manageWindow.implicitHeight + gap))
+          const x = -(manageWindow.implicitWidth - root.width) / 2
+          const rect = win.contentItem.mapFromItem(root, x, y, manageWindow.implicitWidth, manageWindow.implicitHeight)
+          manageWindow.anchor.rect = rect
+        }
+      }
     }
 
     Rectangle {
@@ -280,7 +295,11 @@ BarBlock {
     onClicked: (mouse) => {
       tipWindow.visible = false
       if (!root.QsWindow?.window?.contentItem) return
-      const rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, root.height, root.width, root.height)
+      // Compute anchor rect relative to the block, opening below (top bar) or above (bottom bar)
+      const gap = 5
+      const y = (Globals.barPosition === "top") ? (root.height + gap) : (-(menuWindow.implicitHeight + gap))
+      const x = -(menuWindow.implicitWidth - root.width) / 2
+      const rect = root.QsWindow.window.contentItem.mapFromItem(root, x, y, menuWindow.implicitWidth, menuWindow.implicitHeight)
       if (mouse.button === Qt.LeftButton) {
         menuWindow.anchor.rect = rect
         menuWindow.visible = !menuWindow.visible
@@ -291,7 +310,11 @@ BarBlock {
           if (listProc.running) listProc.running = false
         }
       } else if (mouse.button === Qt.RightButton) {
-        manageWindow.anchor.rect = rect
+        // Compute rect for manageWindow with its own size
+        const my = (Globals.barPosition === "top") ? (root.height + gap) : (-(manageWindow.implicitHeight + gap))
+        const mx = -(manageWindow.implicitWidth - root.width) / 2
+        const mrect = root.QsWindow.window.contentItem.mapFromItem(root, mx, my, manageWindow.implicitWidth, manageWindow.implicitHeight)
+        manageWindow.anchor.rect = mrect
         manageWindow.visible = true
       }
     }
@@ -308,12 +331,15 @@ BarBlock {
 
     anchor {
       window: root.QsWindow?.window
-      edges: Edges.Top
-      gravity: Edges.Bottom
+      edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+      gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
       onAnchoring: {
         const win = root.QsWindow?.window
         if (win) {
-          const rect = win.contentItem.mapFromItem(root, 0, root.height, root.width, root.height)
+          const gap = 5
+          const y = (Globals.barPosition === "top") ? (root.height + gap) : (-(menuWindow.implicitHeight + gap))
+          const x = -(menuWindow.implicitWidth - root.width) / 2
+          const rect = win.contentItem.mapFromItem(root, x, y, menuWindow.implicitWidth, menuWindow.implicitHeight)
           menuWindow.anchor.rect = rect
         }
       }

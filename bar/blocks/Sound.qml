@@ -56,12 +56,15 @@ BarBlock {
 
         anchor {
             window: root.QsWindow?.window
-            edges: Edges.Top
-            gravity: Edges.Bottom
+            edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+            gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
             onAnchoring: {
                 const win = root.QsWindow?.window
                 if (win) {
-                    tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
+                    const gap = 3
+                    tipWindow.anchor.rect.y = (Globals.barPosition === "top")
+                      ? (tipWindow.anchor.window.height + gap)
+                      : (-gap)
                     tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
                 }
             }
@@ -101,14 +104,18 @@ BarBlock {
         anchor {
             // Align and behave like Tooltip: pop downward from the bar block
             window: root.QsWindow?.window
-            edges: Edges.Top
-            gravity: Edges.Bottom
+            edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+            gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
             onAnchoring: {
                 const win = root.QsWindow?.window;
                 if (win) {
-                    // Anchor to the area directly below this bar block
-                    const rect = win.contentItem.mapFromItem(root, 0, root.height, root.width, root.height);
-                    menuWindow.anchor.rect = rect;
+                    const gap = 5
+                    // Anchor rectangle relative to the bar block area
+                    const y = (Globals.barPosition === "top")
+                      ? (root.height + gap)
+                      : (-(menuWindow.implicitHeight + gap))
+                    const rect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+                    menuWindow.anchor.rect = rect
                 }
             }
         }
@@ -225,7 +232,11 @@ BarBlock {
 
     function toggleMenu() {
         if (root.QsWindow?.window?.contentItem) {
-            menuWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, -menuWindow.height - 5, root.width, root.height)
+            const gap = 5
+            const y = (Globals.barPosition === "top")
+              ? (root.height + gap)
+              : (-(menuWindow.implicitHeight + gap))
+            menuWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, y, root.width, root.height)
             menuWindow.visible = !menuWindow.visible
         }
     }

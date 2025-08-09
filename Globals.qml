@@ -13,6 +13,8 @@ Singleton {
   // Bar
   property string barBgColor: "#40000000"
   property string barBorderColor: "#00bee7"
+  // Bar position: "top" or "bottom"
+  property string barPosition: "top"
   // Hover highlight for blocks (e.g., Time)
   property string hoverHighlightColor: "#00bee7"
 
@@ -80,6 +82,7 @@ Singleton {
     // Bar
     barBgColor = "#40000000"
     barBorderColor = "#00bee7"
+    barPosition = "top"
     hoverHighlightColor = "#00bee7"
     // Modules
     moduleIconColor = "#FFFFFF"
@@ -136,6 +139,7 @@ Singleton {
     function setIf(k) { if (obj[k] !== undefined) Globals[k] = obj[k] }
     setIf("barBgColor")
     setIf("barBorderColor")
+    setIf("barPosition")
     setIf("hoverHighlightColor")
     setIf("moduleIconColor")
     setIf("moduleValueColor")
@@ -180,6 +184,9 @@ Singleton {
   // Save current theme to file
   function saveTheme() {
     const obj = {
+      // Preferred top-level positioning key
+      barPosition,
+      // Colors
       barBgColor,
       barBorderColor,
       hoverHighlightColor,
@@ -198,9 +205,10 @@ Singleton {
       popupBorder,
       trayIconColor,
       windowTitleColor,
+      // Layout & behavior
       reorderMode,
       rightModulesOrder,
-      // toggles
+      // Module toggles
       showWelcome,
       showWindowTitle,
       showWorkspaces,

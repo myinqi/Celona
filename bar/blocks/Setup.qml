@@ -45,12 +45,15 @@ BarBlock {
 
     anchor {
       window: root.QsWindow?.window
-      edges: Edges.Top
-      gravity: Edges.Bottom
+      edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+      gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
       onAnchoring: {
         const win = root.QsWindow?.window
         if (win) {
-          tipWindow.anchor.rect.y = win.height + 3
+          const gap = 3
+          tipWindow.anchor.rect.y = (Globals.barPosition === "top")
+            ? (tipWindow.anchor.window.height + gap)
+            : (-gap)
           tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
         }
       }
@@ -78,19 +81,49 @@ BarBlock {
     id: setupPopup
     visible: false
     implicitWidth: 565
-    implicitHeight: 830
+    implicitHeight: 840
     color: "transparent"
 
     anchor {
       window: root.QsWindow?.window
-      edges: Edges.Top
-      gravity: Edges.Bottom
+      edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+      gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
       onAnchoring: {
         const win = root.QsWindow?.window
         if (win) {
-          setupPopup.anchor.rect.y = win.height + 6
-          setupPopup.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x - setupPopup.implicitWidth / 2
+          const gap = 6
+          const y = (Globals.barPosition === "top")
+            ? (root.height + gap)
+            : (-(setupPopup.implicitHeight + gap))
+          const x = -(setupPopup.implicitWidth - root.width) / 2
+          const rect = win.contentItem.mapFromItem(root, x, y, setupPopup.implicitWidth, setupPopup.implicitHeight)
+          setupPopup.anchor.rect = rect
         }
+      }
+    }
+
+    // Re-anchor after showing and when size or barPosition changes
+    function reanchor() {
+      const win = root.QsWindow?.window
+      if (!win) return
+      const gap = 6
+      const y = (Globals.barPosition === "top")
+        ? (root.height + gap)
+        : (-(setupPopup.implicitHeight + gap))
+      const x = -(setupPopup.implicitWidth - root.width) / 2
+      const rect = win.contentItem.mapFromItem(root, x, y, setupPopup.implicitWidth, setupPopup.implicitHeight)
+      setupPopup.anchor.rect = rect
+    }
+
+    onVisibleChanged: if (visible) Qt.callLater(reanchor)
+    onImplicitHeightChanged: if (visible) reanchor()
+    onImplicitWidthChanged: if (visible) reanchor()
+    Connections {
+      target: Globals
+      function onBarPositionChanged() {
+        // If user flips bar position while popup is open, close it to prevent it from being pushed under the bar
+        if (setupPopup.visible) setupPopup.visible = false
+        if (tipWindow.visible) tipWindow.visible = false
       }
     }
 
@@ -113,7 +146,7 @@ BarBlock {
           Layout.fillWidth: true
         }
 
-        // Headings row: Colors (left) and Modules (right) aligned on same baseline
+        // Headings row: Colors (left) — Bar position (center) — Modules (right)
         RowLayout {
           Layout.fillWidth: true
           spacing: 4
@@ -122,9 +155,26 @@ BarBlock {
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
             font.bold: true
             font.italic: true
-            Layout.preferredWidth: 340 // left column width
+            Layout.preferredWidth: 80 // left column width
           }
-          Item { Layout.preferredWidth: 20 } // gap so right header starts at ~420px
+          // Center control: Bar position (top/bottom)
+          Item { Layout.fillWidth: true }
+          RowLayout {
+            spacing: 6
+            Layout.alignment: Qt.AlignVCenter
+            Label {
+              text: "Bar position (top/bottom):"
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            }
+            Switch {
+              // checked = bottom, unchecked = top
+              checked: Globals.barPosition === "bottom"
+              onToggled: Globals.barPosition = checked ? "bottom" : "top"
+              ToolTip.visible: hovered
+              ToolTip.text: checked ? "Bottom" : "Top"
+            }
+          }
+          Item { Layout.fillWidth: true }
           Label {
             text: "Modules:"
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"

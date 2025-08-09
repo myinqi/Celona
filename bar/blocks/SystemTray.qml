@@ -87,6 +87,9 @@ RowLayout {
       acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
       hoverEnabled: true
 
+      onEntered: tipWindow.visible = true
+      onExited: tipWindow.visible = false
+
       onClicked: event => {
         if (event.button == Qt.LeftButton) {
           item.activate();
@@ -137,21 +140,56 @@ RowLayout {
         menu: item.menu
 
         anchor.window: delegate.QsWindow.window
+        anchor.edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+        anchor.gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
         anchor.adjustment: PopupAdjustment.Flip
 
         anchor.onAnchoring: {
           const window = delegate.QsWindow.window;
-          const widgetRect = window.contentItem.mapFromItem(delegate, 0, delegate.height, delegate.width, delegate.height);
-
+          const gap = 5;
+          const y = (Globals.barPosition === "top") ? (delegate.height + gap) : (-gap);
+          const widgetRect = window.contentItem.mapFromItem(delegate, 0, y, delegate.width, delegate.height);
           menuAnchor.anchor.rect = widgetRect;
         }
       }
 
-      Tooltip {
-        relativeItem: delegate.containsMouse ? delegate : null
+      PopupWindow {
+        id: tipWindow
+        visible: false
+        implicitWidth: 200
+        implicitHeight: 40
+        color: "transparent"
 
-        Label {
-          text: delegate.item.tooltipTitle || delegate.item.id
+        anchor {
+          window: delegate.QsWindow?.window
+          edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+          gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
+          onAnchoring: {
+            const win = delegate.QsWindow?.window
+            if (win) {
+              const gap = 3
+              tipWindow.anchor.rect.y = (Globals.barPosition === "top")
+                ? (tipWindow.anchor.window.height + gap)
+                : (-gap)
+              tipWindow.anchor.rect.x = win.contentItem.mapFromItem(delegate, delegate.width / 2, 0).x
+            }
+          }
+        }
+
+        Rectangle {
+          anchors.fill: parent
+          color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+          border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+          border.width: 1
+          radius: 8
+
+          Text {
+            anchors.fill: parent
+            anchors.margins: 10
+            text: delegate.item.tooltipTitle || delegate.item.id
+            color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+            verticalAlignment: Text.AlignVCenter
+          }
         }
       }
     }

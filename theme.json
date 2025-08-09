@@ -1,4 +1,5 @@
 {
+  "barPosition": "top",
   "barBgColor": "#72000000",
   "barBorderColor": "#00bee7",
   "hoverHighlightColor": "#6c7086",
@@ -19,8 +20,8 @@
   "windowTitleColor": "#cdd6f4",
   "reorderMode": false,
   "rightModulesOrder": [
-    "SystemTray",
     "Bluetooth",
+    "SystemTray",
     "Updates",
     "Network",
     "CPU",

@@ -69,12 +69,15 @@ BarBlock {
 
     anchor {
       window: root.QsWindow?.window
-      edges: Edges.Top
-      gravity: Edges.Bottom
+      edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+      gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
       onAnchoring: {
         const win = root.QsWindow?.window
         if (win) {
-          tipWindow.anchor.rect.y = tipWindow.anchor.window.height + 3
+          const gap = 3
+          tipWindow.anchor.rect.y = (Globals.barPosition === "top")
+            ? (tipWindow.anchor.window.height + gap)
+            : (-gap)
           tipWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
         }
       }

@@ -37,7 +37,8 @@ Scope {
       implicitHeight: 38
       visible: true
       anchors {
-        top: true
+        top: Globals.barPosition === "top"
+        bottom: Globals.barPosition === "bottom"
         left: true
         right: true
       }
