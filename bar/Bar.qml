@@ -35,8 +35,8 @@ Scope {
       color: "transparent"
 
       // Keep actual bar height constant and grow the window by the edge margin so the bar shifts
-      property int baseBarHeight: 38
-      implicitHeight: baseBarHeight + (Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0)
+      implicitHeight: (Globals.baseBarHeight !== undefined ? Globals.baseBarHeight : 38)
+                      + (Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0)
       visible: true
       anchors {
         top: Globals.barPosition === "top"

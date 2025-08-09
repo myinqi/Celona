@@ -1,5 +1,6 @@
 {
   "barPosition": "top",
+  "baseBarHeight": 38,
   "barEdgeMargin": 6,
   "barSideMargin": 12,
   "barBgColor": "#72000000",

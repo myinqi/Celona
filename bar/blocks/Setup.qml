@@ -83,7 +83,7 @@ BarBlock {
     id: setupPopup
     visible: false
     implicitWidth: 565
-    implicitHeight: 880
+    implicitHeight: 890
     color: "transparent"
 
     anchor {
@@ -548,6 +548,43 @@ BarBlock {
           Text {
             text: posSwitch.checked ? "Bottom" : "Top"
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          }
+        }
+
+        // Bar base height (visual bar height)
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "Bar Height:"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          }
+          Item { Layout.fillWidth: true }
+          Text {
+            id: barHeightValue
+            text: String(Globals.baseBarHeight !== undefined ? Globals.baseBarHeight : 38) + " px"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            Layout.preferredWidth: 60
+            horizontalAlignment: Text.AlignRight
+          }
+          Slider {
+            id: barHeightSlider
+            from: 30
+            to: 40
+            stepSize: 1
+            wheelEnabled: true
+            Layout.preferredWidth: 180
+            value: Globals.baseBarHeight !== undefined ? Globals.baseBarHeight : 38
+            onMoved: {
+              const v = Math.round(value)
+              if (Globals.baseBarHeight !== v) {
+                Globals.baseBarHeight = v
+                Globals.saveTheme()
+              }
+            }
+            onValueChanged: barHeightValue.text = String(Math.round(value)) + " px"
+            ToolTip.visible: hovered
+            ToolTip.text: "Visual bar height"
           }
         }
 

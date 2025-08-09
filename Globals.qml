@@ -15,6 +15,8 @@ Singleton {
   property string barBorderColor: "#00bee7"
   // Bar position: "top" or "bottom"
   property string barPosition: "top"
+  // Visual bar height in pixels
+  property int baseBarHeight: 38
   // Distance (px) from chosen screen edge to the bar (0–10 typical)
   property int barEdgeMargin: 0
   // Horizontal side margins (px) to shorten the bar from left and right equally (0–10 typical)
@@ -87,6 +89,7 @@ Singleton {
     barBgColor = "#40000000"
     barBorderColor = "#00bee7"
     barPosition = "top"
+    baseBarHeight = 38
     barEdgeMargin = 0
     barSideMargin = 0
     hoverHighlightColor = "#00bee7"
@@ -146,6 +149,7 @@ Singleton {
     setIf("barBgColor")
     setIf("barBorderColor")
     setIf("barPosition")
+    setIf("baseBarHeight")
     setIf("barEdgeMargin")
     setIf("barSideMargin")
     setIf("hoverHighlightColor")
@@ -194,6 +198,7 @@ Singleton {
     const obj = {
       // Preferred top-level positioning keys
       barPosition,
+      baseBarHeight,
       barEdgeMargin,
       // Secondary positioning
       barSideMargin,
