@@ -83,7 +83,7 @@ BarBlock {
     id: setupPopup
     visible: false
     implicitWidth: 565
-    implicitHeight: 890
+    implicitHeight: 850
     color: "transparent"
 
     anchor {
@@ -141,12 +141,12 @@ BarBlock {
         anchors.margins: 12
         spacing: 10
 
-        Text {
-          text: "Bar Settings"
-          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-          font.bold: true
-          Layout.fillWidth: true
-        }
+//        Text {
+//          text: "Bar Settings"
+//          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+//          font.bold: true
+//          Layout.fillWidth: true
+//        }
 
         // Headings row: Colors (left) — Bar position (center) — Modules (right)
         RowLayout {
@@ -211,13 +211,13 @@ BarBlock {
             anchors.margins: 0
             ColumnLayout {
               anchors.fill: parent
-              anchors.margins: 10
-              spacing: 8
+              anchors.margins: 4
+              spacing: 2
               // heading moved to the shared header row above
               GridLayout {
                 Layout.fillWidth: true
                 columns: 1
-                rowSpacing: 6
+                rowSpacing: 0
                 columnSpacing: 10
 
                 // Left column
