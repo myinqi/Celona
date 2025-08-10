@@ -83,7 +83,7 @@ BarBlock {
     id: setupPopup
     visible: false
     implicitWidth: 565
-    implicitHeight: 850
+    implicitHeight: 855
     color: "transparent"
 
     anchor {
@@ -170,10 +170,32 @@ BarBlock {
           }
           Item { width: 20 }
           Button {
+            id: reorderBtn
             text: Globals.reorderMode ? "Finish" : "Reorder"
             onClicked: Globals.reorderMode = !Globals.reorderMode
-            ToolTip.visible: hovered
-            ToolTip.text: Globals.reorderMode ? "Finish: order will be saved" : "Enable: reorder modules directly in the bar"
+            // enforce white label color for this button
+            contentItem: Label {
+              text: parent.text
+              color: "#FFFFFF"
+              horizontalAlignment: Text.AlignHCenter
+              verticalAlignment: Text.AlignVCenter
+            }
+            // Themed tooltip
+            ToolTip {
+              id: reorderTip
+              visible: reorderBtn.hovered
+              text: Globals.reorderMode ? "Finish: order will be saved" : "Enable: reorder modules directly in the bar"
+              contentItem: Text {
+                text: reorderTip.text
+                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+              }
+              background: Rectangle {
+                color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                border.width: 1
+                radius: 6
+              }
+            }
           }
         }
 
@@ -229,31 +251,31 @@ BarBlock {
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Window Title"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Window Title"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showWindowTitle; onToggled: Globals.showWindowTitle = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Workspaces"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Workspaces"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showWorkspaces; onToggled: Globals.showWorkspaces = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "System Tray"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "System Tray"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showSystemTray; onToggled: Globals.showSystemTray = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Updates"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Updates"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showUpdates; onToggled: Globals.showUpdates = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Network"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Network"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showNetwork; onToggled: Globals.showNetwork = checked }
                 }
@@ -261,37 +283,37 @@ BarBlock {
                 // Right column
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Bluetooth"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Bluetooth"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showBluetooth; onToggled: Globals.showBluetooth = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "CPU"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "CPU"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showCPU; onToggled: Globals.showCPU = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "GPU"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "GPU"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showGPU; onToggled: Globals.showGPU = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Memory"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Memory"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showMemory; onToggled: Globals.showMemory = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Power Profiles"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Power Profiles"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showPowerProfiles; onToggled: Globals.showPowerProfiles = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Clipboard"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Clipboard"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showClipboard; onToggled: Globals.showClipboard = checked }
                 }
@@ -321,13 +343,13 @@ BarBlock {
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Time"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Time"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showTime; onToggled: Globals.showTime = checked }
                 }
                 RowLayout {
                   Layout.fillWidth: true
-                  Label { text: "Power"; Layout.preferredWidth: 110; color: Globals.popupText }
+                  Label { text: "Power"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showPower; onToggled: Globals.showPower = checked }
                 }
@@ -542,8 +564,22 @@ BarBlock {
               Globals.barPosition = checked ? "bottom" : "top"
               Globals.saveTheme()
             }
-            ToolTip.visible: hovered
-            ToolTip.text: checked ? "Bottom" : "Top"
+            // Themed tooltip
+            ToolTip {
+              id: posTip
+              visible: posSwitch.hovered
+              text: posSwitch.checked ? "Bottom" : "Top"
+              contentItem: Text {
+                text: posTip.text
+                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+              }
+              background: Rectangle {
+                color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                border.width: 1
+                radius: 6
+              }
+            }
           }
           Text {
             text: posSwitch.checked ? "Bottom" : "Top"
@@ -583,8 +619,21 @@ BarBlock {
               }
             }
             onValueChanged: barHeightValue.text = String(Math.round(value)) + " px"
-            ToolTip.visible: hovered
-            ToolTip.text: "Visual bar height"
+            ToolTip {
+              id: heightTip
+              visible: parent.hovered
+              text: "Visual bar height"
+              contentItem: Text {
+                text: heightTip.text
+                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+              }
+              background: Rectangle {
+                color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                border.width: 1
+                radius: 6
+              }
+            }
           }
         }
 
@@ -620,8 +669,21 @@ BarBlock {
               }
             }
             onValueChanged: marginValue.text = String(Math.round(value)) + " px"
-            ToolTip.visible: hovered
-            ToolTip.text: (Globals.barPosition === "top" ? "Margin from top" : "Margin from bottom")
+            ToolTip {
+              id: edgeTip
+              visible: parent.hovered
+              text: (Globals.barPosition === "top" ? "Margin from top" : "Margin from bottom")
+              contentItem: Text {
+                text: edgeTip.text
+                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+              }
+              background: Rectangle {
+                color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                border.width: 1
+                radius: 6
+              }
+            }
           }
         }
 
@@ -657,23 +719,86 @@ BarBlock {
               }
             }
             onValueChanged: sideMarginValue.text = String(Math.round(value)) + " px"
-            ToolTip.visible: hovered
-            ToolTip.text: "Margin from left/right"
+            ToolTip {
+              id: sideTip
+              visible: parent.hovered
+              text: "Margin from left/right"
+              contentItem: Text {
+                text: sideTip.text
+                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+              }
+              background: Rectangle {
+                color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                border.width: 1
+                radius: 6
+              }
+            }
           }
         }
 
         RowLayout {
           Layout.fillWidth: true
           spacing: 8
-          // Reset links, Save/Close rechts
+          // Reset links, Hide Bar (Game mode) Mitte, Close rechts
           Button {
             text: "Reset"
             onClicked: Globals.resetTheme()
+            // enforce white label color for this button
+            contentItem: Label {
+              text: parent.text
+              color: "#FFFFFF"
+              horizontalAlignment: Text.AlignHCenter
+              verticalAlignment: Text.AlignVCenter
+            }
+          }
+          Item { Layout.fillWidth: true }
+          CheckBox {
+            id: hideBarChk
+            text: "Hide Bar (Game mode)"
+            checked: Globals.barHidden
+            onToggled: { Globals.barHidden = checked; Globals.saveTheme() }
+            spacing: 6
+            // Colorize internal label while preserving default layout
+            Component.onCompleted: {
+              const c = (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
+              if (hideBarChk.contentItem && hideBarChk.contentItem.color !== undefined) hideBarChk.contentItem.color = c
+            }
+            Connections {
+              target: Globals
+              function onPopupTextChanged() {
+                const c = (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
+                if (hideBarChk.contentItem && hideBarChk.contentItem.color !== undefined) hideBarChk.contentItem.color = c
+              }
+            }
+            // Themed tooltip
+            ToolTip {
+              id: hideTip
+              visible: hideBarChk.hovered
+              text: hideBarChk.checked ? "Bar hidden, only gear icon" : "Bar visible"
+              contentItem: Text {
+                text: hideTip.text
+                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+              }
+              background: Rectangle {
+                color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                border.width: 1
+                radius: 6
+              }
+            }
           }
           Item { Layout.fillWidth: true }
           Button {
             text: "Close"
             onClicked: setupPopup.visible = false
+            // enforce white label color for this button
+            contentItem: Label {
+              text: parent.text
+              color: "#FFFFFF"
+              horizontalAlignment: Text.AlignHCenter
+              verticalAlignment: Text.AlignVCenter
+            }
           }
         }
       }

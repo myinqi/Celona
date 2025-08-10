@@ -3,6 +3,7 @@
   "baseBarHeight": 38,
   "barEdgeMargin": 6,
   "barSideMargin": 12,
+  "barHidden": false,
   "barBgColor": "#72000000",
   "barBorderColor": "#00bee7",
   "hoverHighlightColor": "#6c7086",

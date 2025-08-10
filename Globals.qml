@@ -21,6 +21,8 @@ Singleton {
   property int barEdgeMargin: 0
   // Horizontal side margins (px) to shorten the bar from left and right equally (0–10 typical)
   property int barSideMargin: 0
+  // When true, hide the full bar and only show the Setup gear window
+  property bool barHidden: false
   // Hover highlight for blocks (e.g., Time)
   property string hoverHighlightColor: "#00bee7"
 
@@ -92,6 +94,7 @@ Singleton {
     baseBarHeight = 38
     barEdgeMargin = 0
     barSideMargin = 0
+    barHidden = false
     hoverHighlightColor = "#00bee7"
     // Modules
     moduleIconColor = "#FFFFFF"
@@ -152,6 +155,7 @@ Singleton {
     setIf("baseBarHeight")
     setIf("barEdgeMargin")
     setIf("barSideMargin")
+    setIf("barHidden")
     setIf("hoverHighlightColor")
     setIf("moduleIconColor")
     setIf("moduleValueColor")
@@ -202,6 +206,7 @@ Singleton {
       barEdgeMargin,
       // Secondary positioning
       barSideMargin,
+      barHidden,
       // Colors
       barBgColor,
       barBorderColor,

@@ -37,7 +37,7 @@ Scope {
       // Keep actual bar height constant and grow the window by the edge margin so the bar shifts
       implicitHeight: (Globals.baseBarHeight !== undefined ? Globals.baseBarHeight : 38)
                       + (Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0)
-      visible: true
+      visible: !Globals.barHidden
       anchors {
         top: Globals.barPosition === "top"
         bottom: Globals.barPosition === "bottom"
@@ -487,8 +487,39 @@ Scope {
         }
       }
     }
-  }
+    // Mini gear-only window when bar is hidden (game mode)
+    PanelWindow {
+      id: miniGear
+      screen: bar.screen
+      visible: Globals.barHidden
+      color: "transparent"
+      implicitHeight: (Globals.baseBarHeight !== undefined ? Globals.baseBarHeight : 38)
+                      + (Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0)
+      implicitWidth: 44
+      anchors {
+        top: Globals.barPosition === "top"
+        bottom: Globals.barPosition === "bottom"
+        left: true
+        right: false
+      }
 
+      Item {
+        id: miniRect
+        anchors.fill: parent
+        anchors.leftMargin: (Globals.barSideMargin !== undefined ? Globals.barSideMargin : 0) + 2
+        anchors.rightMargin: 2
+        anchors.topMargin: (Globals.barPosition === "top" ? ((Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + 2) : 2)
+        anchors.bottomMargin: (Globals.barPosition === "bottom" ? ((Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + 2) : 2)
+
+        RowLayout {
+          anchors.fill: parent
+          anchors.margins: 0
+          spacing: 0
+          Blocks.Setup { id: miniSetup; Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter }
+        }
+      }
+    }
+  }
   // (removed) Custom toast overlay; using swaync for notifications now
 }
 
