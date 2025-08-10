@@ -448,7 +448,7 @@ BarBlock {
   // Close any open popups when bar position flips (top <-> bottom)
   Connections {
     target: Globals
-    onBarPositionChanged: {
+    function onBarPositionChanged() {
       if (menuWindow && menuWindow.visible) menuWindow.visible = false
       if (manageWindow && manageWindow.visible) manageWindow.visible = false
       if (tipWindow && tipWindow.visible) tipWindow.visible = false

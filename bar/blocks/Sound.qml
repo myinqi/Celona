@@ -39,9 +39,18 @@ BarBlock {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         onEntered: tipWindow.visible = true
         onExited: tipWindow.visible = false
-        onClicked: { tipWindow.visible = false; toggleMenu() }
+        onClicked: (mouse) => {
+            tipWindow.visible = false
+            if (mouse.button === Qt.LeftButton) {
+                toggleMenu()
+            } else if (mouse.button === Qt.RightButton) {
+                // Toggle embedded visualizer popup
+                toggleVisualizer()
+            }
+        }
         onWheel: function(event) {
             if (sink?.audio) {
                 sink.audio.volume = Math.max(0, Math.min(1, sink.audio.volume + (event.angleDelta.y / 120) * 0.05))
@@ -84,8 +93,8 @@ BarBlock {
                 id: tipLabel
                 anchors.fill: parent
                 anchors.margins: 10
-                text: "Volume controls"
-                color: "#ffffff"
+                text: "Left: Volume menu\nRight: Visualizer"
+                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.NoWrap
             }
@@ -96,6 +105,130 @@ BarBlock {
         id: pavucontrol
         command: ["pavucontrol"]
         running: false
+    }
+
+    // Embedded visualizer popup (cava -> ASCII -> bars)
+    PopupWindow {
+        id: vizWindow
+        visible: false
+        implicitWidth: 500
+        implicitHeight: 200
+        color: "transparent"
+
+        property int bars: 48
+        property var values: new Array(bars).fill(0)
+        property bool cavaAvailable: true
+        property string errorText: ""
+
+        anchor {
+            window: root.QsWindow?.window
+            edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+            gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
+            onAnchoring: {
+                const win = root.QsWindow?.window
+                if (win) {
+                    const gap = 5
+                    const y = (Globals.barPosition === "top")
+                      ? (root.height + gap)
+                      : (-(root.height + gap))
+                    vizWindow.anchor.rect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+                }
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+            border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+            border.width: 1
+            radius: 8
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 8
+
+                Text {
+                    text: "Cava Audio Visualizer"
+                    color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                    font.pixelSize: 12
+                }
+
+                Rectangle {
+                    id: graph
+                    width: parent.width
+                    height: parent.height - 28
+                    color: "transparent"
+
+                    // Missing cava message
+                    Text {
+                        anchors.centerIn: parent
+                        visible: !vizWindow.cavaAvailable || vizWindow.errorText !== ""
+                        text: vizWindow.errorText !== "" ? vizWindow.errorText : "please install cava pkg"
+                        color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                        font.pixelSize: 12
+                    }
+
+                    Row {
+                        id: barsRow
+                        anchors.fill: parent
+                        spacing: 2
+                        visible: vizWindow.cavaAvailable && vizWindow.errorText === ""
+                        Repeater {
+                            model: vizWindow.values.length
+                            Rectangle {
+                                width: (barsRow.width - (barsRow.spacing * (vizWindow.values.length - 1))) / vizWindow.values.length
+                                height: Math.max(2, (vizWindow.values[index] / 100) * barsRow.height)
+                                anchors.bottom: parent.bottom
+                                radius: 2
+                                color: Globals.visualizerBarColor !== "" ? Globals.visualizerBarColor : "#00bee7"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Start/stop cava when popup toggles
+        onVisibleChanged: {
+            if (visible) {
+                vizWindow.errorText = ""
+                vizWindow.cavaAvailable = true
+                vizWindow.values = new Array(vizWindow.bars).fill(0)
+                vizProc.running = true
+            } else {
+                vizProc.running = false
+            }
+        }
+
+        Process {
+            id: vizProc
+            running: false
+            command: ["sh", "-c",
+                `if command -v cava >/dev/null 2>&1; then \
+                   printf '[general]\\nframerate=60\\nbars=${vizWindow.bars}\\nsleep_timer=3\\n[output]\\nchannels=mono\\nmethod=raw\\nraw_target=/dev/stdout\\ndata_format=ascii\\nascii_max_range=100' | cava -p /dev/stdin; \
+                 else \
+                   echo '__CAVA_MISSING__'; \
+                 fi`
+            ]
+            stdout: SplitParser {
+                onRead: data => {
+                    const line = String(data).trim()
+                    if (!line) return
+                    if (line.indexOf("__CAVA_MISSING__") !== -1) {
+                        vizWindow.cavaAvailable = false
+                        vizWindow.errorText = "cava ist nicht installiert"
+                        vizProc.running = false
+                        return
+                    }
+                    const parts = line.split(";")
+                    if (parts.length > 0) {
+                        vizWindow.values = parts.map(v => Math.max(0, Math.min(100, parseInt(v, 10) || 0)))
+                    }
+                }
+            }
+            stderr: SplitParser { onRead: data => console.log(`[Sound] viz stderr: ${String(data)}`) }
+        }
     }
 
     PopupWindow {
@@ -242,7 +375,20 @@ BarBlock {
               ? (root.height + gap)
               : (-(root.height + gap))
             menuWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+            if (vizWindow.visible) vizWindow.visible = false
             menuWindow.visible = !menuWindow.visible
+        }
+    }
+
+    function toggleVisualizer() {
+        if (root.QsWindow?.window?.contentItem) {
+            const gap = 5
+            const y = (Globals.barPosition === "top")
+              ? (root.height + gap)
+              : (-(root.height + gap))
+            vizWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+            if (menuWindow.visible) menuWindow.visible = false
+            vizWindow.visible = !vizWindow.visible
         }
     }
 
@@ -252,6 +398,7 @@ BarBlock {
         function onBarPositionChanged() {
             if (menuWindow.visible) menuWindow.visible = false
             if (tipWindow.visible) tipWindow.visible = false
+            if (vizWindow.visible) vizWindow.visible = false
         }
     }
 }

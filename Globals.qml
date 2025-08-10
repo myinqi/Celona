@@ -84,6 +84,8 @@ Singleton {
 
   // Window title
   property string windowTitleColor: "#00bee7"
+  // Visualizer bars color
+  property string visualizerBarColor: "#00bee7"
 
   // Reset all theme colors to their built-in defaults
   function resetTheme() {
@@ -142,6 +144,8 @@ Singleton {
     ]
     // Window title
     windowTitleColor = "#00bee7"
+    // Visualizer bars
+    visualizerBarColor = "#00bee7"
   }
 
   // Apply keys from a loaded theme object safely
@@ -193,6 +197,7 @@ Singleton {
     setIf("showTime")
     setIf("showPower")
     setIf("windowTitleColor")
+    setIf("visualizerBarColor")
   }
 
   // Load theme from file on startup handled by loadThemeProc.running
@@ -226,6 +231,7 @@ Singleton {
       popupBorder,
       trayIconColor,
       windowTitleColor,
+      visualizerBarColor,
       // Layout & behavior
       reorderMode,
       rightModulesOrder,

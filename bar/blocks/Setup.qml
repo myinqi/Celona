@@ -83,7 +83,7 @@ BarBlock {
     id: setupPopup
     visible: false
     implicitWidth: 565
-    implicitHeight: 855
+    implicitHeight: 890
     color: "transparent"
 
     anchor {
@@ -220,6 +220,14 @@ BarBlock {
               const b = parseInt(h.slice(4,6), 16)
               const a = h.length >= 8 ? parseInt(h.slice(6,8), 16) : 255
               return { r, g, b, a }
+            }
+
+            // Helper: fallback color per key
+            function getColor(key) {
+              const v = Globals[key]
+              if (v !== undefined && v !== "") return String(v)
+              if (key === "visualizerBarColor") return "#00bee7"
+              return "#FFFFFF"
             }
 
           // --- Module Toggles ---
@@ -473,7 +481,8 @@ BarBlock {
                 { label: "Popup Text", key: "popupText" },
                 { label: "Popup Border", key: "popupBorder" },
                 { label: "Tray Icon", key: "trayIconColor" },
-                { label: "Window Title", key: "windowTitleColor" }
+                { label: "Window Title", key: "windowTitleColor" },
+                { label: "Visualizer Bars", key: "visualizerBarColor" }
               ]
               delegate: RowLayout {
                 Layout.fillWidth: true
@@ -507,7 +516,7 @@ BarBlock {
                   Label {
                     anchors.fill: parent
                     anchors.margins: 2
-                    text: String(Globals[modelData.key])
+                    text: editor.getColor(modelData.key)
                     color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
@@ -522,7 +531,7 @@ BarBlock {
                 Rectangle {
                   width: 30; height: 22
                   radius: 4
-                  color: Globals[modelData.key]
+                  color: editor.getColor(modelData.key)
                   border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
                   Layout.alignment: Qt.AlignVCenter
                   Layout.preferredWidth: 30
@@ -531,7 +540,7 @@ BarBlock {
                   MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                      const cur = editor.hexToRgba(String(Globals[modelData.key]))
+                      const cur = editor.hexToRgba(editor.getColor(modelData.key))
                       const p = colorPicker.createObject(setupPopup, {
                         r: cur.r, g: cur.g, b: cur.b, a: cur.a,
                         onApply: function(hex) { Globals[modelData.key] = hex; Globals.saveTheme() }
