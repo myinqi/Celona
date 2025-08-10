@@ -14,7 +14,9 @@ BarBlock {
     symbolFont: "Symbols Nerd Font Mono"
     // GPU-Icon (Nerd Font). Bei fehlender Glyph zeigt die Schriftart ein Ersatzsymbol.
     // Icon kann bei Bedarf vom Nutzer überschrieben werden.
-    symbolText: root.iconGlyph + " " + (isNaN(gpuPercent) ? "-" : Math.floor(gpuPercent)) + "%"
+    // Fixed-width percent (0-100) to prevent layout shifts
+    property string percent3: isNaN(gpuPercent) ? "  -" : String(Math.floor(gpuPercent)).padStart(3, " ")
+    symbolText: root.iconGlyph + " " + percent3 + "%"
   }
 
   // Data

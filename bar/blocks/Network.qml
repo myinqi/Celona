@@ -35,7 +35,7 @@ BarBlock {
 
   // Computed label text
   property string displayText: (
-    connType === "wifi" ? (wifiBarsGlyph + " " + (signal >= 0 ? signal + "%" : "-")) :
+    connType === "wifi" ? (wifiBarsGlyph + " " + (signal >= 0 ? (String(signal).padStart(3, " ") + "%") : "-")) :
     connType === "ethernet" ? ethernetGlyph : offlineGlyph
   )
 

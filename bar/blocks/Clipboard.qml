@@ -16,7 +16,9 @@ BarBlock {
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
     // Show icon and the current number of history entries
-    symbolText: `${root.iconGlyph} ${root.entryCount}`
+    // Fixed-width numeric area (0–999): pad to 3 chars to prevent layout shifts
+    property string count3: String(root.entryCount).padStart(3, " ")
+    symbolText: `${root.iconGlyph} ${count3}`
   }
 
   // Hover tooltip under the bar

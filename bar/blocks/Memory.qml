@@ -11,7 +11,9 @@ BarBlock {
     // Symbol für Arbeitsspeicher aus Symbols Nerd Font (nf-mdi-memory: )
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
-    symbolText: " " + Math.floor(percentUsed) + "%"
+    // Fixed-width percent (0-100) to prevent layout shifts: pad to 3 chars
+    property string percent3: String(Math.floor(percentUsed)).padStart(3, " ")
+    symbolText: " " + percent3 + "%"
   }
 
   // Show used memory percent based on MemTotal and MemAvailable

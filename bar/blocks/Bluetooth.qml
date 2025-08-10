@@ -29,8 +29,10 @@ BarBlock {
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
     // Bluetooth icon (Material Design Nerd Font) — more reliable in Symbols NF
-    // Compose icon + space + status in symbolText, since BarText renders from symbolText
-    symbolText: "" + (status.length ? (" " + status) : "")
+    // Compose icon + fixed-width status (3 chars) to prevent layout shifts (e.g., "on", "off")
+    // Use padEnd so shorter labels like "on" become "on "
+    property string status3: status && status.length ? String(status).padEnd(3, " ") : ""
+    symbolText: "" + (status3.length ? (" " + status3) : "")
     symbolSpacing: 1
   }
 

@@ -85,8 +85,9 @@ BarBlock {
   content: BarText {
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
-    // Show icon + optional count
-    symbolText: notifCount > 0 ? (iconForState() + "  " + notifCount) : iconForState()
+    // Always show icon + fixed-width count (0–999). Cap display at 999 and pad to 3 chars.
+    property string count3: String(Math.min(notifCount, 999)).padStart(3, " ")
+    symbolText: iconForState() + " " + count3
     symbolSpacing: 5
     opacity: notifCount > 0 ? 1.0 : 0.9
   }

@@ -42,6 +42,8 @@ BarBlock {
   content: BarText {
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
+    // No text after the icon -> avoid extra gap from letter-spacing
+    symbolSpacing: 0
     symbolText: root.iconForProfile(root.profile)
   }
 

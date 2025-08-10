@@ -21,7 +21,9 @@ BarBlock {
     id: txt
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
-    symbolText: " " + count
+    // Fixed-width numeric area (0–999): pad to 3 chars to prevent layout shifts
+    property string count3: String(count).padStart(3, " ")
+    symbolText: " " + count3
     symbolSpacing: 5
   }
 

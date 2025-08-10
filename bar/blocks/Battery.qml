@@ -16,6 +16,8 @@ BarBlock {
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
     symbolText: battery
+    // If only an icon is shown (no space), avoid extra icon letter-spacing; else allow spacing before text
+    symbolSpacing: (battery && battery.indexOf(" ") !== -1) ? 5 : 0
   }
 
   // Hover tooltip with dynamic anchoring
@@ -90,7 +92,10 @@ BarBlock {
     stdout: SplitParser {
       onRead: function(data) {
         const [capacityStr, status] = data.trim().split(',')
-        const capacity = parseInt(capacityStr)
+        let capacity = parseInt(capacityStr)
+        if (isNaN(capacity)) capacity = 0
+        // Clamp to 0–100 and pad to 3 chars to reserve space for "100%"
+        const pct3 = String(Math.max(0, Math.min(100, capacity))).padStart(3, " ")
         let batteryIcon = "󰂂"
         if (capacity <= 20) batteryIcon = "󰁺"
         else if (capacity <= 40) batteryIcon = "󰁽"
@@ -100,7 +105,7 @@ BarBlock {
         
         // Use PUA plug so BarText applies iconColor; avoids emoji fallback coloring
         const symbol = status === "Charging" ? "" : batteryIcon
-        battery = `${symbol} ${capacity}%`
+        battery = `${symbol} ${pct3}%`
       }
     }
   }

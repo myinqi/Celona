@@ -23,14 +23,17 @@ BarBlock {
     function updateVolume() {
         if (sink?.audio) {
             const icon = sink.audio.muted ? "󰖁" : "󰕾"
-            content.symbolText = `${icon} ${Math.round(sink.audio.volume * 100)}%`
+            const p3 = String(Math.round(sink.audio.volume * 100)).padStart(3, " ")
+            content.symbolText = `${icon} ${p3}%`
         }
     }
 
     content: BarText {
         mainFont: "JetBrains Mono Nerd Font"
         symbolFont: "Symbols Nerd Font Mono"
-        symbolText: `${sink?.audio?.muted ? "󰖁" : "󰕾"} ${Math.round(sink?.audio?.volume * 100)}%`
+        // Fixed-width percent (0-100) to prevent layout shifts: pad to 3 chars
+        property string percent3: String(Math.round(sink?.audio?.volume * 100)).padStart(3, " ")
+        symbolText: `${sink?.audio?.muted ? "󰖁" : "󰕾"} ${percent3}%`
     }
 
     MouseArea {

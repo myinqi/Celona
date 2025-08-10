@@ -16,6 +16,8 @@ BarBlock {
   content: BarText {
     mainFont: "JetBrains Mono Nerd Font"
     symbolFont: "Symbols Nerd Font Mono"
+    // No value text follows the glyph; avoid extra gap from letter-spacing
+    symbolSpacing: 0
     symbolText: root.iconGlyph
   }
 
