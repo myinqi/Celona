@@ -33,6 +33,9 @@ BarBlock {
   property string cpuModel: "-"
   property string cpuVendor: "-"
   property string cpuArch: "-"
+  // CPU usage history buffer (last ~60 seconds at 2s interval ≈ 30 samples)
+  property var cpuHistory: []   // array of percent values (0..100)
+  property int cpuHistMax: 30
 
   // Compute CPU usage by sampling /proc/stat twice and calculating deltas
   Process {
@@ -47,7 +50,18 @@ BarBlock {
     ]
     running: true
 
-    stdout: SplitParser { onRead: data => root.cpuPercent = Number(String(data).trim()) }
+    stdout: SplitParser {
+      onRead: data => {
+        var v = Number(String(data).trim())
+        root.cpuPercent = v
+        if (!isNaN(v)) {
+          var vv = Math.max(0, Math.min(100, Math.floor(v)))
+          root.cpuHistory.push(vv)
+          // keep only last cpuHistMax samples
+          while (root.cpuHistory.length > root.cpuHistMax) root.cpuHistory.shift()
+        }
+      }
+    }
   }
 
   // Tooltip like Date/GPU using PopupWindow
@@ -96,6 +110,47 @@ BarBlock {
         anchors.margins: 10
         spacing: 2
         Text { text: "Usage: " + (isNaN(root.cpuPercent) ? "-" : (Math.floor(root.cpuPercent) + "%")) + "  |  Load: " + root.loadavg1 + ", " + root.loadavg5 + ", " + root.loadavg15; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        // 60s CPU usage histogram (time on X recent→rechts, usage on Y)
+        Canvas {
+          id: cpuHist
+          width: parent.width; height: 48
+          antialiasing: false
+          onPaint: {
+            const ctx = getContext("2d")
+            const w = width, h = height
+            // clear
+            ctx.clearRect(0, 0, w, h)
+            // background
+            ctx.globalAlpha = 0.6
+            ctx.fillStyle = "#333333"
+            ctx.fillRect(0, 0, w, h)
+            ctx.globalAlpha = 1.0
+            // axes
+            const axisColor = (Globals.tooltipText && Globals.tooltipText !== "") ? Globals.tooltipText : "#FFFFFF"
+            ctx.strokeStyle = axisColor
+            ctx.lineWidth = 1
+            // baseline (0%) and 100% line (faint)
+            ctx.beginPath(); ctx.moveTo(0, h-1); ctx.lineTo(w, h-1); ctx.stroke()
+            ctx.globalAlpha = 0.2
+            ctx.beginPath(); ctx.moveTo(0, 1); ctx.lineTo(w, 1); ctx.stroke()
+            ctx.globalAlpha = 1.0
+            // draw bars
+            const barColor = (Globals.moduleIconColor && Globals.moduleIconColor !== "") ? Globals.moduleIconColor : "#89b4fa"
+            ctx.fillStyle = barColor
+            // map last N samples across width (right = most recent)
+            var n = root.cpuHistory.length
+            if (n > 0) {
+              var maxBars = w  // 1px bars
+              var step = Math.max(1, Math.floor(n / maxBars))
+              var x = w - 1
+              for (var i = n - 1; i >= 0 && x >= 0; i -= step, x--) {
+                var val = Math.max(0, Math.min(100, root.cpuHistory[i]))
+                var bh = Math.max(1, Math.round((val / 100) * (h - 2)))
+                ctx.fillRect(x, h - 1 - bh, 1, bh)
+              }
+            }
+          }
+        }
         Text { text: "Temp: " + (root.cpuTempC !== "-" ? (root.cpuTempC + " °C") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
         Text { text: "Gov: " + root.governor; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
         Text { text: "CPU: " + root.cpuModel; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
@@ -196,7 +251,7 @@ BarBlock {
     interval: 2000
     running: true
     repeat: true
-    onTriggered: { cpuProc.running = true; loadProc.running = true; freqProc.running = true; coresProc.running = true; tempProc.running = true; govProc.running = true; cpuInfoProc.running = true }
+    onTriggered: { cpuProc.running = true; loadProc.running = true; freqProc.running = true; coresProc.running = true; tempProc.running = true; govProc.running = true; cpuInfoProc.running = true; if (cpuHist) cpuHist.requestPaint() }
   }
 
 }
