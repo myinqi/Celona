@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQml
 import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
@@ -441,7 +442,16 @@ BarBlock {
         }
       }
     }
-  }
 
   // Note: buffered application handled in listProc.onRunningChanged to avoid frequent UI resets
  
+  // Close any open popups when bar position flips (top <-> bottom)
+  Connections {
+    target: Globals
+    onBarPositionChanged: {
+      if (menuWindow && menuWindow.visible) menuWindow.visible = false
+      if (manageWindow && manageWindow.visible) manageWindow.visible = false
+      if (tipWindow && tipWindow.visible) tipWindow.visible = false
+    }
+  }
+}

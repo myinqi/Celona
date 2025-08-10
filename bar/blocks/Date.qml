@@ -248,6 +248,15 @@ BarBlock {
         }
       }
     }
+
+    // Close popup when bar position flips (top <-> bottom)
+    Connections {
+      target: Globals
+      function onBarPositionChanged() {
+        if (calWindow.visible) calWindow.visible = false
+        if (tipWindow.visible) tipWindow.visible = false
+      }
+    }
   }
 
   // Calendar logic

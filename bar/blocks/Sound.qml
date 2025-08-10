@@ -245,4 +245,13 @@ BarBlock {
             menuWindow.visible = !menuWindow.visible
         }
     }
+
+    // Close any open popups when bar position flips (top <-> bottom)
+    Connections {
+        target: Globals
+        function onBarPositionChanged() {
+            if (menuWindow.visible) menuWindow.visible = false
+            if (tipWindow.visible) tipWindow.visible = false
+        }
+    }
 }
