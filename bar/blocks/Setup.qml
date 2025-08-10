@@ -431,7 +431,7 @@ BarBlock {
                       spacing: 8
                       TextField {
                         id: hexOut
-                        Layout.preferredWidth: 140
+                        Layout.preferredWidth: 160
                         text: editor.rgbaToHex(picker.r, picker.g, picker.b, picker.a)
                         readOnly: true
                       }
@@ -487,17 +487,17 @@ BarBlock {
                   wrapMode: Text.NoWrap
                   horizontalAlignment: Text.AlignLeft
                   Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                  Layout.preferredWidth: 140
-                  Layout.minimumWidth: 140
-                  Layout.maximumWidth: 140
+                  Layout.preferredWidth: 189 
+                  Layout.minimumWidth: 189  
+                  Layout.maximumWidth: 189
                 }
 
                 // Hexcode Anzeige (nicht editierbar)
                 Item {
-                  Layout.preferredWidth: 100
-                  Layout.minimumWidth: 100
-                  Layout.maximumWidth: 100
-                  width: 100; height: 24
+                  Layout.preferredWidth: 95
+                  Layout.minimumWidth: 95
+                  Layout.maximumWidth: 95
+                  width: 95; height: 24
                   Rectangle {
                     anchors.fill: parent
                     radius: 4
@@ -520,14 +520,14 @@ BarBlock {
 
                 // Farbanzeige
                 Rectangle {
-                  width: 40; height: 22
+                  width: 30; height: 22
                   radius: 4
                   color: Globals[modelData.key]
                   border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
                   Layout.alignment: Qt.AlignVCenter
-                  Layout.preferredWidth: 40
-                  Layout.minimumWidth: 40
-                  Layout.maximumWidth: 40
+                  Layout.preferredWidth: 30
+                  Layout.minimumWidth: 30
+                  Layout.maximumWidth: 30
                   MouseArea {
                     anchors.fill: parent
                     onClicked: {

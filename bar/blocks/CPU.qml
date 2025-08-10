@@ -27,6 +27,12 @@ BarBlock {
   property int logicalCores: 0
   // removed top processes list for a cleaner tooltip
   property string cpuTempC: "-"        // CPU temperature in °C
+  // Current scaling governor
+  property string governor: "-"
+  // CPU type info
+  property string cpuModel: "-"
+  property string cpuVendor: "-"
+  property string cpuArch: "-"
 
   // Compute CPU usage by sampling /proc/stat twice and calculating deltas
   Process {
@@ -41,9 +47,7 @@ BarBlock {
     ]
     running: true
 
-    stdout: SplitParser {
-      onRead: data => root.cpuPercent = Number(String(data).trim())
-    }
+    stdout: SplitParser { onRead: data => root.cpuPercent = Number(String(data).trim()) }
   }
 
   // Tooltip like Date/GPU using PopupWindow
@@ -91,11 +95,12 @@ BarBlock {
         anchors.fill: parent
         anchors.margins: 10
         spacing: 2
-        Text { text: "Usage: " + (isNaN(root.cpuPercent) ? "-" : (Math.floor(root.cpuPercent) + "%")); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "Loadavg: " + root.loadavg1 + ", " + root.loadavg5 + ", " + root.loadavg15; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "Freq: " + root.cpuFreqGHz + " GHz"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "Cores: " + root.logicalCores; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Usage: " + (isNaN(root.cpuPercent) ? "-" : (Math.floor(root.cpuPercent) + "%")) + "  |  Load: " + root.loadavg1 + ", " + root.loadavg5 + ", " + root.loadavg15; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
         Text { text: "Temp: " + (root.cpuTempC !== "-" ? (root.cpuTempC + " °C") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Gov: " + root.governor; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "CPU: " + root.cpuModel; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "vCPUs: " + root.logicalCores; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Freq: " + root.cpuFreqGHz + " GHz (avg all cores)"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
       }
     }
   }
@@ -161,6 +166,28 @@ BarBlock {
     stdout: SplitParser { onRead: data => { const v = String(data).trim(); root.cpuTempC = v.length ? v : "-" } }
   }
 
+  // Current CPU scaling governor (first CPU as representative)
+  Process {
+    id: govProc
+    command: [
+      "sh", "-c",
+      "for f in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do if [ -r \"$f\" ]; then cat \"$f\"; exit 0; fi; done; echo '-'"
+    ]
+    running: true
+    stdout: SplitParser { onRead: data => root.governor = String(data).trim() }
+  }
+
+  // CPU model/vendor (from /proc/cpuinfo) and arch (uname -m)
+  Process {
+    id: cpuInfoProc
+    command: [
+      "sh", "-c",
+      "model='-'; vendor='-'; if [ -r /proc/cpuinfo ]; then model=$(awk -F: '/model name/{print $2; exit}' /proc/cpuinfo | sed 's/^ *//'); vendor=$(awk -F: '/vendor_id/{print $2; exit}' /proc/cpuinfo | sed 's/^ *//'); fi; arch=$(uname -m); printf '%s|%s|%s\n' \"$model\" \"$vendor\" \"$arch\""
+    ]
+    running: true
+    stdout: SplitParser { onRead: data => { const s = String(data).trim().split('|'); root.cpuModel = s[0] || '-'; root.cpuVendor = s[1] || '-'; root.cpuArch = s[2] || '-' } }
+  }
+
   // Top CPU processes (pid, command, %CPU)
   // (removed)
 
@@ -169,7 +196,7 @@ BarBlock {
     interval: 2000
     running: true
     repeat: true
-    onTriggered: { cpuProc.running = true; loadProc.running = true; freqProc.running = true; coresProc.running = true; tempProc.running = true }
+    onTriggered: { cpuProc.running = true; loadProc.running = true; freqProc.running = true; coresProc.running = true; tempProc.running = true; govProc.running = true; cpuInfoProc.running = true }
   }
 
 }
