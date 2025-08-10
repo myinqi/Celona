@@ -111,14 +111,15 @@ BarBlock {
     PopupWindow {
         id: vizWindow
         visible: false
-        implicitWidth: 500
-        implicitHeight: 200
+        implicitWidth: 571
+        implicitHeight: 250
         color: "transparent"
 
         property int bars: 48
         property var values: new Array(bars).fill(0)
         property bool cavaAvailable: true
         property string errorText: ""
+        property string nowPlaying: ""
 
         anchor {
             window: root.QsWindow?.window
@@ -148,10 +149,23 @@ BarBlock {
                 anchors.margins: 10
                 spacing: 8
 
-                Text {
-                    text: "Cava Audio Visualizer"
-                    color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                    font.pixelSize: 12
+                Row {
+                    spacing: 8
+                    width: parent.width
+                    Text {
+                        text: "Cava Visualizer"
+                        color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                        font.pixelSize: 12
+                    }
+                    Text {
+                        text: vizWindow.nowPlaying !== "" ? `• ${vizWindow.nowPlaying}` : ""
+                        color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                        elide: Text.ElideRight
+                        font.pixelSize: 12
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        width: parent.width - 160
+                    }
                 }
 
                 Rectangle {
@@ -196,8 +210,10 @@ BarBlock {
                 vizWindow.cavaAvailable = true
                 vizWindow.values = new Array(vizWindow.bars).fill(0)
                 vizProc.running = true
+                nowProc.running = true
             } else {
                 vizProc.running = false
+                nowProc.running = false
             }
         }
 
@@ -205,29 +221,56 @@ BarBlock {
             id: vizProc
             running: false
             command: ["sh", "-c",
-                `if command -v cava >/dev/null 2>&1; then \
-                   printf '[general]\\nframerate=60\\nbars=${vizWindow.bars}\\nsleep_timer=3\\n[output]\\nchannels=mono\\nmethod=raw\\nraw_target=/dev/stdout\\ndata_format=ascii\\nascii_max_range=100' | cava -p /dev/stdin; \
-                 else \
-                   echo '__CAVA_MISSING__'; \
+                `if command -v cava >/dev/null 2>&1; then \\
+                   printf '[general]\\nframerate=60\\nbars=${vizWindow.bars}\\nsleep_timer=3\\n[output]\\nchannels=mono\\nmethod=raw\\nraw_target=/dev/stdout\\ndata_format=ascii\\nascii_max_range=100' | cava -p /dev/stdin; \\
+                 else \\
+                   echo '__CAVA_MISSING__'; \\
                  fi`
             ]
             stdout: SplitParser {
                 onRead: data => {
                     const line = String(data).trim()
-                    if (!line) return
-                    if (line.indexOf("__CAVA_MISSING__") !== -1) {
+                    if (line === "__CAVA_MISSING__") {
                         vizWindow.cavaAvailable = false
                         vizWindow.errorText = "cava ist nicht installiert"
                         vizProc.running = false
                         return
                     }
-                    const parts = line.split(";")
+                    const parts = line.split(";").filter(s => s.length > 0)
                     if (parts.length > 0) {
-                        vizWindow.values = parts.map(v => Math.max(0, Math.min(100, parseInt(v, 10) || 0)))
+                        const nums = parts.map(v => Math.max(0, Math.min(100, parseInt(v, 10) || 0)))
+                        if (nums.length !== vizWindow.bars) {
+                            const trimmed = nums.slice(0, vizWindow.bars)
+                            while (trimmed.length < vizWindow.bars) trimmed.push(0)
+                            vizWindow.values = trimmed
+                        } else {
+                            vizWindow.values = nums
+                        }
                     }
                 }
             }
             stderr: SplitParser { onRead: data => console.log(`[Sound] viz stderr: ${String(data)}`) }
+        }
+
+        Process {
+            id: nowProc
+            running: false
+            command: ["sh", "-c",
+                `if command -v playerctl >/dev/null 2>&1; then \\
+                   playerctl metadata --follow --format '{{title}} — {{artist}}'; \\
+                 else \\
+                   echo '__PLAYERCTL_MISSING__'; \\
+                 fi`
+            ]
+            stdout: SplitParser {
+                onRead: data => {
+                    const line = String(data).trim()
+                    if (line === '__PLAYERCTL_MISSING__') { vizWindow.nowPlaying = ''; nowProc.running = false; return }
+                    // playerctl prints empty lines on state changes; ignore to keep last value or clear
+                    vizWindow.nowPlaying = line
+                }
+            }
+            stderr: SplitParser { onRead: data => console.log(`[Sound] now stderr: ${String(data)}`) }
         }
     }
 
