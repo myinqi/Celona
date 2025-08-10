@@ -118,7 +118,7 @@ BarBlock {
                     // Anchor rectangle relative to the bar block area
                     const y = (Globals.barPosition === "top")
                       ? (root.height + gap)
-                      : (-(menuWindow.implicitHeight + gap))
+                      : (-(root.height + gap))
                     const rect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
                     menuWindow.anchor.rect = rect
                 }
@@ -240,7 +240,7 @@ BarBlock {
             const gap = 5
             const y = (Globals.barPosition === "top")
               ? (root.height + gap)
-              : (-(menuWindow.implicitHeight + gap))
+              : (-(root.height + gap))
             menuWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, y, root.width, root.height)
             menuWindow.visible = !menuWindow.visible
         }

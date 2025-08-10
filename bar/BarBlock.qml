@@ -19,13 +19,12 @@ Rectangle {
   property int rightPadding: 5
 
   property string hoveredBgColor: Globals.hoverHighlightColor
+  // Track hover state passively (does not consume events) so child MouseAreas
+  // (tooltips in CPU/GPU/Memory) still receive hover events.
+  property bool hovered: hoverHandler.hovered
 
   // Background color
-  color: {
-    if (mouseArea.containsMouse)
-      return hoveredBgColor;
-    return "transparent";
-  }
+  color: hovered ? hoveredBgColor : "transparent"
 
   states: [
     State {
@@ -59,6 +58,11 @@ Rectangle {
     hoverEnabled: true
     acceptedButtons: Qt.LeftButton
     onClicked: root.onClicked()
+  }
+
+  // Passive hover tracker; does not grab events, so child hover tooltips work
+  HoverHandler {
+    id: hoverHandler
   }
 
   // While line underneath workspace
