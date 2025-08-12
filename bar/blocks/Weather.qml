@@ -44,17 +44,17 @@ BarBlock {
     httpGet(url, text => {
       try {
         const g = JSON.parse(text)
-        if (!g || !g.results || !g.results[0]) { console.log('[Weather] geocode: no results'); return }
+        if (!g || !g.results || !g.results[0]) { if (root.debugWeather) console.log('[Weather] geocode: no results'); return }
         const r = g.results[0]
         const lat = r.latitude
         const lon = r.longitude
         if (typeof lat === 'number' && typeof lon === 'number') {
-          console.log('[Weather] geocode found coords', lat, lon)
+          if (root.debugWeather) console.log('[Weather] geocode found coords', lat, lon)
           fetchForecastFallback(lat, lon)
         } else {
-          console.log('[Weather] geocode invalid coords', lat, lon)
+          if (root.debugWeather) console.log('[Weather] geocode invalid coords', lat, lon)
         }
-      } catch (e) { console.log('[Weather] geocode parse error', e) }
+      } catch (e) { if (root.debugWeather) console.log('[Weather] geocode parse error', e) }
     })
   }
 
@@ -248,7 +248,7 @@ BarBlock {
     // Build forecast list from json.weather (today + next days)
     try {
       const days = Array.isArray(json.weather) ? json.weather : []
-      console.log('[Weather] days in json.weather:', days.length)
+      if (root.debugWeather) console.log('[Weather] days in json.weather:', days.length)
       const items = []
       // Build forecast starting from tomorrow (index 1)
       const start = 1
@@ -257,10 +257,10 @@ BarBlock {
         try {
           const i = start + j
           const d = days[i]
-          if (!d) { console.log('[Weather] empty day at', i); continue }
+          if (!d) { if (root.debugWeather) console.log('[Weather] empty day at', i); continue }
           const minRaw = (u === "F") ? d.mintempF : d.mintempC
           const maxRaw = (u === "F") ? d.maxtempF : d.maxtempC
-          if (minRaw === undefined || maxRaw === undefined) { console.log('[Weather] no min/max at', i); continue }
+          if (minRaw === undefined || maxRaw === undefined) { if (root.debugWeather) console.log('[Weather] no min/max at', i); continue }
           const min = minRaw
           const max = maxRaw
           // Pick a middle hourly slot for icon when available, guarding for non-array hourly
@@ -281,11 +281,11 @@ BarBlock {
             max: `${parseFloat(max)}°${u}`
           })
         } catch (ie) {
-          console.log('[Weather] skip day index', i, ie)
+          if (root.debugWeather) console.log('[Weather] skip day index', i, ie)
         }
       }
       root.forecast = items
-      console.log('[Weather] forecast items:', items.length)
+      if (root.debugWeather) console.log('[Weather] forecast items:', items.length)
     } catch (e) {
       // leave forecast empty on error
       root.forecast = []
@@ -322,7 +322,7 @@ BarBlock {
       }
       xhr.open('GET', url)
       xhr.send()
-    } catch (e) { console.log('[Weather] xhr error', e) }
+    } catch (e) { if (root.debugWeather) console.log('[Weather] xhr error', e) }
   }
 
   function fetchWeather(loc) {
@@ -347,7 +347,7 @@ BarBlock {
         }
         // Fallback: ensure at least 3 future days. Use nearest_area coords with Open-Meteo when wttr returns only 3 total days
         if (!root.forecast || root.forecast.length < 3) {
-          console.log('[Weather] forecast too short from wttr:', (root.forecast ? root.forecast.length : 0))
+          if (root.debugWeather) console.log('[Weather] forecast too short from wttr:', (root.forecast ? root.forecast.length : 0))
           function parseCoord(v) {
             try {
               let x = v
@@ -361,16 +361,16 @@ BarBlock {
           const lat = area ? parseCoord(area.latitude) : NaN
           const lon = area ? parseCoord(area.longitude) : NaN
           if (!isNaN(lat) && !isNaN(lon)) {
-            console.log('[Weather] using wttr coords for fallback', lat, lon)
+            if (root.debugWeather) console.log('[Weather] using wttr coords for fallback', lat, lon)
             fetchForecastFallback(lat, lon)
           } else {
             const name = root.manualLoc ? String(loc).trim() : (root.placeText || String(loc).trim())
-            console.log('[Weather] no coords from wttr, geocoding', name)
+            if (root.debugWeather) console.log('[Weather] no coords from wttr, geocoding', name)
             fetchGeoAndFallback(name)
           }
         }
       } catch (e) {
-        console.log('[Weather] parse error', e)
+        if (root.debugWeather) console.log('[Weather] parse error', e)
         if (_retryCount < 2) { _retryCount++; if (retryTimer.running) retryTimer.stop(); retryTimer.start() }
         else loading = false
       }
@@ -409,11 +409,11 @@ BarBlock {
           }
           if (items.length >= 3) {
             root.forecast = items
-            console.log('[Weather] fallback forecast items (open-meteo):', items.length)
+            if (root.debugWeather) console.log('[Weather] fallback forecast items (open-meteo):', items.length)
           }
-        } catch (e) { console.log('[Weather] fallback parse error', e) }
+        } catch (e) { if (root.debugWeather) console.log('[Weather] fallback parse error', e) }
       })
-    } catch (e) { console.log('[Weather] fallback error', e) }
+    } catch (e) { if (root.debugWeather) console.log('[Weather] fallback error', e) }
   }
 
   function reload() {
@@ -441,7 +441,7 @@ BarBlock {
             if (ipCooldown.running) ipCooldown.stop();
             ipCooldown.start()
             root.manualLoc = false
-          } catch (e) { console.log('[Weather] ipinfo parse error', e) }
+          } catch (e) { if (root.debugWeather) console.log('[Weather] ipinfo parse error', e) }
         })
       } else {
         loading = false
