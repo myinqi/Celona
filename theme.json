@@ -36,6 +36,7 @@
     "PowerProfiles",
     "Clipboard",
     "Notifications",
+    "Weather",
     "Sound",
     "Date",
     "Time",
@@ -58,5 +59,8 @@
   "showBattery": false,
   "showDate": true,
   "showTime": true,
-  "showPower": true
+  "showPower": true,
+  "showWeather": true,
+  "weatherLocation": "Cadolzburg",
+  "weatherUnit": "C"
 }

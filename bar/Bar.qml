@@ -146,6 +146,7 @@ Scope {
             Component { id: sClipboard; Blocks.Clipboard { visible: Globals.showClipboard } }
             Component { id: sNotifications; Blocks.Notifications { visible: Globals.showNotifications } }
             Component { id: sSound; Blocks.Sound { visible: Globals.showSound } }
+            Component { id: sWeather; Blocks.Weather { visible: Globals.showWeather } }
             Component { id: sBattery; Blocks.Battery { visible: Globals.showBattery } }
             Component { id: sDate; Blocks.Date { visible: Globals.showDate } }
             Component { id: sTime; Blocks.Time { visible: Globals.showTime } }
@@ -176,6 +177,7 @@ Scope {
                   modelData === "Clipboard" ? sClipboard :
                   modelData === "Notifications" ? sNotifications :
                   modelData === "Sound" ? sSound :
+                  modelData === "Weather" ? sWeather :
                   modelData === "Battery" ? sBattery :
                   modelData === "Date" ? sDate :
                   modelData === "Time" ? sTime :
@@ -231,6 +233,7 @@ Scope {
             Component { id: cDate; Blocks.Date { visible: Globals.showDate } }
             Component { id: cTime; Blocks.Time { visible: Globals.showTime } }
             Component { id: cPower; Blocks.Power { visible: Globals.showPower } }
+            Component { id: cWeather; Blocks.Weather { visible: Globals.showWeather } }
 
             function move(arr, from, to) {
               if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr
@@ -348,7 +351,8 @@ Scope {
                     modWrap.modName === "Battery" ? cBattery :
                     modWrap.modName === "Date" ? cDate :
                     modWrap.modName === "Time" ? cTime :
-                    modWrap.modName === "Power" ? cPower : null)
+                    modWrap.modName === "Power" ? cPower :
+                    modWrap.modName === "Weather" ? cWeather : null)
                   onLoaded: {
                     if (modWrap.modName === "SystemTray" && modWrap.host) modWrap.host.systemTrayRef = item
                   }

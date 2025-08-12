@@ -86,6 +86,13 @@ Singleton {
   property string windowTitleColor: "#00bee7"
   // Visualizer bars color
   property string visualizerBarColor: "#00bee7"
+  // Weather settings
+  // Location can be "lat,lon" or a city name recognized by wttr.in
+  property string weatherLocation: "" // empty => auto by IP
+  // "C" or "F"
+  property string weatherUnit: "C"
+  // Toggle for Weather module visibility
+  property bool showWeather: false
 
   // Reset all theme colors to their built-in defaults
   function resetTheme() {
@@ -146,6 +153,10 @@ Singleton {
     windowTitleColor = "#00bee7"
     // Visualizer bars
     visualizerBarColor = "#00bee7"
+    // Weather
+    weatherLocation = ""
+    weatherUnit = "C"
+    showWeather = false
   }
 
   // Apply keys from a loaded theme object safely
@@ -198,6 +209,9 @@ Singleton {
     setIf("showPower")
     setIf("windowTitleColor")
     setIf("visualizerBarColor")
+    setIf("weatherLocation")
+    setIf("weatherUnit")
+    setIf("showWeather")
   }
 
   // Load theme from file on startup handled by loadThemeProc.running
@@ -253,7 +267,11 @@ Singleton {
       showBattery,
       showDate,
       showTime,
-      showPower
+      showPower,
+      showWeather,
+      // Weather (keep at end)
+      weatherLocation,
+      weatherUnit
     }
     const json = JSON.stringify(obj, null, 2)
     // Avoid complex shell escaping by writing base64 and decoding

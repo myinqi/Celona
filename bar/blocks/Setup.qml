@@ -255,37 +255,37 @@ BarBlock {
                   Layout.fillWidth: true
                   Label { text: "Welcome"; Layout.preferredWidth: 110; color: Globals.popupText }
                   Item { width: 0 }
-                  Switch { checked: Globals.showWelcome; onToggled: Globals.showWelcome = checked }
+                  Switch { checked: Globals.showWelcome; onToggled: { Globals.showWelcome = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Window Title"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showWindowTitle; onToggled: Globals.showWindowTitle = checked }
+                  Switch { checked: Globals.showWindowTitle; onToggled: { Globals.showWindowTitle = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Workspaces"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showWorkspaces; onToggled: Globals.showWorkspaces = checked }
+                  Switch { checked: Globals.showWorkspaces; onToggled: { Globals.showWorkspaces = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "System Tray"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showSystemTray; onToggled: Globals.showSystemTray = checked }
+                  Switch { checked: Globals.showSystemTray; onToggled: { Globals.showSystemTray = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Updates"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showUpdates; onToggled: Globals.showUpdates = checked }
+                  Switch { checked: Globals.showUpdates; onToggled: { Globals.showUpdates = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Network"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showNetwork; onToggled: Globals.showNetwork = checked }
+                  Switch { checked: Globals.showNetwork; onToggled: { Globals.showNetwork = checked; Globals.saveTheme() } }
                 }
 
                 // Right column
@@ -293,73 +293,99 @@ BarBlock {
                   Layout.fillWidth: true
                   Label { text: "Bluetooth"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showBluetooth; onToggled: Globals.showBluetooth = checked }
+                  Switch { checked: Globals.showBluetooth; onToggled: { Globals.showBluetooth = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "CPU"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showCPU; onToggled: Globals.showCPU = checked }
+                  Switch { checked: Globals.showCPU; onToggled: { Globals.showCPU = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "GPU"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showGPU; onToggled: Globals.showGPU = checked }
+                  Switch { checked: Globals.showGPU; onToggled: { Globals.showGPU = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Memory"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showMemory; onToggled: Globals.showMemory = checked }
+                  Switch { checked: Globals.showMemory; onToggled: { Globals.showMemory = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Power Profiles"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showPowerProfiles; onToggled: Globals.showPowerProfiles = checked }
+                  Switch { checked: Globals.showPowerProfiles; onToggled: { Globals.showPowerProfiles = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Clipboard"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showClipboard; onToggled: Globals.showClipboard = checked }
+                  Switch { checked: Globals.showClipboard; onToggled: { Globals.showClipboard = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Notifications"; Layout.preferredWidth: 110; color: Globals.popupText }
                   Item { width: 0 }
-                  Switch { checked: Globals.showNotifications; onToggled: Globals.showNotifications = checked }
+                  Switch { checked: Globals.showNotifications; onToggled: { Globals.showNotifications = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Sound"; Layout.preferredWidth: 110; color: Globals.popupText }
                   Item { width: 0 }
-                  Switch { checked: Globals.showSound; onToggled: Globals.showSound = checked }
+                  Switch { checked: Globals.showSound; onToggled: { Globals.showSound = checked; Globals.saveTheme() } }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Weather"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+                  Item { width: 0 }
+                  Switch {
+                    checked: Globals.showWeather
+                    onToggled: {
+                      Globals.showWeather = checked
+                      // Maintain module order list consistently
+                      var order = Globals.rightModulesOrder || []
+                      var idx = order.indexOf("Weather")
+                      if (checked) {
+                        if (idx === -1) {
+                          Globals.rightModulesOrder = order.concat(["Weather"])
+                        }
+                      } else {
+                        if (idx !== -1) {
+                          order.splice(idx, 1)
+                          Globals.rightModulesOrder = order
+                        }
+                      }
+                      // Always persist immediately
+                      Globals.saveTheme()
+                    }
+                  }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Battery"; Layout.preferredWidth: 110; color: Globals.popupText }
                   Item { width: 0 }
-                  Switch { checked: Globals.showBattery; onToggled: Globals.showBattery = checked }
+                  Switch { checked: Globals.showBattery; onToggled: { Globals.showBattery = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Date"; Layout.preferredWidth: 110; color: Globals.popupText }
                   Item { width: 0 }
-                  Switch { checked: Globals.showDate; onToggled: Globals.showDate = checked }
+                  Switch { checked: Globals.showDate; onToggled: { Globals.showDate = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Time"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showTime; onToggled: Globals.showTime = checked }
+                  Switch { checked: Globals.showTime; onToggled: { Globals.showTime = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Power"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch { checked: Globals.showPower; onToggled: Globals.showPower = checked }
+                  Switch { checked: Globals.showPower; onToggled: { Globals.showPower = checked; Globals.saveTheme() } }
                 }
               }
             }
