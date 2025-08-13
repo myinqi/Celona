@@ -30,7 +30,8 @@ BarBlock {
     onClicked: (mouse) => {
       tipWindow.visible = false
       if (mouse.button === Qt.LeftButton) {
-        setupPopup.visible = true
+        // Toggle like Sound.qml: clicking the icon again closes the popup
+        setupPopup.visible = !setupPopup.visible
       }
     }
   }

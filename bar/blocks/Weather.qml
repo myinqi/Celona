@@ -23,6 +23,9 @@ BarBlock {
   property bool _debounceBusy: false
   property bool _ipReady: true
   property bool _pendingReload: false
+  // extra metadata from wttr.in
+  property string regionName: ""
+  property string population: ""
 
   // Sizing similar to other blocks
   readonly property int pad: 6
@@ -128,9 +131,17 @@ BarBlock {
         spacing: 6
 
         Text {
-          text: root.loading ? "Weather" : `${root.placeText}`
+          text: root.loading ? "Weather" : (root.regionName && root.regionName.length > 0 ? `${root.placeText} (${root.regionName})` : `${root.placeText}`)
           color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
           font.pixelSize: 12
+          elide: Text.ElideRight
+        }
+        Text {
+          visible: !root.loading && (root.population && root.population.length > 0)
+          text: `Population: ${root.population}`
+          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          font.pixelSize: 12
+          wrapMode: Text.NoWrap
           elide: Text.ElideRight
         }
         Text {
@@ -327,6 +338,9 @@ BarBlock {
 
   function fetchWeather(loc) {
     if (!loc) return
+    // clear metadata until new data arrives
+    root.regionName = ""
+    root.population = ""
     // Pre-set display name for manual entries
     if (root.manualLoc) {
       root.placeText = String(loc).trim()
@@ -342,6 +356,9 @@ BarBlock {
         const city = area && area.areaName && area.areaName[0] ? area.areaName[0].value : ""
         const region = area && area.region && area.region[0] ? area.region[0].value : ""
         const country = area && area.country && area.country[0] ? area.country[0].value : ""
+        // set extra metadata when available
+        root.regionName = region || ""
+        root.population = area && area.population ? String(area.population).trim() : ""
         if (!root.manualLoc) {
           root.placeText = [city, (region || country)].filter(function(s){ return s && s.length > 0 }).join(", ")
         }

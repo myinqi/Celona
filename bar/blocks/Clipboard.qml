@@ -68,8 +68,8 @@ BarBlock {
   // Small management popup for right-click actions (e.g., clear history)
   PopupWindow {
     id: manageWindow
-    implicitWidth: 260
-    implicitHeight: 120
+    implicitWidth: manageCol.implicitWidth + 20
+    implicitHeight: manageCol.implicitHeight + 20
     visible: false
     color: "transparent"
 
@@ -99,6 +99,7 @@ BarBlock {
       radius: 8
 
       ColumnLayout {
+        id: manageCol
         anchors.fill: parent
         anchors.margins: 10
         spacing: 8
@@ -114,10 +115,6 @@ BarBlock {
         RowLayout {
           Layout.alignment: Qt.AlignHCenter
           spacing: 8
-          Button {
-            text: "Cancel"
-            onClicked: manageWindow.visible = false
-          }
           Button {
             text: "Delete"
             onClicked: { manageWindow.visible = false; wipeProc.running = true }
@@ -315,12 +312,16 @@ BarBlock {
           if (listProc.running) listProc.running = false
         }
       } else if (mouse.button === Qt.RightButton) {
-        // Compute rect for manageWindow with its own size
+        // Toggle manage popup on right click
         const my = (Globals.barPosition === "top") ? (root.height + gap) : (-(manageWindow.implicitHeight + gap))
         const mx = -(manageWindow.implicitWidth - root.width) / 2
-        const mrect = root.QsWindow.window.contentItem.mapFromItem(root, mx, my, manageWindow.implicitWidth, manageWindow.implicitHeight)
-        manageWindow.anchor.rect = mrect
-        manageWindow.visible = true
+        if (manageWindow.visible) {
+          manageWindow.visible = false
+        } else {
+          const mrect = root.QsWindow.window.contentItem.mapFromItem(root, mx, my, manageWindow.implicitWidth, manageWindow.implicitHeight)
+          manageWindow.anchor.rect = mrect
+          manageWindow.visible = true
+        }
       }
     }
   }
