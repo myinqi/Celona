@@ -42,6 +42,7 @@
     "Time",
     "Power"
   ],
+  "aurHelper": "paru",
   "showWelcome": true,
   "showWindowTitle": true,
   "showWorkspaces": true,

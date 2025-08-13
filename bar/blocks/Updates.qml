@@ -35,7 +35,10 @@ BarBlock {
     onExited: tipWindow.visible = false
     onClicked: (mouse) => {
       if (mouse.button === Qt.LeftButton) {
-        openInstall.command = ["sh", "-c", "~/.config/ml4w/settings/installupdates.sh >/dev/null 2>&1 & disown || true"]
+        openInstall.command = [
+          "sh", "-c",
+          "$HOME/.config/quickshell/Celona/scripts/run-in-terminal.sh $HOME/.config/quickshell/Celona/scripts/update-packages.sh"
+        ]
         openInstall.running = true
       } else if (mouse.button === Qt.RightButton) {
         openSoftware.command = ["sh", "-c", "~/.config/ml4w/settings/software.sh >/dev/null 2>&1 & disown || true"]
