@@ -61,6 +61,6 @@
   "showTime": true,
   "showPower": true,
   "showWeather": true,
-  "weatherLocation": "Cadolzburg",
+  "weatherLocation": "90556, Cadolzburg, DE",
   "weatherUnit": "C"
 }

@@ -152,8 +152,11 @@ BarBlock {
           elide: Text.ElideRight
         }
         Text {
-          text: root.loading ? "--°" : `Now: ${root.tempText}  Min: ${root.minText}  Max: ${root.maxText}`
-          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          // Bold only the Now value; keep others normal
+          textFormat: Text.RichText
+          text: root.loading
+                ? "--°"
+                : `<span style="color:${Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"}">Now: <b>${root.tempText}</b>  Min: ${root.minText}  Max: ${root.maxText}</span>`
           font.pixelSize: 12
           wrapMode: Text.NoWrap
           elide: Text.ElideRight
@@ -207,6 +210,14 @@ BarBlock {
     hoverEnabled: true
     onEntered: tip.visible = true
     onExited: tip.visible = false
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    onClicked: (mouse) => {
+      if (mouse.button === Qt.RightButton) {
+        tip.visible = false
+        if (debounceTimer.running) debounceTimer.stop();
+        _debounceBusy = false; _pendingReload = false; reload()
+      }
+    }
   }
 
   // Close tooltip when bar position flips (top <-> bottom)
