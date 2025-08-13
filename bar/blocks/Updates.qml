@@ -12,6 +12,14 @@ BarBlock {
   // State
   property int count: 0
   property string raw: ""
+  // Right-click tooltip content
+  property string updatesText: ""
+  // Formatted into aligned columns (monospace)
+  property string updatesTextColumns: ""
+  // Loading state for list fetch
+  property bool updatesLoading: false
+  // Parsed rows for table view: [{name, oldv, newv}, ...]
+  property var updatesRows: []
 
   // Waybar-like: hide if no updates
   visible: count > 0
@@ -27,10 +35,187 @@ BarBlock {
     symbolSpacing: 5
   }
 
+  function parseUpdatesRows(raw) {
+    try {
+      const lines = String(raw).split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith(":: "))
+      const rows = []
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        const parts = line.split(/\s+->\s+/)
+        if (parts.length === 2) {
+          const left = parts[0].trim()
+          const right = parts[1].trim()
+          const lp = left.split(/\s+/)
+          if (lp.length >= 2) {
+            const oldv = lp.pop()
+            const name = lp.join(" ")
+            rows.push({ name: name, oldv: oldv, newv: right })
+          }
+        }
+      }
+      return rows
+    } catch (e) {
+      return []
+    }
+  }
+
+  // Fetch list of pending updates on demand (right-click)
+  Process {
+    id: listProc
+    running: false
+    command: ["sh", "-c", "$HOME/.config/quickshell/Celona/scripts/list-updates.sh 2>/dev/null"]
+    stdout: SplitParser {
+      onRead: data => {
+        // Accumulate all chunks
+        if (updatesLoading && (updatesText === "(Fetching updates...)" || updatesText === "(Lade Liste...)" || updatesText === "")) {
+          updatesText = ""
+        }
+        // SplitParser emits tokens without trailing newlines; reinsert line breaks
+        updatesText += String(data) + "\n"
+        updatesTextColumns = formatUpdatesColumns(updatesText)
+        updatesRows = parseUpdatesRows(updatesText)
+      }
+    }
+    onRunningChanged: {
+      if (running) {
+        updatesLoading = true
+      }
+      if (!running) {
+        updatesLoading = false
+        updatesTextColumns = formatUpdatesColumns(updatesText)
+        updatesRows = parseUpdatesRows(updatesText)
+      }
+    }
+  }
+
+  function toggleUpdatesMenu() {
+    const win = root.QsWindow?.window
+    if (win && win.contentItem) {
+      const gap = 5
+      const y = (Globals.barPosition === "top") ? (root.height + gap) : (-(root.height + gap))
+      listWindow.anchor.rect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+      const willShow = !listWindow.visible
+      listWindow.visible = willShow
+      if (willShow) {
+        updatesLoading = true
+        updatesText = ""
+        updatesTextColumns = ""
+        updatesRows = []
+        listProc.running = true
+      }
+    }
+  }
+
+  function formatUpdatesColumns(raw) {
+    try {
+      const lines = String(raw).split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith(":: "))
+      const rows = []
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        const parts = line.split(/\s+->\s+/)
+        if (parts.length === 2) {
+          const left = parts[0].trim()
+          const right = parts[1].trim()
+          const lp = left.split(/\s+/)
+          if (lp.length >= 2) {
+            const oldv = lp.pop()
+            const name = lp.join(" ")
+            rows.push({ name: name, oldv: oldv, newv: right })
+          }
+        }
+      }
+      if (rows.length === 0) return ""
+      let maxName = "Package".length
+      let maxOld = "Version".length
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].name.length > maxName) maxName = rows[i].name.length
+        if (rows[i].oldv.length > maxOld) maxOld = rows[i].oldv.length
+      }
+      const header = `${"Package".padEnd(maxName + 2)} ${"Version".padEnd(maxOld)} -> New`
+      const sep = `${"".padEnd(maxName, "-")}  ${"".padEnd(maxOld, "-")}    ${"".padEnd(Math.max(3, 3), "-")}`
+      const body = rows.map(r => `${r.name.padEnd(maxName + 2)} ${r.oldv.padEnd(maxOld)} -> ${r.newv}`).join("\n")
+      return `${header}\n${sep}\n${body}`
+    } catch (e) {
+      return ""
+    }
+  }
+
+  // Right-click popup listing pending updates
+  PopupWindow {
+    id: listWindow
+    visible: false
+    implicitWidth: listContent.implicitWidth + 20
+    implicitHeight: listContent.implicitHeight + 20
+    color: "transparent"
+
+    anchor {
+      window: root.QsWindow?.window
+      edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+      gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
+      onAnchoring: {
+        const win = root.QsWindow?.window
+        if (win) {
+          const gap = 3
+          listWindow.anchor.rect.y = (Globals.barPosition === "top")
+            ? (listWindow.anchor.window.height + gap)
+            : (-gap)
+          listWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
+        }
+      }
+    }
+
+    Rectangle {
+      anchors.fill: parent
+      color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+      border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+      border.width: 1
+      radius: 8
+
+      Column {
+        id: listContent
+        anchors.fill: parent
+        anchors.margins: 10
+        spacing: 6
+
+        Text {
+          text: "Pending updates"
+          font.bold: true
+          color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+        }
+
+        // Scrollable area for the list
+        ScrollView {
+          clip: true
+          // Auto-size to content, with gentle caps to avoid oversizing
+          implicitWidth: Math.min(600, updatesPlain.implicitWidth)
+          implicitHeight: Math.min(400, updatesPlain.implicitHeight)
+          ScrollBar.vertical.policy: ScrollBar.AsNeeded
+
+          // Simple newline-separated list
+          Text {
+            id: updatesPlain
+            width: parent.width
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            font.family: "JetBrains Mono Nerd Font"
+            font.pixelSize: 12
+            color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+            text: updatesLoading
+                    ? "(Fetching updates...)"
+                    : (updatesText && updatesText.trim().length > 0 ? updatesText : "No updates")
+          }
+        }
+
+        
+      }
+    }
+  }
+
   // Tooltip
   MouseArea {
     anchors.fill: parent
     hoverEnabled: true
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
     onEntered: tipWindow.visible = true
     onExited: tipWindow.visible = false
     onClicked: (mouse) => {
@@ -41,8 +226,8 @@ BarBlock {
         ]
         openInstall.running = true
       } else if (mouse.button === Qt.RightButton) {
-        openSoftware.command = ["sh", "-c", "~/.config/ml4w/settings/software.sh >/dev/null 2>&1 & disown || true"]
-        openSoftware.running = true
+        // Toggle updates menu popup (package list)
+        toggleUpdatesMenu()
       }
     }
   }
@@ -79,9 +264,9 @@ BarBlock {
 
       Text {
         id: tipLabel
-        anchors.fill: parent
-        anchors.margins: 10
-        text: count > 0 ? `Updates: ${count}` : "No updates"
+        anchors.centerIn: parent
+        textFormat: Text.PlainText
+        text: "Left: Update system\nRight: Show list"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap
