@@ -155,11 +155,12 @@ BarBlock {
       onAnchoring: {
         const win = root.QsWindow?.window
         if (win) {
-          const gap = 3
-          listWindow.anchor.rect.y = (Globals.barPosition === "top")
-            ? (listWindow.anchor.window.height + gap)
-            : (-gap)
-          listWindow.anchor.rect.x = win.contentItem.mapFromItem(root, root.width / 2, 0).x
+          const gap = 5
+          const y = (Globals.barPosition === "top")
+            ? (root.height + gap)
+            : (-(root.height + gap))
+          const rect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+          listWindow.anchor.rect = rect
         }
       }
     }
@@ -225,6 +226,10 @@ BarBlock {
           "$HOME/.config/quickshell/Celona/scripts/run-in-terminal.sh $HOME/.config/quickshell/Celona/scripts/update-packages.sh"
         ]
         openInstall.running = true
+        // Immediately request a count refresh and start a short polling window
+        refreshNow()
+        quickRefreshTries = 0
+        quickRefreshTimer.running = true
       } else if (mouse.button === Qt.RightButton) {
         // Toggle updates menu popup (package list)
         toggleUpdatesMenu()
@@ -312,6 +317,22 @@ BarBlock {
     repeat: true
     running: true
     onTriggered: refreshNow()
+  }
+
+  // Short polling after user-triggered updates to reflect new count quickly
+  property int quickRefreshTries: 0
+  Timer {
+    id: quickRefreshTimer
+    interval: 10000 // 10s
+    repeat: true
+    running: false
+    onTriggered: {
+      refreshNow()
+      quickRefreshTries += 1
+      if (count === 0 || quickRefreshTries >= 24) { // up to ~4 minutes
+        quickRefreshTimer.running = false
+      }
+    }
   }
 
   Component.onCompleted: refreshNow()
