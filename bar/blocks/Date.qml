@@ -201,7 +201,7 @@ BarBlock {
         Row {
           spacing: 6
           Repeater {
-            model: ["KW","Mo","Di","Mi","Do","Fr","Sa","So"]
+            model: ["CW","Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
             delegate: Text {
               text: modelData
               width: 28
