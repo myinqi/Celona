@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import "../"
@@ -26,6 +27,8 @@ BarBlock {
   // extra metadata from wttr.in
   property string regionName: ""
   property string population: ""
+  // trigger flag for reading theme.json via FileView
+  property bool _themeRefreshRequested: false
 
   // Sizing similar to other blocks
   readonly property int pad: 6
@@ -35,6 +38,43 @@ BarBlock {
   // If the block becomes visible (e.g., recreated/moved in reorder), ensure we have data
   onVisibleChanged: {
     if (visible && (tempText === "--°" || loading)) {
+      reload()
+    }
+  }
+
+  // Read the latest weatherLocation from theme.json and refresh immediately
+  function refreshFromThemeAndReload() {
+    _themeRefreshRequested = true
+    if (themeView) themeView.reload()
+  }
+
+  // Lightweight reader for theme.json
+  FileView {
+    id: themeView
+    path: Qt.resolvedUrl("root:/theme.json")
+    onLoaded: {
+      if (!_themeRefreshRequested) return
+      _themeRefreshRequested = false
+      try {
+        const text = themeView.text()
+        const cfg = JSON.parse(text)
+        const loc = cfg && cfg.weatherLocation ? String(cfg.weatherLocation).trim() : ""
+        if (loc && loc.length > 0) {
+          root.lastLoc = loc
+          root.manualLoc = true
+          root.placeText = loc
+          _retryCount = 0
+          loading = true
+          fetchWeather(loc)
+        } else {
+          reload()
+        }
+      } catch (e) {
+        reload()
+      }
+    }
+    onLoadFailed: (error) => {
+      _themeRefreshRequested = false
       reload()
     }
   }
@@ -215,7 +255,8 @@ BarBlock {
       if (mouse.button === Qt.RightButton) {
         tip.visible = false
         if (debounceTimer.running) debounceTimer.stop();
-        _debounceBusy = false; _pendingReload = false; reload()
+        _debounceBusy = false; _pendingReload = false;
+        refreshFromThemeAndReload()
       }
     }
   }
