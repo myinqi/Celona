@@ -431,7 +431,7 @@ BarBlock {
           Text {
             anchors.fill: parent
             anchors.margins: 8
-            text: root.entries && root.entries.length === 0 ? "Keine Einträge" : "Keine Treffer"
+            text: root.entries && root.entries.length === 0 ? "no entries" : "no matches"
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
             opacity: 0.7
             verticalAlignment: Text.AlignVCenter
