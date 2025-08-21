@@ -29,6 +29,7 @@
     "Battery",
     "SystemTray",
     "Updates",
+    "Keybinds",
     "Network",
     "CPU",
     "GPU",
@@ -56,11 +57,13 @@
   "showClipboard": true,
   "showNotifications": true,
   "showSound": true,
+  "showKeybinds": true,
   "showBattery": false,
   "showDate": true,
   "showTime": true,
   "showPower": true,
   "showWeather": true,
   "weatherLocation": "90587, Obermichelbach, DE",
-  "weatherUnit": "C"
+  "weatherUnit": "C",
+  "keybindsPath": "~/.config/hypr/conf/keybindings/khrom.conf"
 }

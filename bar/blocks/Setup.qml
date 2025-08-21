@@ -84,7 +84,7 @@ BarBlock {
     id: setupPopup
     visible: false
     implicitWidth: 565
-    implicitHeight: 890
+    implicitHeight: 900
     color: "transparent"
 
     anchor {
@@ -325,6 +325,30 @@ BarBlock {
                   Label { text: "Clipboard"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showClipboard; onToggled: { Globals.showClipboard = checked; Globals.saveTheme() } }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
+                  Label { text: "Keybinds"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+                  Item { width: 0 }
+                  Switch {
+                    checked: Globals.showKeybinds
+                    onToggled: {
+                      Globals.showKeybinds = checked
+                      var order = Globals.rightModulesOrder || []
+                      var idx = order.indexOf("Keybinds")
+                      if (checked) {
+                        if (idx === -1) {
+                          Globals.rightModulesOrder = order.concat(["Keybinds"])
+                        }
+                      } else {
+                        if (idx !== -1) {
+                          order.splice(idx, 1)
+                          Globals.rightModulesOrder = order
+                        }
+                      }
+                      Globals.saveTheme()
+                    }
+                  }
                 }
                 RowLayout {
                   Layout.fillWidth: true

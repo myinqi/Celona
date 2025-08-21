@@ -67,6 +67,8 @@ Singleton {
   property bool showClipboard: true
   property bool showNotifications: true
   property bool showSound: true
+  // Keybinds cheatsheet
+  property bool showKeybinds: false
   property bool showBattery: true
   property bool showDate: true
   property bool showTime: true
@@ -79,7 +81,7 @@ Singleton {
   // Default matches current static order
   property var rightModulesOrder: [
     "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
-    "PowerProfiles","Clipboard","Notifications","Sound","Battery","Date","Time","Power"
+    "PowerProfiles","Clipboard","Keybinds","Notifications","Sound","Battery","Date","Time","Power"
   ]
 
   // Window title
@@ -93,6 +95,10 @@ Singleton {
   property string weatherUnit: "C"
   // Toggle for Weather module visibility
   property bool showWeather: false
+
+  // Keybinds cheatsheet: configurable path to Hyprland keybindings file
+  // Example: "/home/USER/.config/hypr/conf/keybindings/khrom.conf"
+  property string keybindsPath: ""
 
   // Reset all theme colors to their built-in defaults
   function resetTheme() {
@@ -157,6 +163,10 @@ Singleton {
     weatherLocation = ""
     weatherUnit = "C"
     showWeather = false
+    // Keybinds path
+    keybindsPath = ""
+    // Keybinds
+    showKeybinds = false
   }
 
   // Apply keys from a loaded theme object safely
@@ -203,6 +213,7 @@ Singleton {
     setIf("showClipboard")
     setIf("showNotifications")
     setIf("showSound")
+    setIf("showKeybinds")
     setIf("showBattery")
     setIf("showDate")
     setIf("showTime")
@@ -212,6 +223,7 @@ Singleton {
     setIf("weatherLocation")
     setIf("weatherUnit")
     setIf("showWeather")
+    setIf("keybindsPath")
   }
 
   // Load theme from file on startup handled by loadThemeProc.running
@@ -264,6 +276,7 @@ Singleton {
       showClipboard,
       showNotifications,
       showSound,
+      showKeybinds,
       showBattery,
       showDate,
       showTime,
@@ -271,7 +284,9 @@ Singleton {
       showWeather,
       // Weather (keep at end)
       weatherLocation,
-      weatherUnit
+      weatherUnit,
+      // Keybinds (path at end for clarity)
+      keybindsPath
     }
     const json = JSON.stringify(obj, null, 2)
     // Avoid complex shell escaping by writing base64 and decoding

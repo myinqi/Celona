@@ -271,7 +271,7 @@ BarBlock {
         id: tipLabel
         anchors.centerIn: parent
         textFormat: Text.PlainText
-        text: "Left: Update system\nRight: Show list"
+        text: "Left: Update\nRight: Show list"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap

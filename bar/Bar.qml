@@ -144,6 +144,7 @@ Scope {
             Component { id: sMemory; Blocks.Memory { visible: Globals.showMemory } }
             Component { id: sPowerProfiles; Blocks.PowerProfiles { visible: Globals.showPowerProfiles } }
             Component { id: sClipboard; Blocks.Clipboard { visible: Globals.showClipboard } }
+            Component { id: sKeybinds; Blocks.InfoKeybinds { visible: Globals.showKeybinds } }
             Component { id: sNotifications; Blocks.Notifications { visible: Globals.showNotifications } }
             Component { id: sSound; Blocks.Sound { visible: Globals.showSound } }
             Component { id: sWeather; Blocks.Weather { visible: Globals.showWeather } }
@@ -175,6 +176,7 @@ Scope {
                   modelData === "Memory" ? sMemory :
                   modelData === "PowerProfiles" ? sPowerProfiles :
                   modelData === "Clipboard" ? sClipboard :
+                  modelData === "Keybinds" ? sKeybinds :
                   modelData === "Notifications" ? sNotifications :
                   modelData === "Sound" ? sSound :
                   modelData === "Weather" ? sWeather :
@@ -227,6 +229,7 @@ Scope {
             Component { id: cMemory; Blocks.Memory { visible: Globals.showMemory } }
             Component { id: cPowerProfiles; Blocks.PowerProfiles { visible: Globals.showPowerProfiles } }
             Component { id: cClipboard; Blocks.Clipboard { visible: Globals.showClipboard } }
+            Component { id: cKeybinds; Blocks.InfoKeybinds { visible: Globals.showKeybinds } }
             Component { id: cNotifications; Blocks.Notifications { visible: Globals.showNotifications } }
             Component { id: cSound; Blocks.Sound { visible: Globals.showSound } }
             Component { id: cBattery; Blocks.Battery { visible: Globals.showBattery } }
@@ -346,6 +349,7 @@ Scope {
                     modWrap.modName === "Memory" ? cMemory :
                     modWrap.modName === "PowerProfiles" ? cPowerProfiles :
                     modWrap.modName === "Clipboard" ? cClipboard :
+                    modWrap.modName === "Keybinds" ? cKeybinds :
                     modWrap.modName === "Notifications" ? cNotifications :
                     modWrap.modName === "Sound" ? cSound :
                     modWrap.modName === "Battery" ? cBattery :
