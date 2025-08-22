@@ -2,12 +2,16 @@ pragma Singleton
 
 import Quickshell
 import Quickshell.Io
+import QtQml
 
 Singleton {
   // Global popup context used by Tooltip.qml
   property PopupContext popupContext: PopupContext {}
   readonly property string themeFile: "~/.config/quickshell/Celona/config.json"
+  readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
+  // internal flags for async operations
+  property bool _resetFromDefaultsRequested: false
 
   // THEME COLORS (defaults reflect current bar style)
   // Bar
@@ -80,6 +84,14 @@ Singleton {
   // Swap positions of WindowTitle and Workspaces (false: WindowTitle left, Workspaces center; true: Workspaces left, WindowTitle center)
   property bool swapTitleAndWorkspaces: false
 
+  // Matugen integration
+  // When true and colors.css exists in the Celona root, we apply mapped colors from it
+  property bool useMatugenColors: false
+  // Computed availability of colors.css
+  property bool matugenAvailable: false
+  // last applied colors.css content hash to detect changes
+  property string _matugenHash: ""
+
   // Custom order for right-side modules (used for dynamic rendering)
   // Default matches current static order
   property var rightModulesOrder: [
@@ -103,15 +115,87 @@ Singleton {
   // Example: "/home/USER/.config/hypr/conf/keybindings/khrom.conf"
   property string keybindsPath: ""
 
+  // --- Matugen colors handling ---
+  // Helper: convert rgba(r,g,b,a) or #RRGGBB to #AARRGGBB
+  function toArgb(hexOrRgba, alphaOverride) {
+    try {
+      const s = String(hexOrRgba).trim()
+      const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x))
+      const hx = n => (n.toString(16).padStart(2, '0'))
+      if (s.startsWith('rgba')) {
+        const m = s.match(/rgba\(([^)]+)\)/i)
+        if (!m) return '#ff000000'
+        const parts = m[1].split(',').map(p => p.trim())
+        let r = clamp(parseInt(parts[0], 10), 0, 255)
+        let g = clamp(parseInt(parts[1], 10), 0, 255)
+        let b = clamp(parseInt(parts[2], 10), 0, 255)
+        let a = parts[3] !== undefined ? clamp(Math.round(parseFloat(parts[3]) * 255), 0, 255) : 255
+        if (typeof alphaOverride === 'number') a = clamp(alphaOverride, 0, 255)
+        return '#' + hx(a) + hx(r) + hx(g) + hx(b)
+      }
+      if (s.startsWith('#') && s.length === 7) {
+        const a = (typeof alphaOverride === 'number') ? alphaOverride : 255
+        return '#' + hx(a) + s.slice(1)
+      }
+      return '#ff000000'
+    } catch (e) { return '#ff000000' }
+  }
+
+  function applyMatugenMap(map) {
+    // Map Matugen names to our config keys
+    // Fallbacks if a key is missing
+    const pick = (k, d) => (map[k] !== undefined ? map[k] : d)
+    const bg = pick('background', '#111318')
+    const onSurf = pick('on_surface', '#e2e2e9')
+    const onSurfVar = pick('on_surface_variant', '#c4c6d0')
+    const invPrim = pick('inverse_primary', '#415e91')
+    const hoverVar = pick('on_secondary_fixed_variant', '#3e4759')
+    const blur8 = pick('blur_background8', 'rgba(17,19,24,0.8)')
+
+    barBgColor = toArgb(blur8)
+    popupBg = toArgb(bg)
+    tooltipBg = toArgb(bg)
+    popupText = toArgb(onSurf)
+    tooltipText = toArgb(onSurf)
+    popupBorder = toArgb(invPrim)
+    tooltipBorder = toArgb(invPrim)
+    moduleValueColor = toArgb(onSurf)
+    windowTitleColor = toArgb(onSurf)
+    workspaceTextColor = toArgb(onSurf)
+    workspaceActiveBorder = toArgb(invPrim)
+    workspaceInactiveBorder = toArgb(invPrim)
+    barBorderColor = toArgb(invPrim)
+    moduleIconColor = toArgb(onSurfVar)
+    trayIconColor = toArgb(onSurfVar)
+    hoverHighlightColor = toArgb(hoverVar)
+    // active bg: inverse_primary with 0x40 alpha
+    workspaceActiveBg = toArgb(invPrim, 0x40)
+    workspaceInactiveBg = '#00000000'
+    // visualizer bars align with border/accent
+    visualizerBarColor = toArgb(invPrim)
+  }
+
+  function applyMatugenColors() {
+    if (!useMatugenColors) return
+    if (matugenView) matugenView.reload()
+  }
+
   // Reset all theme colors to their built-in defaults
   function resetTheme() {
+    // Prefer loading from external defaults file; fallback to built-in defaults
+    _resetFromDefaultsRequested = true
+    if (defaultsView) defaultsView.reload()
+  }
+
+  // Built-in defaults as a fallback when defaults file is missing/invalid
+  function applyBuiltinDefaults() {
     // Bar
     barBgColor = "#40000000"
     barBorderColor = "#00bee7"
     barPosition = "top"
     baseBarHeight = 38
-    barEdgeMargin = 0
-    barSideMargin = 0
+    barEdgeMargin = 6
+    barSideMargin = 12
     barHidden = false
     hoverHighlightColor = "#00bee7"
     // Modules
@@ -131,9 +215,22 @@ Singleton {
     popupBg = ""
     popupText = "#FFFFFF"
     popupBorder = ""
-    // SystemTray
+    // System tray
     trayIconColor = ""
-    // Module toggles
+    // Title & visualizer
+    windowTitleColor = "#00bee7"
+    // Visualizer bars
+    visualizerBarColor = "#00bee7"
+    useMatugenColors = false
+    // Weather
+    weatherLocation = ""
+    weatherUnit = "C"
+    showWeather = true
+    // Keybinds path
+    keybindsPath = ""
+    // Keybinds
+    showKeybinds = true
+    // Toggles
     showWelcome = true
     showWindowTitle = true
     showWorkspaces = true
@@ -157,12 +254,14 @@ Singleton {
     swapTitleAndWorkspaces = false
     rightModulesOrder = [
       "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
-      "PowerProfiles","Clipboard","Notifications","Sound","Battery","Date","Time","Power"
+      "PowerProfiles","Battery","Clipboard","Notifications","Sound","Weather",
+      "Date","Time","Keybinds","Power"
     ]
     // Window title
     windowTitleColor = "#00bee7"
     // Visualizer bars
     visualizerBarColor = "#00bee7"
+    useMatugenColors = false
     // Weather
     weatherLocation = ""
     weatherUnit = "C"
@@ -185,6 +284,7 @@ Singleton {
     setIf("barEdgeMargin")
     setIf("barSideMargin")
     setIf("barHidden")
+    setIf("useMatugenColors")
     setIf("hoverHighlightColor")
     setIf("moduleIconColor")
     setIf("moduleValueColor")
@@ -202,6 +302,7 @@ Singleton {
     setIf("trayIconColor")
     setIf("reorderMode")
     setIf("swapTitleAndWorkspaces")
+    setIf("useMatugenColors")
     setIf("rightModulesOrder")
     // toggles
     setIf("showWelcome")
@@ -236,13 +337,14 @@ Singleton {
   // Save current theme to file
   function saveTheme() {
     const obj = {
-      // Preferred top-level positioning keys
+      // Layout
       barPosition,
       baseBarHeight,
       barEdgeMargin,
-      // Secondary positioning
       barSideMargin,
       barHidden,
+      // Persist Matugen flag right after barHidden as requested
+      useMatugenColors,
       // Colors
       barBgColor,
       barBorderColor,
@@ -267,7 +369,7 @@ Singleton {
       reorderMode,
       swapTitleAndWorkspaces,
       rightModulesOrder,
-      // Module toggles
+      // toggles
       showWelcome,
       showWindowTitle,
       showWorkspaces,
@@ -320,10 +422,72 @@ Singleton {
         } catch (e) { /* ignore parse errors */ }
       }
       Globals._themeBuf = ""
+      if (Globals.useMatugenColors) Globals.applyMatugenColors()
     }
   }
 
   Process { id: saveThemeProc; running: false }
+
+  // Read colors.css if present
+  // Lightweight reader for defaults file
+  FileView {
+    id: defaultsView
+    path: defaultsFile
+    onLoaded: {
+      if (!_resetFromDefaultsRequested) return
+      _resetFromDefaultsRequested = false
+      try {
+        const text = defaultsView.text()
+        const obj = JSON.parse(text)
+        Globals.applyTheme(obj)
+        Globals.saveTheme()
+      } catch (e) {
+        Globals.applyBuiltinDefaults()
+      }
+    }
+    onLoadFailed: (error) => {
+      if (_resetFromDefaultsRequested) {
+        _resetFromDefaultsRequested = false
+        Globals.applyBuiltinDefaults()
+      }
+    }
+  }
+  FileView {
+    id: matugenView
+    path: Qt.resolvedUrl("root:/colors.css")
+    onLoaded: {
+      Globals.matugenAvailable = true
+      if (!Globals.useMatugenColors) return
+      try {
+        const text = matugenView.text()
+        const hash = Qt.md5(text)
+        const changed = (hash !== Globals._matugenHash)
+        const lines = text.split(/\r?\n/)
+        const map = {}
+        for (let raw of lines) {
+          const m = raw.match(/@define-color\s+([a-zA-Z0-9_\-]+)\s+([^;]+);/)
+          if (m) map[m[1]] = m[2].trim()
+        }
+        if (changed) {
+          Globals.applyMatugenMap(map)
+          Globals._matugenHash = hash
+          Globals.saveTheme()
+        }
+      } catch (e) { /* ignore */ }
+    }
+    onLoadFailed: (error) => { Globals.matugenAvailable = false }
+  }
+
+  // Watcher: periodically reload colors.css when Matugen is enabled to auto-apply on changes
+  Timer {
+    id: matugenWatch
+    interval: 3000
+    repeat: true
+    running: Globals.useMatugenColors && Globals.matugenAvailable
+    onTriggered: {
+      if (Globals.useMatugenColors) matugenView.reload()
+    }
+  }
 
   // Note: we don't use Component.onCompleted in Singleton context
 }

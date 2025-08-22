@@ -65,7 +65,7 @@
   "showTime": true,
   "showPower": true,
   "showWeather": true,
-  "weatherLocation": "90587, Obermichelbach, DE",
+  "weatherLocation": "Berlin, DE",
   "weatherUnit": "C",
-  "keybindsPath": "~/.config/hypr/conf/keybindings/khrom.conf"
+  "keybindsPath": ""
 }

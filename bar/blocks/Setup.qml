@@ -160,6 +160,41 @@ BarBlock {
             font.italic: true
             Layout.preferredWidth: 80 // left column width
           }
+          // Matugen toggle next to Colors label
+          RowLayout {
+            spacing: 6
+            visible: true
+            CheckBox {
+              id: matugenBox
+              text: "Use Matugen colors"
+              enabled: Globals.matugenAvailable
+              checked: Globals.useMatugenColors
+              onToggled: {
+                Globals.useMatugenColors = checked
+                if (checked) {
+                  Globals.applyMatugenColors()
+                } else {
+                  Globals.resetTheme()
+                }
+                Globals.saveTheme()
+              }
+              ToolTip {
+                id: matugenTip
+                visible: matugenBox.hovered
+                text: Globals.matugenAvailable ? (matugenBox.checked ? "Matugen colors applied from colors.css" : "Disable to reset to defaults") : "colors.css not found in project"
+                contentItem: Text {
+                  text: matugenTip.text
+                  color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+                }
+                background: Rectangle {
+                  color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                  border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                  border.width: 1
+                  radius: 6
+                }
+              }
+            }
+          }
           // Center spacer
           Item { Layout.fillWidth: true }
           Item { Layout.fillWidth: true }

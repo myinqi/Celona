@@ -362,7 +362,22 @@ BarBlock {
       xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
           if (root.debugWeather) console.log('[Weather] HTTP', xhr.status, url)
-          if (xhr.status >= 200 && xhr.status < 300) cb(xhr.responseText)
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const body = (xhr.responseText === null || xhr.responseText === undefined) ? "" : xhr.responseText
+            if (body.length === 0) {
+              if (typeof errCb === 'function') { errCb(xhr.status, url); return }
+              if (_retryCount < 2) { _retryCount++; if (retryTimer.running) retryTimer.stop(); retryTimer.start() }
+              else loading = false
+              return
+            }
+            try { cb(body) }
+            catch (e) {
+              if (root.debugWeather) console.log('[Weather] callback error', e)
+              if (typeof errCb === 'function') { errCb(-1, url); return }
+              if (_retryCount < 2) { _retryCount++; if (retryTimer.running) retryTimer.stop(); retryTimer.start() }
+              else loading = false
+            }
+          }
           else {
             if (typeof errCb === 'function') {
               errCb(xhr.status, url)
