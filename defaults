@@ -67,5 +67,5 @@
   "showWeather": true,
   "weatherLocation": "Berlin, DE",
   "weatherUnit": "C",
-  "keybindsPath": ""
+  "keybindsPath": "~/.config/hypr/conf/keybindings/default.conf"
 }
