@@ -323,7 +323,7 @@ BarBlock {
                         visible: String(Globals.keybindsPath || "").trim().length === 0
                         implicitWidth: noPathText.implicitWidth
                         implicitHeight: noPathText.implicitHeight
-                        Text { id: noPathText; text: "No keybinds file configured. Set 'keybindsPath' in theme.json to display the cheatsheet."; color: Globals.popupText !== "" ? Globals.popupText : "#bbb"; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; width: sheetContent.width }
+                        Text { id: noPathText; text: "No keybinds file configured. Set 'keybindsPath' in config.json to display the cheatsheet."; color: Globals.popupText !== "" ? Globals.popupText : "#bbb"; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; width: sheetContent.width }
                     }
                     // Loading placeholder when path set but no data yet
                     Item {

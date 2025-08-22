@@ -27,7 +27,7 @@ BarBlock {
   // extra metadata from wttr.in
   property string regionName: ""
   property string population: ""
-  // trigger flag for reading theme.json via FileView
+  // trigger flag for reading config.json via FileView
   property bool _themeRefreshRequested: false
 
   // Sizing similar to other blocks
@@ -42,16 +42,16 @@ BarBlock {
     }
   }
 
-  // Read the latest weatherLocation from theme.json and refresh immediately
+  // Read the latest weatherLocation from config.json and refresh immediately
   function refreshFromThemeAndReload() {
     _themeRefreshRequested = true
     if (themeView) themeView.reload()
   }
 
-  // Lightweight reader for theme.json
+  // Lightweight reader for config.json
   FileView {
     id: themeView
-    path: Qt.resolvedUrl("root:/theme.json")
+    path: Qt.resolvedUrl("root:/config.json")
     onLoaded: {
       if (!_themeRefreshRequested) return
       _themeRefreshRequested = false

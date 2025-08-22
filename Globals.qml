@@ -6,7 +6,7 @@ import Quickshell.Io
 Singleton {
   // Global popup context used by Tooltip.qml
   property PopupContext popupContext: PopupContext {}
-  readonly property string themeFile: "~/.config/quickshell/Celona/theme.json"
+  readonly property string themeFile: "~/.config/quickshell/Celona/config.json"
   property string _themeBuf: ""
 
   // THEME COLORS (defaults reflect current bar style)

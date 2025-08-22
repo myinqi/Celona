@@ -1,18 +1,18 @@
 #!/usr/bin/env sh
-# Print pending updates as lines. Uses aurHelper from theme.json when possible.
+# Print pending updates as lines. Uses aurHelper from config.json when possible.
 set -eu
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 ROOT_DIR="${SCRIPT_DIR%/scripts}"
-THEME_JSON="$ROOT_DIR/theme.json"
+CONFIG_JSON="$ROOT_DIR/config.json"
 
 read_aur_helper() {
-  if [ -f "$THEME_JSON" ]; then
+  if [ -f "$CONFIG_JSON" ]; then
     if command -v jq >/dev/null 2>&1; then
-      val=$(jq -r '."aurHelper" // empty' "$THEME_JSON" 2>/dev/null || true)
+      val=$(jq -r '."aurHelper" // empty' "$CONFIG_JSON" 2>/dev/null || true)
       [ "${val:-}" != "null" ] && [ -n "${val:-}" ] && { printf '%s\n' "$val"; return 0; }
     fi
-    val=$(sed -n 's/.*"aurHelper"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$THEME_JSON" | head -n1)
+    val=$(sed -n 's/.*"aurHelper"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$CONFIG_JSON" | head -n1)
     [ -n "${val:-}" ] && { printf '%s\n' "$val"; return 0; }
   fi
   return 1
