@@ -173,15 +173,19 @@ Scope {
               model: Globals.rightModulesOrder
               delegate: Loader {
                 id: staticLoader
+                // resolve if this module should be shown in static mode
+                property bool shown: staticRight.isShown(modelData)
+                visible: shown
+                active: shown
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: item ? (
+                Layout.preferredWidth: shown && item ? (
                   (item.Layout && item.Layout.preferredWidth && item.Layout.preferredWidth > 0) ? item.Layout.preferredWidth :
                   (item.implicitWidth && item.implicitWidth > 0) ? item.implicitWidth : (item.width || 24)
-                ) : 24
-                Layout.preferredHeight: item ? (
+                ) : 0
+                Layout.preferredHeight: shown && item ? (
                   (item.Layout && item.Layout.preferredHeight && item.Layout.preferredHeight > 0) ? item.Layout.preferredHeight :
                   (item.implicitHeight && item.implicitHeight > 0) ? item.implicitHeight : (item.height || 24)
-                ) : 24
+                ) : 0
                 sourceComponent: (
                   modelData === "SystemTray" ? sSystemTray :
                   modelData === "Updates" ? sUpdates :
@@ -207,6 +211,29 @@ Scope {
             }
 
             property var systemTrayRef: null
+            // map module name to its visibility toggle
+            function isShown(name) {
+              switch (name) {
+                case "SystemTray": return Globals.showSystemTray
+                case "Updates": return Globals.showUpdates
+                case "Network": return Globals.showNetwork
+                case "Bluetooth": return Globals.showBluetooth
+                case "CPU": return Globals.showCPU
+                case "GPU": return Globals.showGPU
+                case "Memory": return Globals.showMemory
+                case "PowerProfiles": return Globals.showPowerProfiles
+                case "Clipboard": return Globals.showClipboard
+                case "Keybinds": return Globals.showKeybinds
+                case "Notifications": return Globals.showNotifications
+                case "Sound": return Globals.showSound
+                case "Weather": return Globals.showWeather
+                case "Battery": return Globals.showBattery
+                case "Date": return Globals.showDate
+                case "Time": return Globals.showTime
+                case "Power": return Globals.showPower
+                default: return true
+              }
+            }
           }
 
           // Dynamic (reorder mode) — modules via rightModulesOrder with move handles
