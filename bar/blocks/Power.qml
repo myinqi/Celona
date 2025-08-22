@@ -21,7 +21,7 @@ BarBlock {
     symbolText: root.iconGlyph
   }
 
-  // Click handling: left -> wlogout script, right -> hyprlock
+  // Click handling: left -> power menu, right -> hyprlock
   MouseArea {
     anchors.fill: parent
     acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -34,7 +34,7 @@ BarBlock {
     onClicked: (mouse) => {
       tipWindow.visible = false
       if (mouse.button === Qt.LeftButton) {
-        powerProc.running = true
+        toggleMenu()
       } else if (mouse.button === Qt.RightButton) {
         lockProc.running = true
       }
@@ -85,14 +85,101 @@ BarBlock {
     }
   }
 
-  // Processes to trigger actions
-  Process {
-    id: powerProc
-    running: false
-    // Use sh -c so ~ expansion works
-    command: ["sh", "-c", "~/.config/ml4w/scripts/wlogout.sh"]
-    stdout: SplitParser { onRead: data => console.log(`[Power] OUT: ${String(data)}`) }
-    stderr: SplitParser { onRead: data => console.log(`[Power] ERR: ${String(data)}`) }
+  // Power menu popup (left-click)
+  PopupWindow {
+    id: menuWindow
+    visible: false
+    // Auto-size to content like Sound.qml tooltip
+    implicitWidth: contentCol.implicitWidth + 20
+    implicitHeight: contentCol.implicitHeight + 20
+    color: "transparent"
+
+    anchor {
+      window: root.QsWindow?.window
+      edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+      gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
+      onAnchoring: {
+        const win = root.QsWindow?.window
+        if (win) {
+          const gap = 5
+          const y = (Globals.barPosition === "top")
+            ? (root.height + gap)
+            : (-(root.height + gap))
+          menuWindow.anchor.rect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+        }
+      }
+    }
+
+    MouseArea {
+      anchors.fill: parent
+      hoverEnabled: true
+      onExited: { if (!containsMouse) closeTimer.start() }
+      onEntered: closeTimer.stop()
+
+      Timer { id: closeTimer; interval: 500; onTriggered: menuWindow.visible = false }
+
+      Rectangle {
+        anchors.fill: parent
+        color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+        border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+        border.width: 1
+        radius: 8
+
+        Column {
+          id: contentCol
+          anchors.left: parent.left
+          anchors.top: parent.top
+          anchors.margins: 10
+          spacing: 10
+
+          Repeater {
+            model: [
+              { icon: "󰤄", text: "Suspend", action: () => suspendProc.running = true },
+              { icon: "󰜉", text: "Reboot", action: () => rebootProc.running = true },
+              { icon: "󰐥", text: "Poweroff", action: () => poweroffProc.running = true },
+              { icon: "󰍃", text: "Logout", action: () => logoutProc.running = true }
+            ]
+
+            Rectangle {
+              implicitWidth: contentRow.implicitWidth + 20
+              implicitHeight: 35
+              color: mouseArea.containsMouse ? Globals.hoverHighlightColor : "transparent"
+              radius: 6
+
+              Row {
+                id: contentRow
+                anchors.left: parent.left
+                anchors.leftMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 8
+
+                Text {
+                  text: modelData.icon
+                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                  font.family: "Symbols Nerd Font Mono"
+                  font.pixelSize: 14
+                  verticalAlignment: Text.AlignVCenter
+                }
+                Text {
+                  text: modelData.text
+                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                  font.pixelSize: 12
+                  verticalAlignment: Text.AlignVCenter
+                  elide: Text.ElideRight
+                }
+              }
+
+              MouseArea {
+                id: mouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: { modelData.action(); menuWindow.visible = false }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   Process {
@@ -101,5 +188,45 @@ BarBlock {
     command: ["sh", "-c", "hyprlock"]
     stdout: SplitParser { onRead: data => console.log(`[Power] LOCK OUT: ${String(data)}`) }
     stderr: SplitParser { onRead: data => console.log(`[Power] LOCK ERR: ${String(data)}`) }
+  }
+
+  // Cross-DE/system power actions using loginctl if available, else systemctl
+  Process {
+    id: suspendProc
+    running: false
+    command: ["sh","-c","(command -v loginctl >/dev/null 2>&1 && loginctl suspend) || systemctl suspend"]
+    stdout: SplitParser { onRead: data => console.log(`[Power] SUSPEND OUT: ${String(data)}`) }
+    stderr: SplitParser { onRead: data => console.log(`[Power] SUSPEND ERR: ${String(data)}`) }
+  }
+  Process {
+    id: rebootProc
+    running: false
+    command: ["sh","-c","(command -v loginctl >/dev/null 2>&1 && loginctl reboot) || systemctl reboot"]
+    stdout: SplitParser { onRead: data => console.log(`[Power] REBOOT OUT: ${String(data)}`) }
+    stderr: SplitParser { onRead: data => console.log(`[Power] REBOOT ERR: ${String(data)}`) }
+  }
+  Process {
+    id: poweroffProc
+    running: false
+    command: ["sh","-c","(command -v loginctl >/dev/null 2>&1 && loginctl poweroff) || systemctl poweroff"]
+    stdout: SplitParser { onRead: data => console.log(`[Power] POWEROFF OUT: ${String(data)}`) }
+    stderr: SplitParser { onRead: data => console.log(`[Power] POWEROFF ERR: ${String(data)}`) }
+  }
+
+  Process {
+    id: logoutProc
+    running: false
+    command: ["sh","-c","if command -v loginctl >/dev/null 2>&1; then loginctl terminate-user $USER; else pkill -KILL -u $USER; fi"]
+    stdout: SplitParser { onRead: data => console.log(`[Power] LOGOUT OUT: ${String(data)}`) }
+    stderr: SplitParser { onRead: data => console.log(`[Power] LOGOUT ERR: ${String(data)}`) }
+  }
+
+  function toggleMenu() {
+    if (root.QsWindow?.window?.contentItem) {
+      const gap = 5
+      const y = (Globals.barPosition === "top") ? (root.height + gap) : (-(root.height + gap))
+      menuWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+      menuWindow.visible = !menuWindow.visible
+    }
   }
 }
