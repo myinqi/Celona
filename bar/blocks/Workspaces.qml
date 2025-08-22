@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Hyprland
 import "../utils" as Utils
 import "root:/"
 
@@ -21,7 +20,7 @@ Item {
     spacing: 5
 
     Repeater {
-      model: Utils.HyprlandUtils.workspaces
+      model: Utils.CompositorUtils.workspaces
 
       Rectangle {
         width: 35
@@ -33,7 +32,7 @@ Item {
 
         MouseArea {
           anchors.fill: parent
-          onClicked: Utils.HyprlandUtils.switchWorkspace(modelData.id)
+          onClicked: Utils.CompositorUtils.switchWorkspace(modelData.id)
         }
 
         Text {
@@ -48,7 +47,7 @@ Item {
     }
 
     Text {
-      visible: Utils.HyprlandUtils.workspaces.length === 0
+      visible: (Utils.CompositorUtils.workspaces.length || 0) === 0
       text: "No workspaces"
       color: Globals.workspaceTextColor
       font.pixelSize: 12
