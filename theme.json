@@ -24,12 +24,12 @@
   "windowTitleColor": "#cdd6f4",
   "visualizerBarColor": "#f5c2e7",
   "reorderMode": false,
+  "swapTitleAndWorkspaces": true,
   "rightModulesOrder": [
     "Bluetooth",
     "Battery",
     "SystemTray",
     "Updates",
-    "Keybinds",
     "Network",
     "CPU",
     "GPU",
@@ -41,6 +41,7 @@
     "Weather",
     "Date",
     "Time",
+    "Keybinds",
     "Power"
   ],
   "showWelcome": true,

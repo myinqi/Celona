@@ -93,21 +93,37 @@ Scope {
           Blocks.Welcome { id: welcomeBlkLeft; z: 3; visible: Globals.showWelcome }
           Blocks.Setup { id: setupBlkLeft }
 
+          // Left-side variant of WindowTitle (default when not swapped)
           Blocks.WindowTitle {
-            id: windowTitle
+            id: windowTitleLeft
             maxWidth: Math.max(200, barRect.width * 0.35)
             z: 1
             Layout.preferredWidth: implicitWidth
-            visible: Globals.showWindowTitle
+            visible: Globals.showWindowTitle && !Globals.swapTitleAndWorkspaces
+          }
+          // Left-side variant of Workspaces (when swapped)
+          Blocks.Workspaces {
+            id: workspacesLeft
+            Layout.alignment: Qt.AlignVCenter
+            visible: Globals.showWorkspaces && Globals.swapTitleAndWorkspaces
           }
         }
 
-        // Center: workspaces module
+        // Center: Workspaces (default) or WindowTitle (when swapped)
+        // Centered Workspaces when not swapped
         Blocks.Workspaces {
-          id: workspaces
+          id: workspacesCenter
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.verticalCenter: parent.verticalCenter
-          visible: Globals.showWorkspaces
+          visible: Globals.showWorkspaces && !Globals.swapTitleAndWorkspaces
+        }
+        // Centered WindowTitle when swapped
+        Blocks.WindowTitle {
+          id: windowTitleCenter
+          maxWidth: Math.max(200, barRect.width * 0.35)
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.verticalCenter: parent.verticalCenter
+          visible: Globals.showWindowTitle && Globals.swapTitleAndWorkspaces
         }
 
         // Right side: container + layout (allows DnD overlay without layout constraints)

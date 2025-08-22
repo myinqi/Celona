@@ -84,7 +84,7 @@ BarBlock {
     id: setupPopup
     visible: false
     implicitWidth: 565
-    implicitHeight: 900
+    implicitHeight: 950
     color: "transparent"
 
     anchor {
@@ -388,6 +388,7 @@ BarBlock {
                     }
                   }
                 }
+                // (moved) Swap Title & Workspaces toggle now lives under the Bar Position section
                 RowLayout {
                   Layout.fillWidth: true
                   Label { text: "Battery"; Layout.preferredWidth: 110; color: Globals.popupText }
@@ -608,7 +609,29 @@ BarBlock {
           }
         }
 
-        // Bar position control (top/bottom) — placed under colors/modules, before Reset/Close
+        
+
+        // Swap Title & Workspaces — aligned like Bar Position row
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "Title & Workspaces order:"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          }
+          Item { Layout.fillWidth: true }
+          Text {
+            text: swapSwitch.checked ? "Title center, WS left" : "Title left, WS center"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          }
+          Switch {
+            id: swapSwitch
+            checked: Globals.swapTitleAndWorkspaces
+            onToggled: { Globals.swapTitleAndWorkspaces = checked; Globals.saveTheme() }
+          }
+        }
+
+        // Bar position control (top/bottom)
         RowLayout {
           Layout.fillWidth: true
           spacing: 10
@@ -617,6 +640,10 @@ BarBlock {
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
           }
           Item { Layout.fillWidth: true }
+          Text {
+            text: posSwitch.checked ? "Bottom" : "Top"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          }
           Switch {
             id: posSwitch
             checked: Globals.barPosition === "bottom"
@@ -640,10 +667,6 @@ BarBlock {
                 radius: 6
               }
             }
-          }
-          Text {
-            text: posSwitch.checked ? "Bottom" : "Top"
-            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
           }
         }
 

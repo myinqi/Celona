@@ -77,6 +77,9 @@ Singleton {
   // Reorder mode: when true, bar shows drag UI and allows reordering directly
   property bool reorderMode: false
 
+  // Swap positions of WindowTitle and Workspaces (false: WindowTitle left, Workspaces center; true: Workspaces left, WindowTitle center)
+  property bool swapTitleAndWorkspaces: false
+
   // Custom order for right-side modules (used for dynamic rendering)
   // Default matches current static order
   property var rightModulesOrder: [
@@ -151,6 +154,7 @@ Singleton {
     showPower = true
     // Reorder defaults
     reorderMode = false
+    swapTitleAndWorkspaces = false
     rightModulesOrder = [
       "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
       "PowerProfiles","Clipboard","Notifications","Sound","Battery","Date","Time","Power"
@@ -197,6 +201,7 @@ Singleton {
     setIf("popupBorder")
     setIf("trayIconColor")
     setIf("reorderMode")
+    setIf("swapTitleAndWorkspaces")
     setIf("rightModulesOrder")
     // toggles
     setIf("showWelcome")
@@ -260,6 +265,7 @@ Singleton {
       visualizerBarColor,
       // Layout & behavior
       reorderMode,
+      swapTitleAndWorkspaces,
       rightModulesOrder,
       // Module toggles
       showWelcome,
