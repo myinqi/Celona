@@ -1,5 +1,5 @@
 import QtQuick
-import Quickshell.Hyprland
+import "../utils" as Utils
 import "root:/"
 
 Item {
@@ -15,7 +15,7 @@ Item {
 
   Text {
     id: title
-    text: Hyprland.activeToplevel ? Hyprland.activeToplevel.title : "Desktop"
+    text: Utils.CompositorUtils.activeTitle
     color: root.color
     font.bold: root.bold
     font.pixelSize: root.pixelSize

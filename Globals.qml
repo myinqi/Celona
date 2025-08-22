@@ -114,6 +114,8 @@ Singleton {
   // Keybinds cheatsheet: configurable path to Hyprland keybindings file
   // Example: "/home/USER/.config/hypr/conf/keybindings/khrom.conf"
   property string keybindsPath: ""
+  // Development: keybindsPath read from repo config.json (root), applied after theme load
+  property string _repoKeybindsPath: ""
 
   // --- Matugen colors handling ---
   // Helper: convert rgba(r,g,b,a) or #RRGGBB to #AARRGGBB
@@ -422,6 +424,10 @@ Singleton {
         } catch (e) { /* ignore parse errors */ }
       }
       Globals._themeBuf = ""
+      // After applying theme, override keybindsPath from repo config if provided
+      if (Globals._repoKeybindsPath && Globals._repoKeybindsPath.trim().length) {
+        Globals.keybindsPath = Globals._repoKeybindsPath
+      }
       if (Globals.useMatugenColors) Globals.applyMatugenColors()
     }
   }
@@ -451,6 +457,24 @@ Singleton {
         Globals.applyBuiltinDefaults()
       }
     }
+  }
+  // Development convenience: read keybindsPath from repository config.json if present
+  // Allows running directly from the repo without saving a theme first.
+  FileView {
+    id: repoConfigView
+    path: Qt.resolvedUrl("root:/config.json")
+    onLoaded: {
+      try {
+        const text = repoConfigView.text()
+        const obj = JSON.parse(text)
+        if (obj && obj.keybindsPath && String(obj.keybindsPath).trim().length) {
+          Globals._repoKeybindsPath = obj.keybindsPath
+          // If theme has already loaded, apply immediately
+          if (!loadThemeProc.running) Globals.keybindsPath = Globals._repoKeybindsPath
+        }
+      } catch (e) { /* ignore */ }
+    }
+    onLoadFailed: (error) => { /* ignore */ }
   }
   FileView {
     id: matugenView

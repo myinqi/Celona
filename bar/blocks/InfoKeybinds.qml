@@ -10,6 +10,10 @@ BarBlock {
     id: root
     // Parsed model shaped like: { children: [ { children: [ { name, keybinds: [ {mods:[], key:"", comment:""} ] } ] } ] }
     property var keybinds: ({ children: [ { children: [] } ] })
+    // Debug: which parser was used last (Hyprland or Niri)
+    property string _parserName: ""
+    // Debug: last resolved file path actually read
+    property string _resolvedPath: ""
     property real spacing: 20
     property real titleSpacing: 7
 
@@ -36,7 +40,7 @@ BarBlock {
         // "Shift": "",
     })
 
-    // --- Read and parse Hyprland keybinds file ---
+    // --- Read and parse keybinds (Hyprland .conf and Niri .kdl) ---
     property string bindsPath: "~/.config/hypr/conf/keybindings/khrom.conf"
 
     function parseHyprBinds(text) {
@@ -88,6 +92,138 @@ BarBlock {
         return { children: [ { children: sections } ] }
     }
 
+    function parseNiriKdlBinds(text) {
+        // Robust KDL parser for common Niri binding styles.
+        // Supports:
+        //   bindings { binding { modifiers ["Super"] key "Return" action "spawn" command "alacritty" } }
+        //   binding { ... } on a single line
+        //   Optional brace-less forms: bind modifiers [..] key ".." action ".." command ".."
+        const src = String(text || "")
+        const sections = []
+        let current = { name: "General", keybinds: [] }
+        const pushSection = () => { if (current.keybinds.length) sections.push(current) }
+
+        const unquote = (s) => {
+            if (!s) return ""
+            s = String(s).trim()
+            if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) return s.slice(1, -1)
+            return s
+        }
+        const parseArray = (s) => {
+            const m = s.match(/\[(.*)\]/)
+            if (!m) return []
+            const inside = m[1]
+            const quoted = inside.match(/(["'])(?:\\.|(?!\1).)*\1/g) || []
+            const unquoted = inside
+                .replace(/(["'])(?:\\.|(?!\1).)*\1/g, ' ') // blank out quoted to avoid double counting
+                .match(/[A-Za-z0-9:_+\-]+/g) || []
+            return [...quoted.map(unquote), ...unquoted]
+        }
+        const addBindFromChunk = (chunk) => {
+            if (!chunk) return
+            const mods = (() => {
+                let m
+                if ((m = chunk.match(/\bmodifiers\s*\[[^\]]*\]/))) return parseArray(m[0])
+                if ((m = chunk.match(/\bmods?\s*\[[^\]]*\]/))) return parseArray(m[0])
+                if ((m = chunk.match(/\bmodifiers\s+(["'][^"']+["'])/))) return [unquote(m[1])]
+                if ((m = chunk.match(/\bmods?\s+(["'][^"']+["'])/))) return [unquote(m[1])]
+                return []
+            })()
+            const key = (() => {
+                let m
+                if ((m = chunk.match(/\bkey\s+(["'][^"']+["'])/))) return unquote(m[1])
+                if ((m = chunk.match(/\bkey\s+([^\s\}]+)/))) return m[1]
+                return ""
+            })()
+            const action = (() => {
+                let m
+                if ((m = chunk.match(/\baction\s+(["'][^"']+["'])/))) return unquote(m[1])
+                if ((m = chunk.match(/\baction\s+([^\s\}]+)/))) return m[1]
+                return ""
+            })()
+            const command = (() => {
+                let m
+                if ((m = chunk.match(/\b(command|exec|spawn)\s+(["'][^"']+["'])/))) return unquote(m[2])
+                if ((m = chunk.match(/\b(command|exec|spawn)\s+([^\s\}]+)/))) return m[2]
+                return ""
+            })()
+            const comment = (() => {
+                const m = chunk.match(/\bcomment\s+(["'][^"']+["'])/)
+                return m ? unquote(m[1]) : (command || action)
+            })()
+            current.keybinds.push({ mods, key, comment })
+        }
+
+        // 1) Group by preceding line comments for sectioning
+        const lines = src.split(/\r?\n/)
+        for (let i = 0; i < lines.length; i++) {
+            const raw = lines[i]
+            const line = raw.trim()
+            if (!line) continue
+            if (line.startsWith("//") || line.startsWith("#")) {
+                const body = line.replace(/^\/{2,}|#+\s*/, "").trim()
+                if (body.length) {
+                    pushSection()
+                    current = { name: body, keybinds: [] }
+                }
+            }
+        }
+
+        // 2) Extract brace-delimited binding blocks (multi- or single-line)
+        const reBlock = /\b(bind|binding)\b[^\{]*\{([\s\S]*?)\}/g
+        let m
+        while ((m = reBlock.exec(src)) !== null) {
+            addBindFromChunk(m[2])
+        }
+
+        // 2b) Extract and parse `binds { ... }` blocks with bare entries
+        const reBindsBlock = /\bbinds\b[^\{]*\{([\s\S]*?)\}/g
+        let bm
+        while ((bm = reBindsBlock.exec(src)) !== null) {
+            const body = bm[1]
+            // First, capture any nested binding { ... } blocks if present
+            let nm
+            const nested = /\b(bind|binding)\b[^\{]*\{([\s\S]*?)\}/g
+            while ((nm = nested.exec(body)) !== null) addBindFromChunk(nm[2])
+            // Then, parse chord-style entries: Chord [props...] { inner; }
+            // Example: Mod+Return hotkey-overlay-title="..." { spawn "ghostty"; }
+            let em
+            // Capture: chord, props (before '{'), and inner block
+            const entryRe = /(^|\n)\s*([A-Za-z0-9+_:.-]+)([^\{]*)\{([^}]*)\}/g
+            while ((em = entryRe.exec(body)) !== null) {
+                const chord = em[2]
+                const props = em[3] || ""
+                const inner = em[4]
+                const parts = chord.split('+')
+                const key = parts.pop()
+                const mods = parts
+                // Prefer curated Niri overlay titles; if absent, skip to keep list tidy
+                let titleMatch = props.match(/hotkey-overlay-title\s*=\s*(\"[^\"]+\"|'[^']+'|[^\s\{]+)/)
+                if (!titleMatch) continue
+                const comment = unquote(titleMatch[1])
+                current.keybinds.push({ mods, key, comment })
+            }
+        }
+
+        // 3) Fallback: inline, brace-less forms per line
+        if (current.keybinds.length === 0) {
+            const reInline = /\b(bind|binding)\b[^\n\{]*/g
+            let mm
+            while ((mm = reInline.exec(src)) !== null) {
+                addBindFromChunk(mm[0])
+            }
+        }
+
+        if (current.keybinds.length) sections.push(current)
+        return { children: [ { children: sections } ] }
+    }
+
+    function parseKeybindsAuto(text, pathHint) {
+        const t = String(text || "")
+        // Only Hyprland parsing is supported for the popup
+        return parseHyprBinds(t)
+    }
+
     // Process to read file
     property string bindsBuf: ""
     // Track last known modification time to auto-refresh on change
@@ -98,10 +234,17 @@ BarBlock {
         const p = String(Globals.keybindsPath || "").trim()
         if (p.length === 0) return
         const esc = p.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
-        const buildCat = "p=\"" + esc + "\"; p=${p/#~/$HOME}; if [[ \"$p\" != /* ]]; then p=\"$HOME/$p\"; fi; cat \"$p\""
-        const buildStat = "p=\"" + esc + "\"; p=${p/#~/$HOME}; if [[ \"$p\" != /* ]]; then p=\"$HOME/$p\"; fi; stat -c %Y \"$p\" 2>/dev/null || echo 0"
+        const buildResolve = "p=\"" + esc + "\"; p=${p/#~/$HOME}; if [[ \"$p\" != /* ]]; then p=\"$HOME/$p\"; fi;"
+        const buildCat = buildResolve + " cat \"$p\""
+        const buildStat = buildResolve + " stat -c %Y \"$p\" 2>/dev/null || echo 0"
         bindsProc.command = ["bash", "-lc", buildCat]
         mtimeProc.command = ["bash", "-lc", buildStat]
+        // Also compute resolved path once
+        try {
+            const out = Qs.runSync(["bash","-lc", buildResolve + " printf '%s' \"$p\""])
+            if (out && out.stdout) root._resolvedPath = String(out.stdout).trim()
+        } catch (e) { root._resolvedPath = p }
+        console.log("InfoKeybinds: using path=", root._resolvedPath)
     }
     function _reconfigure() {
         const p = String(Globals.keybindsPath || "").trim()
@@ -113,11 +256,21 @@ BarBlock {
             keybinds = { children: [ { children: [] } ] }
             return
         }
+        // Under Niri (.kdl), do not read or parse; we show native overlay only
+        if (p.toLowerCase().endsWith('.kdl')) {
+            if (bindsProc.running) bindsProc.running = false
+            if (mtimeProc.running) mtimeProc.running = false
+            bindsBuf = ""
+            keybinds = { children: [ { children: [] } ] }
+            return
+        }
         _updateCommands()
         bindsBuf = ""
         if (bindsProc.running) bindsProc.running = false
         Qt.callLater(() => bindsProc.running = true)
         bindsMtime = -1
+        // Start modification watcher immediately
+        if (!mtimeProc.running) mtimeProc.running = true
     }
 
     // Extract just the filename part for display
@@ -132,18 +285,45 @@ BarBlock {
     }
     Process {
         id: bindsProc
-        command: ["bash", "-lc", "true"] // set dynamically from keybindsPath
-        running: true
-        stdout: SplitParser {
-            onRead: data => { root.bindsBuf += String(data) + "\n" }
-        }
-        onRunningChanged: {
-            if (!running) {
+        running: false
+        command: ["bash","-lc","cat /dev/null"] // updated dynamically
+        onRunningChanged: if (!running) {
+            if (root.bindsBuf.length > 0) {
                 try {
-                    root.keybinds = parseHyprBinds(String(root.bindsBuf))
+                    const text = String(root.bindsBuf)
+                    if (text.trim().length === 0) {
+                        // Ignore transient empty reads
+                        root.bindsBuf = ""
+                        return
+                    }
+                    // Popup supports Hyprland only
+                    root._parserName = "Hyprland"
+                    root.keybinds = parseKeybindsAuto(text, Globals.keybindsPath)
+                    // Debug counts
+                    try {
+                        const secs = (root.keybinds.children?.[0]?.children || [])
+                        let total = 0
+                        for (let s of secs) total += (s.keybinds?.length || 0)
+                        console.log(`InfoKeybinds: parser=${root._parserName}, sections=${secs.length}, binds=${total}`)
+                        console.log("InfoKeybinds: file head=", text.slice(0, 160).replace(/\n/g, ' ⏎ '))
+                    } catch (e2) {}
                 } catch (e) { console.log("InfoKeybinds parse error:", e) }
                 root.bindsBuf = ""
             }
+        }
+        stdout: SplitParser {
+            onRead: data => { root.bindsBuf += String(data) + "\n" }
+        }
+    }
+
+    // Niri: trigger built-in hotkey overlay
+    Process {
+        id: niriOverlayProc
+        running: false
+        command: ["bash","-lc","niri msg action show-hotkey-overlay"]
+        onRunningChanged: if (!running) {
+            // auto-reset so it can be clicked again
+            niriOverlayProc.running = false
         }
     }
 
@@ -157,7 +337,13 @@ BarBlock {
             onRead: data => {
                 const s = String(data).trim()
                 const n = parseInt(s)
-                if (!isNaN(n)) mtimeProc._latest = n
+                if (isNaN(n) || n === 0) return // ignore invalid or missing mtime
+                if (n !== mtimeProc._latest) {
+                    mtimeProc._latest = n
+                    // Re-read file
+                    root.bindsBuf = ""
+                    bindsProc.running = true
+                }
             }
         }
         onRunningChanged: {
@@ -306,15 +492,39 @@ BarBlock {
                     spacing: 10
 
                     // Header: show which file is parsed
-                    Item {
+                    RowLayout {
                         visible: String(Globals.keybindsPath || "").trim().length > 0
-                        implicitWidth: headerText.implicitWidth
-                        implicitHeight: headerText.implicitHeight
+                        spacing: 10
                         Text {
                             id: headerText
-                            text: "Keybinds parsed from " + _baseName(Globals.keybindsPath)
+                            text: "Keybinds parsed from " + _baseName(root._resolvedPath || Globals.keybindsPath) + (root._parserName ? ("  (" + root._parserName + ")") : "")
                             color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
                             font.pixelSize: 12
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                        // Niri helper: open built-in hotkey overlay
+                        Rectangle {
+                            visible: root._parserName === "Niri"
+                            color: "transparent"
+                            border.color: Globals.popupText !== "" ? Globals.popupText : "#aaa"
+                            radius: 4
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitHeight: 18
+                            implicitWidth: overlayText.implicitWidth + 10
+                            Text {
+                                id: overlayText
+                                anchors.centerIn: parent
+                                text: "Open Niri overlay"
+                                font.pixelSize: 11
+                                color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: {
+                                    if (!niriOverlayProc.running) niriOverlayProc.running = true
+                                }
+                            }
                         }
                     }
 
@@ -443,11 +653,17 @@ BarBlock {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton
-        onEntered: tipWindow.visible = true
+        onEntered: { tipWindow.visible = true }
         onExited: tipWindow.visible = false
         onClicked: (mouse) => {
             if (mouse.button === Qt.LeftButton) {
+                const isNiri = String(Globals.keybindsPath || "").toLowerCase().endsWith(".kdl")
                 tipWindow.visible = false
+                if (isNiri) {
+                    if (!niriOverlayProc.running) niriOverlayProc.running = true
+                    if (sheetWindow.visible) sheetWindow.visible = false
+                    return
+                }
                 sheetWindow.visible = !sheetWindow.visible
             }
         }

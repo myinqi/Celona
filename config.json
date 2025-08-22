@@ -67,5 +67,5 @@
   "showWeather": true,
   "weatherLocation": "90587, Obermichelbach, DE",
   "weatherUnit": "C",
-  "keybindsPath": "~/.config/hypr/conf/keybindings/khrom.conf"
+  "keybindsPath": "~/.config/niri/config.kdl"
 }

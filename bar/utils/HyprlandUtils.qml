@@ -22,6 +22,8 @@ Singleton {
     // Expose sorted workspaces only when Hyprland is available
     property var workspaces: isAvailable ? sortWorkspaces(Hyprland.workspaces.values) : []
     property int maxWorkspace: findMaxId()
+    // Active window title (defaults to "Desktop")
+    property string activeTitle: (isAvailable && Hyprland.activeToplevel) ? (Hyprland.activeToplevel.title || "Desktop") : "Desktop"
 
     function sortWorkspaces(ws) {
         return [...ws].sort((a, b) => a?.id - b?.id)

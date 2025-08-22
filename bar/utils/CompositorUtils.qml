@@ -19,6 +19,7 @@ Singleton {
 
   // Public API
   property var workspaces: []
+  property string activeTitle: "Desktop"
 
   function switchWorkspace(w) {
     if (comp.isHyprland) {
@@ -54,6 +55,9 @@ Singleton {
     function onWorkspacesChanged() {
       comp.workspaces = (Utils.HyprlandUtils.workspaces || []).map(ws => ({ id: ws.id, active: ws.active }))
     }
+    function onActiveTitleChanged() {
+      comp.activeTitle = Utils.HyprlandUtils.activeTitle || "Desktop"
+    }
   }
 
   // Initialize Hyprland state
@@ -63,6 +67,7 @@ Singleton {
     repeat: false
     onTriggered: {
       comp.workspaces = (Utils.HyprlandUtils.workspaces || []).map(ws => ({ id: ws.id, active: ws.active }))
+      comp.activeTitle = Utils.HyprlandUtils.activeTitle || "Desktop"
     }
   }
 
@@ -70,6 +75,7 @@ Singleton {
   // Focused output name (e.g., DP-3)
   property string _niriFocusedOutput: ""
   property string _niriWorkspacesRaw: ""
+  property string _niriFocusedWindowJson: ""
   // Event-stream availability
   property bool _niriEventsActive: false
 
@@ -88,6 +94,11 @@ Singleton {
       niriWorkspacesProc.command = ["bash", "-lc", "niri msg workspaces"]
       _niriWorkspacesRaw = ""
       niriWorkspacesProc.running = true
+
+      // Focused window as JSON for title
+      niriFocusedWinProc.command = ["bash", "-lc", "niri msg -j focused-window"]
+      _niriFocusedWindowJson = ""
+      niriFocusedWinProc.running = true
     }
   }
 
@@ -133,6 +144,29 @@ Singleton {
 
   Process { id: niriActionProc; running: false }
 
+  Process {
+    id: niriFocusedWinProc
+    running: false
+    stdout: SplitParser { onRead: (data) => { comp._niriFocusedWindowJson += String(data) } }
+    onRunningChanged: if (!running) {
+      try {
+        const txt = comp._niriFocusedWindowJson && comp._niriFocusedWindowJson.trim()
+        if (txt && txt[0] === '{') {
+          const obj = JSON.parse(txt)
+          const title = obj && (obj.title || obj.name)
+          if (title && typeof title === 'string') comp.activeTitle = title
+          else comp.activeTitle = "Desktop"
+        } else {
+          // If not JSON (older versions), fallback to plain parsing: first line
+          const first = (comp._niriFocusedWindowJson || "").split(/\r?\n/)[0]
+          comp.activeTitle = first && first.length ? first : "Desktop"
+        }
+      } catch (e) {
+        comp.activeTitle = "Desktop"
+      }
+    }
+  }
+
   // --- Niri event stream (debounced refresh) ---
   // Start the event stream shortly after load if on Niri
   Timer {
@@ -160,6 +194,10 @@ Singleton {
       niriWorkspacesProc.command = ["bash", "-lc", "niri msg workspaces"]
       _niriWorkspacesRaw = ""
       niriWorkspacesProc.running = true
+
+      niriFocusedWinProc.command = ["bash", "-lc", "niri msg -j focused-window"]
+      _niriFocusedWindowJson = ""
+      niriFocusedWinProc.running = true
     }
   }
 
