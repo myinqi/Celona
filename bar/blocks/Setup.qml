@@ -330,25 +330,7 @@ BarBlock {
                   Layout.fillWidth: true
                   Label { text: "Keybinds"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch {
-                    checked: Globals.showKeybinds
-                    onToggled: {
-                      Globals.showKeybinds = checked
-                      var order = Globals.rightModulesOrder || []
-                      var idx = order.indexOf("Keybinds")
-                      if (checked) {
-                        if (idx === -1) {
-                          Globals.rightModulesOrder = order.concat(["Keybinds"])
-                        }
-                      } else {
-                        if (idx !== -1) {
-                          order.splice(idx, 1)
-                          Globals.rightModulesOrder = order
-                        }
-                      }
-                      Globals.saveTheme()
-                    }
-                  }
+                  Switch { checked: Globals.showKeybinds; onToggled: { Globals.showKeybinds = checked; Globals.saveTheme() } }
                 }
                 RowLayout {
                   Layout.fillWidth: true
@@ -366,27 +348,7 @@ BarBlock {
                   Layout.fillWidth: true
                   Label { text: "Weather"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
-                  Switch {
-                    checked: Globals.showWeather
-                    onToggled: {
-                      Globals.showWeather = checked
-                      // Maintain module order list consistently
-                      var order = Globals.rightModulesOrder || []
-                      var idx = order.indexOf("Weather")
-                      if (checked) {
-                        if (idx === -1) {
-                          Globals.rightModulesOrder = order.concat(["Weather"])
-                        }
-                      } else {
-                        if (idx !== -1) {
-                          order.splice(idx, 1)
-                          Globals.rightModulesOrder = order
-                        }
-                      }
-                      // Always persist immediately
-                      Globals.saveTheme()
-                    }
-                  }
+                  Switch { checked: Globals.showWeather; onToggled: { Globals.showWeather = checked; Globals.saveTheme() } }
                 }
                 // (moved) Swap Title & Workspaces toggle now lives under the Bar Position section
                 RowLayout {

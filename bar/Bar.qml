@@ -281,6 +281,30 @@ Scope {
             Component { id: cPower; Blocks.Power { visible: Globals.showPower } }
             Component { id: cWeather; Blocks.Weather { visible: Globals.showWeather } }
 
+            // map module name to its visibility toggle (for reorder placeholders)
+            function isShown(name) {
+              switch (name) {
+                case "SystemTray": return Globals.showSystemTray
+                case "Updates": return Globals.showUpdates
+                case "Network": return Globals.showNetwork
+                case "Bluetooth": return Globals.showBluetooth
+                case "CPU": return Globals.showCPU
+                case "GPU": return Globals.showGPU
+                case "Memory": return Globals.showMemory
+                case "PowerProfiles": return Globals.showPowerProfiles
+                case "Clipboard": return Globals.showClipboard
+                case "Keybinds": return Globals.showKeybinds
+                case "Notifications": return Globals.showNotifications
+                case "Sound": return Globals.showSound
+                case "Battery": return Globals.showBattery
+                case "Date": return Globals.showDate
+                case "Time": return Globals.showTime
+                case "Power": return Globals.showPower
+                case "Weather": return Globals.showWeather
+                default: return true
+              }
+            }
+
             function move(arr, from, to) {
               if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr
               const a = Array.prototype.slice.call(arr)
@@ -298,6 +322,8 @@ Scope {
                 property int myIndex: index
                 // Access the dynamicRight container via the repeater's parent to avoid id-scope issues
                 property var host: rightRepeater ? rightRepeater.parent : null
+                // whether this module is currently shown (based on toggles)
+                property bool shown: host ? host.isShown(modName) : true
                 spacing: 4
                 Layout.alignment: Qt.AlignVCenter
 
@@ -361,11 +387,12 @@ Scope {
                     }
                   }
                 }
-
                 // Loaded module (acts as drag handle area)
                 Loader {
                   id: loader
                   z: 1
+                  visible: modWrap.shown
+                  active: true
                   Layout.alignment: Qt.AlignVCenter
                   Layout.preferredWidth: item ? (
                     (item.Layout && item.Layout.preferredWidth && item.Layout.preferredWidth > 0) ? item.Layout.preferredWidth :
@@ -441,22 +468,108 @@ Scope {
                       }
                     }
                     onCentroidChanged: {
-                      if (!active) return
-                      // compute target index over rightRepeater children using pointer x
-                      const pt = rightBlocks.mapFromItem(null, centroid.scenePosition.x, centroid.scenePosition.y)
-                      let dropX = pt.x
-                      let acc = 0
-                      let to = 0
-                      const N = Globals.rightModulesOrder.length
-                      for (let i = 0; i < N; i++) {
-                        const it = rightRepeater.itemAt(i)
-                        if (!it) continue
-                        const w = it.width || it.implicitWidth || 24
-                        if (dropX < acc + w / 2) { to = i; break }
-                        acc += w + dynamicRight.spacing
-                        to = i + 1
+                      if (active && modWrap.host) {
+                        // compute index under drag position
+                        const p = mapToItem(rightBlocks, centroid.position.x, centroid.position.y)
+                        let acc = 0
+                        for (let i = 0; i < rightRepeater.count; i++) {
+                          const it = rightRepeater.itemAt(i)
+                          if (!it) continue
+                          const w = it.width || it.implicitWidth || 24
+                          if (p.x < acc + w / 2) { modWrap.host.dragTo = i; return }
+                          acc += w + dynamicRight.spacing
+                        }
+                        modWrap.host.dragTo = rightRepeater.count
                       }
-                      if (modWrap.host) modWrap.host.dragTo = Math.max(0, Math.min(N, to))
+                    }
+                  }
+                }
+
+                // Placeholder when module is hidden — still draggable
+                Rectangle {
+                  id: placeholder
+                  visible: !modWrap.shown
+                  Layout.preferredWidth: 24
+                  Layout.preferredHeight: 24
+                  width: 24; height: 24
+                  radius: 6
+                  color: Qt.rgba(0.8, 0.8, 0.8, 0.18)
+                  border.color: barRect.border.color
+                  border.width: 1
+                  Drag.keys: ["right-mod"]
+                  Drag.mimeData: ({ "text/plain": modWrap.modName })
+                  Drag.supportedActions: Qt.MoveAction
+                  Drag.active: pdhandler.active
+                  Drag.hotSpot.x: width / 2
+                  Drag.hotSpot.y: height / 2
+                  DragHandler {
+                    id: pdhandler
+                    target: null
+                    acceptedButtons: Qt.LeftButton
+                    grabPermissions: PointerHandler.CanTakeOverFromAnything
+                    dragThreshold: 2
+                    onActiveChanged: {
+                      if (active) {
+                        if (modWrap.host) {
+                          modWrap.host.dragFrom = modWrap.myIndex
+                          modWrap.host.dragName = modWrap.modName
+                          modWrap.host.dragTo = modWrap.myIndex
+                        }
+                      } else {
+                        const from = modWrap.host ? modWrap.host.dragFrom : -1
+                        let to = modWrap.host ? modWrap.host.dragTo : -1
+                        if (from !== -1 && to !== -1) {
+                          if (from < to) to = to - 1
+                          if (from !== to) {
+                            const a = Array.prototype.slice.call(Globals.rightModulesOrder)
+                            const [it] = a.splice(from, 1)
+                            a.splice(Math.max(0, Math.min(a.length, to)), 0, it)
+                            Globals.rightModulesOrder = a
+                            console.log('[reorder][dnd][final] moved (ph)', modWrap.host ? modWrap.host.dragName : modWrap.modName, 'from', from, 'to', to)
+                          }
+                        }
+                        if (modWrap.host) {
+                          modWrap.host.dragFrom = -1
+                          modWrap.host.dragTo = -1
+                          modWrap.host.dragName = ""
+                        }
+                      }
+                    }
+                    onCentroidChanged: {
+                      if (active && modWrap.host) {
+                        const p = mapToItem(rightBlocks, centroid.position.x, centroid.position.y)
+                        let acc = 0
+                        for (let i = 0; i < rightRepeater.count; i++) {
+                          const it = rightRepeater.itemAt(i)
+                          if (!it) continue
+                          const w = it.width || it.implicitWidth || 24
+                          if (p.x < acc + w / 2) { modWrap.host.dragTo = i; return }
+                          acc += w + dynamicRight.spacing
+                        }
+                        modWrap.host.dragTo = rightRepeater.count
+                      }
+                    }
+                  }
+                }
+
+                // Left move control (hidden to avoid widening layout; DnD is primary)
+                Rectangle {
+                  visible: false
+                  z: 10
+                  Layout.preferredWidth: 18
+                  Layout.preferredHeight: (loader.item && (loader.item.implicitHeight || loader.item.height)) ? (loader.item.implicitHeight || loader.item.height) : 24
+                  width: 18; height: Layout.preferredHeight
+                  color: Qt.rgba(0,0,0,0)
+                  Text { anchors.centerIn: parent; text: "‹"; color: Globals.moduleIconColor }
+                  MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                      console.log('[reorder] left click on', modWrap.modName, 'idx', modWrap.myIndex)
+                      if (modWrap.myIndex > 0) {
+                        const next = modWrap.host.move(Globals.rightModulesOrder, modWrap.myIndex, modWrap.myIndex - 1)
+                        Globals.rightModulesOrder = next
+                        console.log('[reorder] new order', JSON.stringify(next))
+                      }
                     }
                   }
                 }
