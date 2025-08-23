@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "../"
 import "root:/"
+import "../utils" as Utils
 
 BarBlock {
   id: root
@@ -34,7 +35,11 @@ BarBlock {
     onClicked: (mouse) => {
       tipWindow.visible = false
       if (mouse.button === Qt.LeftButton) {
-        toggleMenu()
+        if (Utils.CompositorUtils.isHyprland) {
+          hyprWlogoutProc.running = true
+        } else {
+          toggleMenu()
+        }
       } else if (mouse.button === Qt.RightButton) {
         lockProc.running = true
       }
@@ -190,6 +195,15 @@ BarBlock {
     stderr: SplitParser { onRead: data => console.log(`[Power] LOCK ERR: ${String(data)}`) }
   }
 
+  // Hyprland: open external wlogout menu directly (bypass our popup)
+  Process {
+    id: hyprWlogoutProc
+    running: false
+    command: ["bash", "-lc", "~/.config/ml4w/scripts/wlogout.sh"]
+    stdout: SplitParser { onRead: data => console.log(`[Power] HYPR WLOGOUT OUT: ${String(data)}`) }
+    stderr: SplitParser { onRead: data => console.log(`[Power] HYPR WLOGOUT ERR: ${String(data)}`) }
+  }
+
   // Cross-DE/system power actions using loginctl if available, else systemctl
   Process {
     id: suspendProc
@@ -211,14 +225,6 @@ BarBlock {
     command: ["sh","-c","(command -v loginctl >/dev/null 2>&1 && loginctl poweroff) || systemctl poweroff"]
     stdout: SplitParser { onRead: data => console.log(`[Power] POWEROFF OUT: ${String(data)}`) }
     stderr: SplitParser { onRead: data => console.log(`[Power] POWEROFF ERR: ${String(data)}`) }
-  }
-
-  Process {
-    id: logoutProc
-    running: false
-    command: ["sh","-c","if command -v loginctl >/dev/null 2>&1; then loginctl terminate-user $USER; else pkill -KILL -u $USER; fi"]
-    stdout: SplitParser { onRead: data => console.log(`[Power] LOGOUT OUT: ${String(data)}`) }
-    stderr: SplitParser { onRead: data => console.log(`[Power] LOGOUT ERR: ${String(data)}`) }
   }
 
   function toggleMenu() {
