@@ -160,7 +160,7 @@ BarBlock {
 
                 Text {
                   text: modelData.icon
-                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                  color: Globals.moduleIconColor !== "" ? Globals.moduleIconColor : (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
                   font.family: "Symbols Nerd Font Mono"
                   font.pixelSize: 14
                   verticalAlignment: Text.AlignVCenter
