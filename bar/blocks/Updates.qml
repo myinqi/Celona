@@ -63,7 +63,13 @@ BarBlock {
   Process {
     id: listProc
     running: false
-    command: ["sh", "-c", "$HOME/.config/quickshell/Celona/scripts/list-updates.sh 2>/dev/null"]
+    // Use repo-local script path; convert file:// URL to a real path
+    command: [
+      "bash", "-lc",
+      "LIST_SH=\"" + Qt.resolvedUrl("root:/scripts/list-updates.sh") + "\"; " +
+      "LIST_SH=${LIST_SH#file://}; " +
+      "sh \"$LIST_SH\" 2>/dev/null"
+    ]
     stdout: SplitParser {
       onRead: data => {
         // Accumulate all chunks
@@ -221,9 +227,37 @@ BarBlock {
     onExited: tipWindow.visible = false
     onClicked: (mouse) => {
       if (mouse.button === Qt.LeftButton) {
+        // Launch via helper to leverage Hyprland exec and terminal probing
+        // Also log diagnostics (PATH, ghostty) for race conditions
+        const updSh = Qt.resolvedUrl("root:/scripts/update-packages.sh")
         openInstall.command = [
-          "sh", "-c",
-          "$HOME/.config/quickshell/Celona/scripts/run-in-terminal.sh $HOME/.config/quickshell/Celona/scripts/update-packages.sh"
+          "bash", "-lc",
+          "{ date; echo 'Left-click received'; echo \"PATH=$PATH\"; echo \"DISPLAY=${DISPLAY:-} WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-} XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-}\"; printf 'ghostty: '; command -v ghostty || echo 'not found'; } >> \"${XDG_RUNTIME_DIR:-/tmp}/celona-upd.log\" 2>&1; " +
+          "UPD_SH=\"" + updSh + "\"; UPD_SH=${UPD_SH#file://}; " +
+          "LOG=\"${XDG_RUNTIME_DIR:-/tmp}/celona-upd.log\"; " +
+          "if command -v hyprctl >/dev/null 2>&1 && [ -n \"${HYPRLAND_INSTANCE_SIGNATURE:-}\" ]; then \
+             if command -v ghostty >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+ghostty' >> \"$LOG\"; hyprctl dispatch exec -- ghostty -e bash -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v kitty >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+kitty' >> \"$LOG\"; hyprctl dispatch exec -- kitty sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v alacritty >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+alacritty' >> \"$LOG\"; hyprctl dispatch exec -- alacritty -e sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v wezterm >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+wezterm' >> \"$LOG\"; hyprctl dispatch exec -- wezterm start -- sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v foot >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+foot' >> \"$LOG\"; hyprctl dispatch exec -- foot sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v gnome-terminal >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+gnome-terminal' >> \"$LOG\"; hyprctl dispatch exec -- gnome-terminal -- sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v konsole >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+konsole' >> \"$LOG\"; hyprctl dispatch exec -- konsole -e sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v xfce4-terminal >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+xfce4-terminal' >> \"$LOG\"; hyprctl dispatch exec -- xfce4-terminal -e \"sh -lc '\\\\''\"$UPD_SH\"'\\\\''\" & disown; \
+             else hypr=0; fi; \
+           fi; \
+           if [ -z \"${hypr:-}\" ]; then \
+             if command -v ghostty >/dev/null 2>&1; then echo 'qml-direct: launch -> ghostty' >> \"$LOG\"; ghostty -e bash -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v kitty >/dev/null 2>&1; then echo 'qml-direct: launch -> kitty' >> \"$LOG\"; kitty sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v alacritty >/dev/null 2>&1; then echo 'qml-direct: launch -> alacritty' >> \"$LOG\"; alacritty -e sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v wezterm >/dev/null 2>&1; then echo 'qml-direct: launch -> wezterm' >> \"$LOG\"; wezterm start -- sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v foot >/dev/null 2>&1; then echo 'qml-direct: launch -> foot' >> \"$LOG\"; foot sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v gnome-terminal >/dev/null 2>&1; then echo 'qml-direct: launch -> gnome-terminal' >> \"$LOG\"; gnome-terminal -- sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v konsole >/dev/null 2>&1; then echo 'qml-direct: launch -> konsole' >> \"$LOG\"; konsole -e sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v xfce4-terminal >/dev/null 2>&1; then echo 'qml-direct: launch -> xfce4-terminal' >> \"$LOG\"; xfce4-terminal -e \"sh -lc '\\\\''\"$UPD_SH\"'\\\\''\" & disown; \
+             elif command -v xterm >/dev/null 2>&1; then echo 'qml-direct: launch -> xterm' >> \"$LOG\"; xterm -e sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             else echo 'qml-direct: no terminal found' >> \"$LOG\"; ( command -v notify-send >/dev/null 2>&1 && notify-send 'Celona Updates' 'Kein Terminal gefunden' ) >/dev/null 2>&1 || true; fi; \
+           fi"
         ]
         openInstall.running = true
         // Immediately request a count refresh and start a short polling window
@@ -283,7 +317,13 @@ BarBlock {
   Process {
     id: updatesProc
     running: false
-    command: ["sh", "-c", "~/.config/ml4w/scripts/updates.sh 2>/dev/null"]
+    // Prefer our list-updates script and count non-empty lines reliably; fallback to ml4w updates.sh
+    // Outputs a single integer so downstream parsing works across environments
+    command: ["bash", "-lc",
+      "LIST_SH=\"" + Qt.resolvedUrl("root:/scripts/list-updates.sh") + "\"; " +
+      "LIST_SH=${LIST_SH#file://}; " +
+      "( \"$LIST_SH\" 2>/dev/null | sed '/^$/d' | wc -l ) || ( ~/.config/ml4w/scripts/updates.sh 2>/dev/null || true )"
+    ]
     stdout: SplitParser {
       onRead: data => {
         raw = String(data)
@@ -335,5 +375,12 @@ BarBlock {
     }
   }
 
+  // Ensure initial refresh; sometimes early onCompleted can race, so we do one immediate and one delayed
   Component.onCompleted: refreshNow()
+  Timer {
+    interval: 1200
+    running: true
+    repeat: false
+    onTriggered: refreshNow()
+  }
 }
