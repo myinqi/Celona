@@ -227,6 +227,15 @@ BarBlock {
     stderr: SplitParser { onRead: data => console.log(`[Power] POWEROFF ERR: ${String(data)}`) }
   }
 
+  // Niri: quit compositor without confirmation and return to SDDM
+  Process {
+    id: logoutProc
+    running: false
+    command: ["bash","-lc","niri msg action quit --skip-confirmation || true"]
+    stdout: SplitParser { onRead: data => console.log(`[Power] LOGOUT OUT: ${String(data)}`) }
+    stderr: SplitParser { onRead: data => console.log(`[Power] LOGOUT ERR: ${String(data)}`) }
+  }
+
   function toggleMenu() {
     if (root.QsWindow?.window?.contentItem) {
       const gap = 5
