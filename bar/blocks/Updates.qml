@@ -236,14 +236,14 @@ BarBlock {
           "UPD_SH=\"" + updSh + "\"; UPD_SH=${UPD_SH#file://}; " +
           "LOG=\"${XDG_RUNTIME_DIR:-/tmp}/celona-upd.log\"; " +
           "if command -v hyprctl >/dev/null 2>&1 && [ -n \"${HYPRLAND_INSTANCE_SIGNATURE:-}\" ]; then \
-             if command -v ghostty >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+ghostty' >> \"$LOG\"; hyprctl dispatch exec -- ghostty -e bash -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
-             elif command -v kitty >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+kitty' >> \"$LOG\"; hyprctl dispatch exec -- kitty sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
-             elif command -v alacritty >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+alacritty' >> \"$LOG\"; hyprctl dispatch exec -- alacritty -e sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
-             elif command -v wezterm >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+wezterm' >> \"$LOG\"; hyprctl dispatch exec -- wezterm start -- sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
-             elif command -v foot >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+foot' >> \"$LOG\"; hyprctl dispatch exec -- foot sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
-             elif command -v gnome-terminal >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+gnome-terminal' >> \"$LOG\"; hyprctl dispatch exec -- gnome-terminal -- sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
-             elif command -v konsole >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+konsole' >> \"$LOG\"; hyprctl dispatch exec -- konsole -e sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
-             elif command -v xfce4-terminal >/dev/null 2>&1; then echo 'qml-direct: launch -> hyprctl+xfce4-terminal' >> \"$LOG\"; hyprctl dispatch exec -- xfce4-terminal -e \"sh -lc '\\\\''\"$UPD_SH\"'\\\\''\" & disown; \
+             if command -v ghostty >/dev/null 2>&1; then hypr=1; echo 'qml-direct: launch -> hyprctl+ghostty' >> \"$LOG\"; hyprctl dispatch exec -- ghostty -e bash -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v kitty >/dev/null 2>&1; then hypr=1; echo 'qml-direct: launch -> hyprctl+kitty' >> \"$LOG\"; hyprctl dispatch exec -- kitty sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v alacritty >/dev/null 2>&1; then hypr=1; echo 'qml-direct: launch -> hyprctl+alacritty' >> \"$LOG\"; hyprctl dispatch exec -- alacritty -e sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v wezterm >/dev/null 2>&1; then hypr=1; echo 'qml-direct: launch -> hyprctl+wezterm' >> \"$LOG\"; hyprctl dispatch exec -- wezterm start -- sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v foot >/dev/null 2>&1; then hypr=1; echo 'qml-direct: launch -> hyprctl+foot' >> \"$LOG\"; hyprctl dispatch exec -- foot sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v gnome-terminal >/dev/null 2>&1; then hypr=1; echo 'qml-direct: launch -> hyprctl+gnome-terminal' >> \"$LOG\"; hyprctl dispatch exec -- gnome-terminal -- sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v konsole >/dev/null 2>&1; then hypr=1; echo 'qml-direct: launch -> hyprctl+konsole' >> \"$LOG\"; hyprctl dispatch exec -- konsole -e sh -lc \"\\\"$UPD_SH\\\"; echo; echo '[Finished] Press Enter to close...'; read _\" & disown; \
+             elif command -v xfce4-terminal >/dev/null 2>&1; then hypr=1; echo 'qml-direct: launch -> hyprctl+xfce4-terminal' >> \"$LOG\"; hyprctl dispatch exec -- xfce4-terminal -e \"sh -lc '\\\\''\"$UPD_SH\"'\\\\''\" & disown; \
              else hypr=0; fi; \
            fi; \
            if [ -z \"${hypr:-}\" ]; then \
