@@ -111,7 +111,8 @@ Scope {
           Blocks.Barvisualizer {
             id: barvisualizer
             Layout.alignment: Qt.AlignVCenter
-            Layout.leftMargin: -8
+            // Cancel RowLayout spacing (12) + previous BarBlock rightPadding (5)
+            Layout.leftMargin: -90
             visible: Globals.showBarvisualizer
           }
         }
