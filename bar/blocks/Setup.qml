@@ -8,6 +8,8 @@ import "root:/"
 
 BarBlock {
   id: root
+  // Feature flag to use the new multi-page centered setup dialog
+  property bool useNewSetupUI: false
   property string currentMatugenMode: ""
 
   // Icon-only block using Nerd Font gear
@@ -18,6 +20,22 @@ BarBlock {
     symbolText: "" // gear
     symbolSpacing: 0
   }
+
+  // Read config flag from root:/config.json
+  FileView {
+    id: configView
+    path: Qt.resolvedUrl("root:/config.json")
+    onLoaded: {
+      try {
+        const txt = configView.text()
+        const obj = JSON.parse(txt)
+        root.useNewSetupUI = obj && obj.useNewSetupUI === true
+      } catch (e) { root.useNewSetupUI = false }
+    }
+  }
+
+  // New centered Setup dialog (created but only shown when flag is true)
+  SetupDialog { id: setupDialog }
 
   // Hover tooltip: "Bar Setup"
   MouseArea {
@@ -32,8 +50,21 @@ BarBlock {
     onClicked: (mouse) => {
       tipWindow.visible = false
       if (mouse.button === Qt.LeftButton) {
-        // Toggle like Sound.qml: clicking the icon again closes the popup
-        setupPopup.visible = !setupPopup.visible
+        // Toggle like Sound.qml: clicking the icon again closes the settings
+        if (root.useNewSetupUI) {
+          const win = root.QsWindow?.window
+          if (win) {
+            const w = setupDialog.implicitWidth
+            const h = setupDialog.implicitHeight
+            const x = Math.max(0, (win.width - w) / 2)
+            const y = Math.max(0, (win.height - h) / 2)
+            setupDialog.anchor.window = win
+            setupDialog.anchor.rect = Qt.rect(x, y, w, h)
+          }
+          setupDialog.visible = !setupDialog.visible
+        } else {
+          setupPopup.visible = !setupPopup.visible
+        }
       }
     }
   }
@@ -164,6 +195,7 @@ BarBlock {
 
       // Ensure initial mode file is read when the setup popup is created
       Component.onCompleted: {
+        if (configView) configView.reload()
         if (matugenModeView) matugenModeView.reload()
       }
 

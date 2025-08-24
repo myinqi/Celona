@@ -73,5 +73,6 @@
   "wallpaperStaticPath": "~/Bilder/animated backgrounds/draeonor.png",
   "wallpaperOutputs": ["*"],
   "mpvpaperOptions": "--loop --no-audio",
-  "wallpaperTool": "swww"
+  "wallpaperTool": "swww",
+  "useNewSetupUI": true
 }
