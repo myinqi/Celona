@@ -142,6 +142,7 @@ Item {
         clip: true
         contentWidth: flick.width
         contentHeight: editor.childrenRect.height
+        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOn }
 
       ColumnLayout {
         id: editor
