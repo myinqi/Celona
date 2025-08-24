@@ -139,6 +139,8 @@ Singleton {
   property string wallpaperTool: "swww"
   // Feature flag for new setup UI
   property bool useNewSetupUI: false
+  // Show bar visualizer module
+  property bool showBarvisualizer: false
 
   // --- Matugen colors handling ---
   // Helper: convert rgba(r,g,b,a) or #RRGGBB to #AARRGGBB
@@ -416,6 +418,7 @@ Singleton {
     setIf("wallpaperTool")
     // Setup UI
     setIf("useNewSetupUI")
+    setIf("showBarvisualizer")
   }
 
   // Load theme from file on startup handled by loadThemeProc.running
@@ -491,7 +494,8 @@ Singleton {
       mpvpaperOptions,
       wallpaperTool,
       // Setup UI flag
-      useNewSetupUI
+      useNewSetupUI,
+      showBarvisualizer
     }
     const json = JSON.stringify(obj, null, 2)
     // Avoid complex shell escaping by writing base64 and decoding

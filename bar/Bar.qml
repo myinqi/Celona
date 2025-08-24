@@ -107,6 +107,13 @@ Scope {
             Layout.alignment: Qt.AlignVCenter
             visible: Globals.showWorkspaces && Globals.swapTitleAndWorkspaces
           }
+          // Barvisualizer - always last in left area
+          Blocks.Barvisualizer {
+            id: barvisualizer
+            Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: -8
+            visible: Globals.showBarvisualizer
+          }
         }
 
         // Center: Workspaces (default) or WindowTitle (when swapped)

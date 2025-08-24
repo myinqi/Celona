@@ -383,6 +383,12 @@ BarBlock {
                 }
                 RowLayout {
                   Layout.fillWidth: true
+                  Label { text: "Barvisualizer"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+                  Item { width: 0 }
+                  Switch { checked: Globals.showBarvisualizer; onToggled: { Globals.showBarvisualizer = checked; Globals.saveTheme() } }
+                }
+                RowLayout {
+                  Layout.fillWidth: true
                   Label { text: "System Tray"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
                   Item { width: 0 }
                   Switch { checked: Globals.showSystemTray; onToggled: { Globals.showSystemTray = checked; Globals.saveTheme() } }
