@@ -33,48 +33,56 @@ Item {
       border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
       border.width: 1
 
-      RowLayout {
+      ColumnLayout {
         anchors.fill: parent
         anchors.margins: 8
         spacing: 10
 
-        Label {
-          text: "Animated Wallpaper:"
-          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-        }
-        Item { Layout.fillWidth: true }
-        Text {
-          text: wpSwitch.checked ? "On (mpvpaper)" : "Off (static)"
-          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-        }
-        Switch {
-          id: wpSwitch
-          checked: Globals.wallpaperAnimatedEnabled
-          onToggled: {
-            Globals.wallpaperAnimatedEnabled = checked
-            if (checked) {
-              Globals.startAnimatedWallpaper()
-            } else {
-              Globals.stopAnimatedAndSetStatic()
-            }
-            Globals.saveTheme()
+        // Top row: Animated wallpaper toggle aligned like module rows
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "Animated Wallpaper:"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
           }
-          ToolTip {
-            id: wpTip
-            visible: wpSwitch.hovered
-            text: wpSwitch.checked ? ("Stop to set static wallpaper via " + Globals.wallpaperTool) : "Start animated wallpaper via mpvpaper"
-            contentItem: Text {
-              text: wpTip.text
-              color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+          Item { Layout.fillWidth: true }
+          Text {
+            text: wpSwitch.checked ? "On (mpvpaper)" : "Off (static)"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          }
+          Switch {
+            id: wpSwitch
+            checked: Globals.wallpaperAnimatedEnabled
+            onToggled: {
+              Globals.wallpaperAnimatedEnabled = checked
+              if (checked) {
+                Globals.startAnimatedWallpaper()
+              } else {
+                Globals.stopAnimatedAndSetStatic()
+              }
+              Globals.saveTheme()
             }
-            background: Rectangle {
-              color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
-              border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
-              border.width: 1
-              radius: 6
+            ToolTip {
+              id: wpTip
+              visible: wpSwitch.hovered
+              text: wpSwitch.checked ? ("Stop to set static wallpaper via " + Globals.wallpaperTool) : "Start animated wallpaper via mpvpaper"
+              contentItem: Text {
+                text: wpTip.text
+                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+              }
+              background: Rectangle {
+                color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                border.width: 1
+                radius: 6
+              }
             }
           }
         }
+
+        // Spacer to keep top row at the top of the frame
+        Item { Layout.fillHeight: true }
       }
     }
   }
