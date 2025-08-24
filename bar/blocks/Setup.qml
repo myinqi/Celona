@@ -2,11 +2,13 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import "../"
 import "root:/"
 
 BarBlock {
   id: root
+  property string currentMatugenMode: ""
 
   // Icon-only block using Nerd Font gear
   content: BarText {
@@ -137,6 +139,33 @@ BarBlock {
       border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
       border.width: 1
       radius: 8
+
+      // Read current Matugen mode written by matugen-toggle.sh (repo-local)
+      FileView {
+        id: matugenModeView
+        path: Qt.resolvedUrl("root:/colors.mode")
+        onLoaded: {
+          try {
+            const t = String(matugenModeView.text()).trim()
+            root.currentMatugenMode = (t === "light" || t === "dark") ? t : ""
+          } catch (e) { root.currentMatugenMode = "" }
+        }
+      }
+      // Runner to toggle Matugen light/dark
+      Process {
+        id: matugenProc
+        running: false
+        onRunningChanged: if (!running) {
+          // Re-read mode and re-apply colors
+          if (matugenModeView) matugenModeView.reload()
+          if (Globals.useMatugenColors) Globals.applyMatugenColors()
+        }
+      }
+
+      // Ensure initial mode file is read when the setup popup is created
+      Component.onCompleted: {
+        if (matugenModeView) matugenModeView.reload()
+      }
 
       ColumnLayout {
         anchors.fill: parent
@@ -637,6 +666,7 @@ BarBlock {
                   Layout.maximumWidth: 30
                   MouseArea {
                     anchors.fill: parent
+                    enabled: !Globals.useMatugenColors
                     onClicked: {
                       const cur = editor.hexToRgba(editor.getColor(modelData.key))
                       const p = colorPicker.createObject(setupBody, {
@@ -916,13 +946,22 @@ BarBlock {
         RowLayout {
           Layout.fillWidth: true
           spacing: 8
-          // Reset links, Hide Bar (Game mode) Mitte, Close rechts
+          // Theme Mode toggle (visible only when Matugen is enabled), Hide Bar (Game mode) Mitte, Close rechts
           Button {
-            text: "Reset"
-            onClicked: Globals.resetTheme()
+            id: themeModeBtn
+            visible: Globals.useMatugenColors
+            enabled: Globals.useMatugenColors && !matugenProc.running
+            text: "Theme Mode: " + (root.currentMatugenMode !== "" ? root.currentMatugenMode : (Globals.useMatugenColors ? "unknown" : "disabled"))
+            onClicked: {
+              // Optimistically reflect next mode in the label
+              let next = (root.currentMatugenMode === "light") ? "dark" : (root.currentMatugenMode === "dark" ? "light" : "dark")
+              root.currentMatugenMode = next
+              const scriptPath = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
+              matugenProc.command = ["bash", "-lc", '"' + scriptPath.replace(/"/g,'\\"') + '"']
+              matugenProc.running = true
+            }
             leftPadding: 12
             rightPadding: 12
-            // Themed label/background
             contentItem: Label {
               text: parent.text
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
