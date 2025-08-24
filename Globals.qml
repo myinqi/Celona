@@ -12,6 +12,8 @@ Singleton {
   property string _themeBuf: ""
   // internal flags for async operations
   property bool _resetFromDefaultsRequested: false
+  // when true, load defaults file but apply only color-related properties
+  property bool _resetColorsFromDefaultsRequested: false
 
   // THEME COLORS (defaults reflect current bar style)
   // Bar
@@ -239,6 +241,13 @@ Singleton {
     popupBorder = ""
     // System tray
     trayIconColor = ""
+  }
+
+  // Reset only COLOR-related properties from external defaults file (root:/defaults)
+  // Keeps layout, visibility, margins, etc. intact. Falls back to built-ins if load fails.
+  function resetColorsFromDefaults() {
+    _resetColorsFromDefaultsRequested = true
+    if (defaultsView) defaultsView.reload()
   }
 
   // Built-in defaults as a fallback when defaults file is missing/invalid
@@ -598,21 +607,58 @@ Singleton {
     id: defaultsView
     path: defaultsFile
     onLoaded: {
-      if (!_resetFromDefaultsRequested) return
-      _resetFromDefaultsRequested = false
+      if (!_resetFromDefaultsRequested && !_resetColorsFromDefaultsRequested) return
       try {
         const text = defaultsView.text()
         const obj = JSON.parse(text)
-        Globals.applyTheme(obj)
-        Globals.saveTheme()
+        if (_resetFromDefaultsRequested) {
+          _resetFromDefaultsRequested = false
+          Globals.applyTheme(obj)
+          Globals.saveTheme()
+        } else if (_resetColorsFromDefaultsRequested) {
+          _resetColorsFromDefaultsRequested = false
+          // apply only color-related keys when present
+          function setIf(k) { if (obj[k] !== undefined) Globals[k] = obj[k] }
+          setIf("barBgColor")
+          setIf("barBorderColor")
+          setIf("hoverHighlightColor")
+          setIf("moduleIconColor")
+          setIf("moduleValueColor")
+          setIf("windowTitleColor")
+          setIf("visualizerBarColor")
+          setIf("workspaceActiveBg")
+          setIf("workspaceActiveBorder")
+          setIf("workspaceInactiveBg")
+          setIf("workspaceInactiveBorder")
+          setIf("workspaceTextColor")
+          setIf("tooltipBg")
+          setIf("tooltipText")
+          setIf("tooltipBorder")
+          setIf("tooltipFontPixelSize")
+          setIf("tooltipFontFamily")
+          setIf("popupBg")
+          setIf("popupText")
+          setIf("popupBorder")
+          setIf("trayIconColor")
+          Globals.saveTheme()
+        }
       } catch (e) {
-        Globals.applyBuiltinDefaults()
+        if (_resetFromDefaultsRequested) {
+          _resetFromDefaultsRequested = false
+          Globals.applyBuiltinDefaults()
+        } else if (_resetColorsFromDefaultsRequested) {
+          _resetColorsFromDefaultsRequested = false
+          Globals.resetColorTheme()
+        }
       }
     }
     onLoadFailed: (error) => {
       if (_resetFromDefaultsRequested) {
         _resetFromDefaultsRequested = false
         Globals.applyBuiltinDefaults()
+      } else if (_resetColorsFromDefaultsRequested) {
+        _resetColorsFromDefaultsRequested = false
+        Globals.resetColorTheme()
       }
     }
   }

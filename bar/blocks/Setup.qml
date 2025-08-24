@@ -176,8 +176,8 @@ BarBlock {
                 if (checked) {
                   Globals.applyMatugenColors()
                 } else {
-                  // Only reset color-related properties; keep layout and visibility settings
-                  Globals.resetColorTheme()
+                  // Only reset color-related properties from defaults file; keep layout and visibility settings
+                  Globals.resetColorsFromDefaults()
                 }
                 Globals.saveTheme()
               }
