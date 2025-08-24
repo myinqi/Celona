@@ -531,7 +531,26 @@ Singleton {
   Process { id: saveThemeProc; running: false }
 
   // --- Wallpaper control processes ---
-  Process { id: wpProc; running: false }
+  // Single process used for wallpaper commands; we queue when busy
+  property string _wpQueuedScript: ""
+  Process {
+    id: wpProc
+    running: false
+    // Remove custom environment - inherit from parent shell completely
+    stdout: SplitParser {
+      onRead: (data) => console.log("[Wallpaper Process] stdout:", String(data))
+    }
+    stderr: SplitParser {
+      onRead: (data) => console.log("[Wallpaper Process] stderr:", String(data))
+    }
+    onExited: (exitCode) => console.log("[Wallpaper Process] exited with code:", exitCode)
+    onRunningChanged: if (!running && Globals._wpQueuedScript && Globals._wpQueuedScript.length) {
+      const next = Globals._wpQueuedScript
+      Globals._wpQueuedScript = ""
+      wpProc.command = ["bash", "-lc", next]
+      wpProc.running = true
+    }
+  }
 
   // Start animated wallpaper with mpvpaper for configured outputs
   function startAnimatedWallpaper() {
@@ -551,8 +570,14 @@ Singleton {
       if (!o) continue
       script += "nohup mpvpaper -o \"$opts\" \"" + o.replace(/"/g, '\\"') + "\" \"$vid\" >/dev/null 2>&1 &\n"
     }
-    wpProc.command = ["bash", "-lc", script]
-    wpProc.running = true
+    // Debug: log the script being executed
+    console.log("[Wallpaper] Executing script:", script)
+    if (wpProc.running) {
+      Globals._wpQueuedScript = script
+    } else {
+      wpProc.command = ["bash", "-lc", script]
+      wpProc.running = true
+    }
   }
 
   // Stop mpvpaper and set static wallpaper via selected tool
@@ -561,24 +586,13 @@ Singleton {
     const outs = Array.isArray(wallpaperOutputs) ? wallpaperOutputs : []
     const tool = String(wallpaperTool || "swww").trim()
     // Always stop mpvpaper
-    let script = "pkill -x mpvpaper 2>/dev/null || true\n"
-    // Proceed if we have an image; swww branch can handle empty or wildcard outputs
+    let script = "pkill -x mpvpaper 2>/dev/null || true\n" +
+                 "sleep 0.2\n"
+    // Proceed if we have an image
     if (img) {
       if (tool === "swww") {
-        script += "command -v swww >/dev/null 2>&1 || exit 0\n"
-        // modern swww: ensure daemon is running
-        script += "pgrep -x swww-daemon >/dev/null 2>&1 || (nohup swww-daemon >/dev/null 2>&1 & sleep 0.2)\n"
-        script += "img=\\\"" + img.replace(/"/g, '\\\\"') + "\\\"\n"
-        script += "if [ \\\"${img#~/}\\\" != \\\"$img\\\" ]; then img=\\\"$HOME/${img#~/}\\\"; fi\n"
-        if (outs.length === 0 || outs.indexOf("*") !== -1) {
-          script += "swww img \\\"$img\\\" >/dev/null 2>&1 || true\n"
-        } else {
-          for (let i = 0; i < outs.length; i++) {
-            const o = String(outs[i])
-            if (!o) continue
-            script += "swww img \\\"$img\\\" --outputs \\\"" + o.replace(/"/g, '\\\\"') + "\\\" >/dev/null 2>&1 || true\n"
-          }
-        }
+        // Use swww directly - inherit shell environment completely
+        script += "swww img '" + img.replace(/'/g, "'\"'\"'") + "' --transition-type none\n"
       } else if (tool === "hyprpaper") {
         // Only applicable on Hyprland where hyprctl is available
         script += "command -v hyprctl >/dev/null 2>&1 || exit 0\n"
@@ -597,8 +611,14 @@ Singleton {
         // Unknown tool: no-op after stopping mpvpaper
       }
     }
-    wpProc.command = ["bash", "-lc", script]
-    wpProc.running = true
+    // Debug: log the script being executed
+    console.log("[Wallpaper Static] Executing script:", script)
+    if (wpProc.running) {
+      Globals._wpQueuedScript = script
+    } else {
+      wpProc.command = ["bash", "-lc", script]
+      wpProc.running = true
+    }
   }
 
   // Read colors.css if present
