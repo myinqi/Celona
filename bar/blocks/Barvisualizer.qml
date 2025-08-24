@@ -18,27 +18,36 @@ BarBlock {
     property string nowPlaying: ""
 
     content: Item {
-        implicitWidth: noteIcon.implicitWidth + 4 + vizArea.width
-        implicitHeight: Globals.baseBarHeight
+        // Ensure content aligns to the very start of the BarBlock
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: iconWrap.width + 4 + vizArea.width
+        implicitHeight: 26
         
-        // Music note icon
-        BarText {
-            id: noteIcon
+        // Music note icon (BarText centers itself; wrap it so we can left-align)
+        Item {
+            id: iconWrap
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            mainFont: "JetBrains Mono Nerd Font"
-            symbolFont: "Symbols Nerd Font Mono"
-            symbolText: "♪"
+            width: noteIcon.implicitWidth
+            height: parent.height
+            BarText {
+                id: noteIcon
+                anchors.centerIn: parent
+                mainFont: "JetBrains Mono Nerd Font"
+                symbolFont: "Symbols Nerd Font Mono"
+                symbolText: "♪"
+            }
         }
         
         // Compact visualizer area (60px)
         Rectangle {
             id: vizArea
-            anchors.left: noteIcon.right
+            anchors.left: iconWrap.right
             anchors.leftMargin: 4
             anchors.verticalCenter: parent.verticalCenter
-            width: 190
-            height: 26
+            width: 225
+            height: 28
             color: "transparent"
             
             // Error/missing cava message
@@ -83,7 +92,11 @@ BarBlock {
     PopupWindow {
         id: tipWindow
         visible: false
-        implicitWidth: tipLabel.implicitWidth + 20
+        // Allow longer text before elide: cap tooltip width to 55% of window width, max 700px
+        implicitWidth: Math.min(
+            Math.min(700, Math.floor((root.QsWindow?.window?.width || 1200) * 0.55)),
+            tipLabel.implicitWidth + 20
+        )
         implicitHeight: tipLabel.implicitHeight + 20
         color: "transparent"
 

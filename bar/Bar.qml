@@ -93,27 +93,35 @@ Scope {
           Blocks.Welcome { id: welcomeBlkLeft; z: 3; visible: Globals.showWelcome }
           Blocks.Setup { id: setupBlkLeft }
 
-          // Left-side variant of WindowTitle (default when not swapped)
-          Blocks.WindowTitle {
-            id: windowTitleLeft
-            maxWidth: Math.max(200, barRect.width * 0.35)
-            z: 1
-            Layout.preferredWidth: implicitWidth
-            visible: Globals.showWindowTitle && !Globals.swapTitleAndWorkspaces
-          }
-          // Left-side variant of Workspaces (when swapped)
-          Blocks.Workspaces {
-            id: workspacesLeft
+          // Title/Workspaces + Barvisualizer group with tight spacing
+          RowLayout {
+            id: titleGroup
             Layout.alignment: Qt.AlignVCenter
-            visible: Globals.showWorkspaces && Globals.swapTitleAndWorkspaces
-          }
-          // Barvisualizer - always last in left area
-          Blocks.Barvisualizer {
-            id: barvisualizer
-            Layout.alignment: Qt.AlignVCenter
-            // Cancel RowLayout spacing (12) + previous BarBlock rightPadding (5)
-            Layout.leftMargin: -90
-            visible: Globals.showBarvisualizer
+            // No leading gap before Barvisualizer when both left title/workspaces are hidden
+            spacing: (windowTitleLeft.visible || workspacesLeft.visible) ? 14 : 0
+
+            // Left-side variant of WindowTitle (default when not swapped)
+            Blocks.WindowTitle {
+              id: windowTitleLeft
+              maxWidth: Math.max(200, barRect.width * 0.35)
+              z: 1
+              Layout.preferredWidth: visible ? implicitWidth : 0
+              visible: Globals.showWindowTitle && !Globals.swapTitleAndWorkspaces
+            }
+            // Left-side variant of Workspaces (when swapped)
+            Blocks.Workspaces {
+              id: workspacesLeft
+              Layout.alignment: Qt.AlignVCenter
+              Layout.preferredWidth: visible ? implicitWidth : 0
+              visible: Globals.showWorkspaces && Globals.swapTitleAndWorkspaces
+            }
+            // Barvisualizer directly after title/workspaces with no extra outer spacing
+            Blocks.Barvisualizer {
+              id: barvisualizer
+              Layout.alignment: Qt.AlignVCenter
+              // No negative margins needed; group spacing controls gap
+              visible: Globals.showBarvisualizer
+            }
           }
         }
 
