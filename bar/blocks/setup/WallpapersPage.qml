@@ -112,6 +112,7 @@ Item {
               Globals.wallpaperStaticPath = staticPathField.text
               // Force static apply: turn off animated and set static now
               Globals.wallpaperAnimatedEnabled = false
+              wpSwitch.checked = false  // Update UI switch
               Globals.stopAnimatedAndSetStatic()
               Globals.saveTheme()
             }

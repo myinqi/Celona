@@ -11,23 +11,52 @@ PopupWindow {
   id: dialog
   visible: false
   color: "transparent"
+  // Item in the bar to which this dialog should align (e.g., the Setup block root)
+  property Item anchorItem
 
-  // Centered on screen
+  // Dialog size
   implicitWidth: 820
   implicitHeight: 560
 
-  // Attach to window and position in the center safely
+  // Attach to window and position like the old Setup popup (right section, offset from bar)
   anchor {
     window: dialog.QsWindow?.window
+    edges: Globals.barPosition === "top" ? Edges.Top : Edges.Bottom
+    gravity: Globals.barPosition === "top" ? Edges.Bottom : Edges.Top
     onAnchoring: {
       const win = dialog.QsWindow?.window
-      if (win) {
-        const w = dialog.implicitWidth
-        const h = dialog.implicitHeight
-        const x = Math.max(0, (win.width - w) / 2)
-        const y = Math.max(0, (win.height - h) / 2)
-        dialog.anchor.rect = Qt.rect(x, y, w, h)
-      }
+      if (!win || !dialog.anchorItem) return
+      const gap = 6
+      const yLocal = (Globals.barPosition === "top")
+        ? (dialog.anchorItem.height + gap)
+        : (-(dialog.implicitHeight + gap))
+      const xLocal = -(dialog.implicitWidth - dialog.anchorItem.width) / 2
+      const rect = win.contentItem.mapFromItem(dialog.anchorItem, xLocal, yLocal, dialog.implicitWidth, dialog.implicitHeight)
+      dialog.anchor.rect = rect
+    }
+  }
+
+  // Re-anchor on show and when size changes
+  function reanchor() {
+    const win = dialog.QsWindow?.window
+    if (!win || !dialog.anchorItem) return
+    const gap = 6
+    const yLocal = (Globals.barPosition === "top")
+      ? (dialog.anchorItem.height + gap)
+      : (-(dialog.implicitHeight + gap))
+    const xLocal = -(dialog.implicitWidth - dialog.anchorItem.width) / 2
+    const rect = win.contentItem.mapFromItem(dialog.anchorItem, xLocal, yLocal, dialog.implicitWidth, dialog.implicitHeight)
+    dialog.anchor.rect = rect
+  }
+
+  onVisibleChanged: if (visible) Qt.callLater(reanchor)
+  onImplicitHeightChanged: if (visible) reanchor()
+  onImplicitWidthChanged: if (visible) reanchor()
+
+  Connections {
+    target: Globals
+    function onBarPositionChanged() {
+      if (dialog.visible) dialog.visible = false
     }
   }
 

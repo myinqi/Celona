@@ -137,6 +137,8 @@ Singleton {
   property string mpvpaperOptions: "--loop --no-audio"
   // Tool to set static wallpaper; currently supports "swww"
   property string wallpaperTool: "swww"
+  // Feature flag for new setup UI
+  property bool useNewSetupUI: false
 
   // --- Matugen colors handling ---
   // Helper: convert rgba(r,g,b,a) or #RRGGBB to #AARRGGBB
@@ -412,6 +414,8 @@ Singleton {
     setIf("wallpaperOutputs")
     setIf("mpvpaperOptions")
     setIf("wallpaperTool")
+    // Setup UI
+    setIf("useNewSetupUI")
   }
 
   // Load theme from file on startup handled by loadThemeProc.running
@@ -478,15 +482,16 @@ Singleton {
       weatherLocation,
       weatherUnit,
       // Keybinds (path at end for clarity)
-      keybindsPath
-      ,
+      keybindsPath,
       // Wallpaper (keep at end)
       wallpaperAnimatedEnabled,
       wallpaperAnimatedPath,
       wallpaperStaticPath,
       wallpaperOutputs,
       mpvpaperOptions,
-      wallpaperTool
+      wallpaperTool,
+      // Setup UI flag
+      useNewSetupUI
     }
     const json = JSON.stringify(obj, null, 2)
     // Avoid complex shell escaping by writing base64 and decoding
@@ -584,7 +589,8 @@ Singleton {
     // Proceed if we have an image
     if (img) {
       if (tool === "swww") {
-        // Use swww directly - inherit shell environment completely
+        // Start swww-daemon if not running, then set wallpaper
+        script += "pgrep -x swww-daemon >/dev/null 2>&1 || (nohup swww-daemon >/dev/null 2>&1 & sleep 1)\n"
         script += "swww img '" + img.replace(/'/g, "'\"'\"'") + "' --transition-type none\n"
       } else if (tool === "hyprpaper") {
         // Only applicable on Hyprland where hyprctl is available

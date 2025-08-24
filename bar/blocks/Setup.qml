@@ -34,8 +34,8 @@ BarBlock {
     }
   }
 
-  // New centered Setup dialog (created but only shown when flag is true)
-  SetupDialog { id: setupDialog }
+  // New Setup dialog (positioned like old popup, anchored to this block)
+  SetupDialog { id: setupDialog; anchorItem: root }
 
   // Hover tooltip: "Bar Setup"
   MouseArea {
@@ -52,16 +52,8 @@ BarBlock {
       if (mouse.button === Qt.LeftButton) {
         // Toggle like Sound.qml: clicking the icon again closes the settings
         if (root.useNewSetupUI) {
-          const win = root.QsWindow?.window
-          if (win) {
-            const w = setupDialog.implicitWidth
-            const h = setupDialog.implicitHeight
-            const x = Math.max(0, (win.width - w) / 2)
-            const y = Math.max(0, (win.height - h) / 2)
-            setupDialog.anchor.window = win
-            setupDialog.anchor.rect = Qt.rect(x, y, w, h)
-          }
           setupDialog.visible = !setupDialog.visible
+          if (setupDialog.visible) Qt.callLater(() => setupDialog.reanchor && setupDialog.reanchor())
         } else {
           setupPopup.visible = !setupPopup.visible
         }
