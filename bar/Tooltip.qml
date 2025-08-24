@@ -83,17 +83,24 @@ LazyLoader {
           sourceComponent: contentDelegate
           active: true
           onLoaded: {
-            // Apply tooltip text color to nested items if set in Globals
+            // Apply tooltip text color and font settings to nested items
             const c = Globals.tooltipText
-            if (!c || c === "") return
-            function applyColor(it) {
+            function applyStyle(it) {
               if (!it) return
-              if ("color" in it) {
-                it.color = c
+              if ("color" in it && c && c !== "") { it.color = c }
+              // Apply font settings when available
+              if (it.font !== undefined) {
+                if (Globals.tooltipFontPixelSize > 0 && it.font.pixelSize !== undefined) {
+                  it.font.pixelSize = Globals.tooltipFontPixelSize
+                }
+                if (Globals.tooltipFontFamily !== "" && it.font.family !== undefined) {
+                  it.font.family = Globals.tooltipFontFamily
+                }
               }
               if (it.children) for (const ch of it.children) applyColor(ch)
             }
-            applyColor(content.item)
+            function applyColor(ch) { applyStyle(ch) }
+            applyStyle(content.item)
           }
         }
       }

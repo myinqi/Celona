@@ -95,6 +95,8 @@ BarBlock {
                 anchors.margins: 10
                 text: "Left: Volume menu\nRight: Visualizer"
                 color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+                font.pixelSize: Globals.tooltipFontPixelSize
+                font.family: Globals.tooltipFontFamily !== "" ? Globals.tooltipFontFamily : font.family
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.NoWrap
             }

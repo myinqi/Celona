@@ -131,6 +131,7 @@ BarBlock {
     }
 
     Rectangle {
+      id: setupBody
       anchors.fill: parent
       color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
       border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
@@ -162,19 +163,21 @@ BarBlock {
           }
           // Matugen toggle next to Colors label
           RowLayout {
-            spacing: 6
+            spacing: 0
             visible: true
             CheckBox {
               id: matugenBox
-              text: "Use Matugen colors"
+              text: ""
               enabled: Globals.matugenAvailable
               checked: Globals.useMatugenColors
+              Layout.alignment: Qt.AlignVCenter
               onToggled: {
                 Globals.useMatugenColors = checked
                 if (checked) {
                   Globals.applyMatugenColors()
                 } else {
-                  Globals.resetTheme()
+                  // Only reset color-related properties; keep layout and visibility settings
+                  Globals.resetColorTheme()
                 }
                 Globals.saveTheme()
               }
@@ -194,6 +197,18 @@ BarBlock {
                 }
               }
             }
+            Label {
+              text: "Use Matugen colors"
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              verticalAlignment: Text.AlignVCenter
+              elide: Text.ElideRight
+              Layout.alignment: Qt.AlignVCenter
+              MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: matugenBox.checked = !matugenBox.checked
+              }
+            }
           }
           // Center spacer
           Item { Layout.fillWidth: true }
@@ -209,12 +224,20 @@ BarBlock {
             id: reorderBtn
             text: Globals.reorderMode ? "Finish" : "Reorder"
             onClicked: Globals.reorderMode = !Globals.reorderMode
-            // enforce white label color for this button
+            leftPadding: 12
+            rightPadding: 12
+            // Themed label/background to ensure contrast in light/dark Matugen themes
             contentItem: Label {
               text: parent.text
-              color: "#FFFFFF"
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
               horizontalAlignment: Text.AlignHCenter
               verticalAlignment: Text.AlignVCenter
+            }
+            background: Rectangle {
+              radius: 6
+              color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button
+              border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+              border.width: 1
             }
             // Themed tooltip
             ToolTip {
@@ -423,7 +446,7 @@ BarBlock {
             // Small color picker popup shown when clicking the swatch
             Component {
               id: colorPicker
-              PopupWindow {
+              Item {
                 id: picker
                 property int r: 255
                 property int g: 255
@@ -433,11 +456,9 @@ BarBlock {
                 property var onApply
 
                 visible: false
-                color: "transparent"
-                implicitWidth: 380
-                implicitHeight: 320
-
-                anchor.window: setupPopup.QsWindow?.window
+                width: 380
+                height: 320
+                z: 1000
 
                 Rectangle {
                   anchors.fill: parent
@@ -495,14 +516,42 @@ BarBlock {
                       Item { Layout.fillWidth: true }
                       Button {
                         text: "set color"
+                        leftPadding: 12
+                        rightPadding: 12
                         onClicked: {
                           if (picker.onApply) picker.onApply(hexOut.text)
                           picker.visible = false
                         }
+                        contentItem: Label {
+                          text: parent.text
+                          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                          horizontalAlignment: Text.AlignHCenter
+                          verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                          radius: 6
+                          color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button
+                          border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+                          border.width: 1
+                        }
                       }
                       Button {
                         text: "cancel"
+                        leftPadding: 12
+                        rightPadding: 12
                         onClicked: picker.visible = false
+                        contentItem: Label {
+                          text: parent.text
+                          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                          horizontalAlignment: Text.AlignHCenter
+                          verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                          radius: 6
+                          color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button
+                          border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+                          border.width: 1
+                        }
                       }
                     }
                   }
@@ -559,12 +608,12 @@ BarBlock {
                   Rectangle {
                     anchors.fill: parent
                     radius: 4
-                    color: palette.active.window
+                    color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
                     border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
                   }
                   Label {
                     anchors.fill: parent
-                    anchors.margins: 2
+                    anchors.margins: 6
                     text: editor.getColor(modelData.key)
                     color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
                     horizontalAlignment: Text.AlignHCenter
@@ -590,10 +639,14 @@ BarBlock {
                     anchors.fill: parent
                     onClicked: {
                       const cur = editor.hexToRgba(editor.getColor(modelData.key))
-                      const p = colorPicker.createObject(setupPopup, {
+                      const p = colorPicker.createObject(setupBody, {
                         r: cur.r, g: cur.g, b: cur.b, a: cur.a,
                         onApply: function(hex) { Globals[modelData.key] = hex; Globals.saveTheme() }
                       })
+                      // Position picker below the swatch within the setup body, clamped to edges
+                      const pos = parent.mapToItem(setupBody, 0, parent.height)
+                      p.x = Math.max(6, Math.min(setupBody.width - p.width - 6, pos.x))
+                      p.y = Math.max(6, Math.min(setupBody.height - p.height - 6, pos.y))
                       p.visible = true
                     }
                   }
@@ -867,12 +920,20 @@ BarBlock {
           Button {
             text: "Reset"
             onClicked: Globals.resetTheme()
-            // enforce white label color for this button
+            leftPadding: 12
+            rightPadding: 12
+            // Themed label/background
             contentItem: Label {
               text: parent.text
-              color: "#FFFFFF"
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
               horizontalAlignment: Text.AlignHCenter
               verticalAlignment: Text.AlignVCenter
+            }
+            background: Rectangle {
+              radius: 6
+              color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button
+              border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+              border.width: 1
             }
           }
           Item { Layout.fillWidth: true }
@@ -915,12 +976,20 @@ BarBlock {
           Button {
             text: "Close"
             onClicked: setupPopup.visible = false
-            // enforce white label color for this button
+            leftPadding: 12
+            rightPadding: 12
+            // Themed label/background
             contentItem: Label {
               text: parent.text
-              color: "#FFFFFF"
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
               horizontalAlignment: Text.AlignHCenter
               verticalAlignment: Text.AlignVCenter
+            }
+            background: Rectangle {
+              radius: 6
+              color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button
+              border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+              border.width: 1
             }
           }
         }

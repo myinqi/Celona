@@ -45,6 +45,11 @@ Singleton {
   property string tooltipBg: ""
   property string tooltipText: "#FFFFFF"
   property string tooltipBorder: ""
+  // Tooltip typography
+  // When >0, applies to all tooltip texts; when 0, use component defaults
+  property int tooltipFontPixelSize: 12
+  // When non-empty, sets tooltip font family; when empty, use component defaults
+  property string tooltipFontFamily: ""
 
   // Popups (menus) (leave empty to fallback to component palette)
   property string popupBg: ""
@@ -193,6 +198,8 @@ Singleton {
 
   function applyMatugenColors() {
     if (!useMatugenColors) return
+    // Clear cached hash so a re-enable forces re-apply even if colors.css didn't change
+    _matugenHash = ""
     if (matugenView) matugenView.reload()
   }
 
@@ -201,6 +208,37 @@ Singleton {
     // Prefer loading from external defaults file; fallback to built-in defaults
     _resetFromDefaultsRequested = true
     if (defaultsView) defaultsView.reload()
+  }
+
+  // Reset only COLOR-related properties to built-in defaults.
+  // Keeps layout, visibility toggles, margins, etc. intact.
+  function resetColorTheme() {
+    // Bar colors
+    barBgColor = "#40000000"
+    barBorderColor = "#00bee7"
+    hoverHighlightColor = "#00bee7"
+    // Module/text colors
+    moduleIconColor = "#FFFFFF"
+    moduleValueColor = "#FFFFFF"
+    windowTitleColor = "#00bee7"
+    visualizerBarColor = "#00bee7"
+    // Workspaces
+    workspaceActiveBg = "#4000bee7"
+    workspaceActiveBorder = "#00bee7"
+    workspaceInactiveBg = "#00000000"
+    workspaceInactiveBorder = "#00bee7"
+    workspaceTextColor = "#FFFFFF"
+    // Tooltip/Popup
+    tooltipBg = ""
+    tooltipText = "#FFFFFF"
+    tooltipBorder = ""
+    tooltipFontPixelSize = 12
+    tooltipFontFamily = ""
+    popupBg = ""
+    popupText = "#FFFFFF"
+    popupBorder = ""
+    // System tray
+    trayIconColor = ""
   }
 
   // Built-in defaults as a fallback when defaults file is missing/invalid
@@ -227,6 +265,8 @@ Singleton {
     tooltipBg = ""
     tooltipText = "#FFFFFF"
     tooltipBorder = ""
+    tooltipFontPixelSize = 12
+    tooltipFontFamily = ""
     // Popups
     popupBg = ""
     popupText = "#FFFFFF"
@@ -320,6 +360,8 @@ Singleton {
     setIf("tooltipBg")
     setIf("tooltipText")
     setIf("tooltipBorder")
+    setIf("tooltipFontPixelSize")
+    setIf("tooltipFontFamily")
     setIf("popupBg")
     setIf("popupText")
     setIf("popupBorder")
@@ -390,6 +432,8 @@ Singleton {
       tooltipBg,
       tooltipText,
       tooltipBorder,
+      tooltipFontPixelSize,
+      tooltipFontFamily,
       popupBg,
       popupText,
       popupBorder,

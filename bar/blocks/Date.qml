@@ -51,6 +51,7 @@ BarBlock {
     implicitWidth: tipLabel.implicitWidth + 20
     implicitHeight: tipLabel.implicitHeight + 20
     color: "transparent"
+    
 
     anchor {
       window: text.QsWindow?.window
@@ -80,7 +81,7 @@ BarBlock {
         anchors.fill: parent
         anchors.margins: 10
         text: "Calendar"
-        color: "#ffffff"
+        color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap
       }
