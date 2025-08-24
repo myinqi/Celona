@@ -130,6 +130,16 @@ else
           "Ensure your matugen version writes colors.css to the current directory." >&2
 fi
 
+# Toggle GTK theme to match
+echo -e "${CYAN}Syncing GTK color scheme...${RESET}"
+if [[ "$MODE" == "dark" ]]; then
+  gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+  echo -e "${GREEN}GTK theme set to:${RESET} prefer-dark"
+else
+  gsettings set org.gnome.desktop.interface color-scheme 'default'
+  echo -e "${GREEN}GTK theme set to:${RESET} default (light)"
+fi
+
 # Persist new mode for next toggle
 echo "$MODE" > "$STATE_FILE"
 echo "$MODE" > "$MODE_FILE"
