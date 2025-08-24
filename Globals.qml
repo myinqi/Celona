@@ -537,13 +537,8 @@ Singleton {
     id: wpProc
     running: false
     // Remove custom environment - inherit from parent shell completely
-    stdout: SplitParser {
-      onRead: (data) => console.log("[Wallpaper Process] stdout:", String(data))
-    }
-    stderr: SplitParser {
-      onRead: (data) => console.log("[Wallpaper Process] stderr:", String(data))
-    }
-    onExited: (exitCode) => console.log("[Wallpaper Process] exited with code:", exitCode)
+    stdout: SplitParser { }
+    stderr: SplitParser { }
     onRunningChanged: if (!running && Globals._wpQueuedScript && Globals._wpQueuedScript.length) {
       const next = Globals._wpQueuedScript
       Globals._wpQueuedScript = ""
@@ -570,8 +565,6 @@ Singleton {
       if (!o) continue
       script += "nohup mpvpaper -o \"$opts\" \"" + o.replace(/"/g, '\\"') + "\" \"$vid\" >/dev/null 2>&1 &\n"
     }
-    // Debug: log the script being executed
-    console.log("[Wallpaper] Executing script:", script)
     if (wpProc.running) {
       Globals._wpQueuedScript = script
     } else {
@@ -611,8 +604,6 @@ Singleton {
         // Unknown tool: no-op after stopping mpvpaper
       }
     }
-    // Debug: log the script being executed
-    console.log("[Wallpaper Static] Executing script:", script)
     if (wpProc.running) {
       Globals._wpQueuedScript = script
     } else {

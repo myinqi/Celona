@@ -1,11 +1,12 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
+import Qt.labs.platform as Platform
 import Quickshell
 import Quickshell.Io
 import "../../"
 import "root:/"
-import QtQuick.Dialogs
 import QtCore
 
 Item {
@@ -98,9 +99,10 @@ Item {
             text: String(Globals.wallpaperStaticPath || "")
           }
           Button {
-            id: browseStaticBtn
-            text: "Browse…"
-            onClicked: staticFileDialog.open()
+            text: "Browse..."
+            onClicked: {
+              staticFileDialog.open()
+            }
           }
           Button {
             id: applyStaticBtn
@@ -138,9 +140,10 @@ Item {
             text: String(Globals.wallpaperAnimatedPath || "")
           }
           Button {
-            id: browseAnimatedBtn
-            text: "Browse…"
-            onClicked: animatedFileDialog.open()
+            text: "Browse..."
+            onClicked: {
+              animatedFileDialog.open()
+            }
           }
           Button {
             id: applyAnimatedBtn
@@ -165,53 +168,32 @@ Item {
 
         
 
-        // File dialogs
-        FileDialog {
+        // Native file dialogs (platform dialogs should open as floating windows)
+        Platform.FileDialog {
           id: staticFileDialog
           title: "Choose static wallpaper"
-          // Default to Home when no prior path exists to avoid empty watcher warnings
-          currentFolder: {
-            const p = String(Globals.wallpaperStaticPath || "")
-            if (p.startsWith("/")) {
-              const i = p.lastIndexOf("/")
-              return "file://" + (i > 0 ? p.substring(0, i) : "/")
-            }
-            const home = StandardPaths.writableLocation(StandardPaths.HomeLocation)
-            return home ? ("file://" + home) : "file:///"
-          }
-          nameFilters: [
-            "Images (*.png *.jpg *.jpeg *.webp *.bmp *.gif)",
-            "All files (*)"
-          ]
+          folder: (Globals.wallpaperStaticPath && Globals.wallpaperStaticPath.startsWith("/"))
+                    ? "file://" + Globals.wallpaperStaticPath.substring(0, Globals.wallpaperStaticPath.lastIndexOf("/"))
+                    : "file://" + Platform.StandardPaths.writableLocation(Platform.StandardPaths.PicturesLocation)
+          nameFilters: ["Images (*.png *.jpg *.jpeg *.webp *.bmp *.gif)", "All files (*)"]
           onAccepted: {
-            // selectedFile is a url; convert to local path
-            var p = selectedFile.toString()
-            if (p.startsWith("file://")) p = p.substring(7)
-            staticPathField.text = p
+            const list = files && files.length ? files : (file ? [file] : [])
+            if (list.length > 0)
+              staticPathField.text = list[0].toString().replace("file://", "")
           }
         }
-
-        FileDialog {
+        
+        Platform.FileDialog {
           id: animatedFileDialog
           title: "Choose animated wallpaper"
-          // Default to Home when no prior path exists to avoid empty watcher warnings
-          currentFolder: {
-            const p = String(Globals.wallpaperAnimatedPath || "")
-            if (p.startsWith("/")) {
-              const i = p.lastIndexOf("/")
-              return "file://" + (i > 0 ? p.substring(0, i) : "/")
-            }
-            const home = StandardPaths.writableLocation(StandardPaths.HomeLocation)
-            return home ? ("file://" + home) : "file:///"
-          }
-          nameFilters: [
-            "Videos (*.mp4 *.mkv *.webm *.mov *.avi *.m4v)",
-            "All files (*)"
-          ]
+          folder: (Globals.wallpaperAnimatedPath && Globals.wallpaperAnimatedPath.startsWith("/"))
+                    ? "file://" + Globals.wallpaperAnimatedPath.substring(0, Globals.wallpaperAnimatedPath.lastIndexOf("/"))
+                    : "file://" + Platform.StandardPaths.writableLocation(Platform.StandardPaths.MoviesLocation)
+          nameFilters: ["Videos (*.mp4 *.mkv *.webm *.mov *.avi *.m4v)", "All files (*)"]
           onAccepted: {
-            var p = selectedFile.toString()
-            if (p.startsWith("file://")) p = p.substring(7)
-            animatedPathField.text = p
+            const list = files && files.length ? files : (file ? [file] : [])
+            if (list.length > 0)
+              animatedPathField.text = list[0].toString().replace("file://", "")
           }
         }
 
