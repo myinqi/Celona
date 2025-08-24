@@ -14,27 +14,28 @@ Item {
 
   ColumnLayout {
     anchors.fill: parent
-    anchors.margins: 12
+    anchors.margins: 14
     spacing: 10
 
     Label {
       text: "Wallpaper"
       color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
       font.bold: true
-      font.pixelSize: 16
+      font.pixelSize: 17
     }
 
-    // Animated Wallpaper toggle
+    // Content (framed)
     Rectangle {
       Layout.fillWidth: true
-      radius: 8
+      Layout.fillHeight: true
+      radius: 6
       color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
       border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
       border.width: 1
 
       RowLayout {
         anchors.fill: parent
-        anchors.margins: 10
+        anchors.margins: 8
         spacing: 10
 
         Label {

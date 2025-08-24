@@ -43,14 +43,14 @@ Item {
 
   ColumnLayout {
     anchors.fill: parent
-    anchors.margins: 12
+    anchors.margins: 14
     spacing: 10
 
     Label {
       text: "Theme"
       color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
       font.bold: true
-      font.pixelSize: 16
+      font.pixelSize: 17
     }
 
     // Header row: Colors + Matugen toggle
@@ -103,21 +103,50 @@ Item {
           Layout.alignment: Qt.AlignVCenter
           MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: matugenBox.checked = !matugenBox.checked }
         }
+        // Theme Mode toggle moved here next to the checkbox
+        Button {
+          id: themeModeBtn
+          visible: Globals.useMatugenColors
+          enabled: Globals.useMatugenColors && !matugenProc.running
+          text: "Theme Mode: " + (page.currentMatugenMode !== "" ? page.currentMatugenMode : (Globals.useMatugenColors ? "unknown" : "disabled"))
+          onClicked: {
+            let next = (page.currentMatugenMode === "light") ? "dark" : (page.currentMatugenMode === "dark" ? "light" : "dark")
+            page.currentMatugenMode = next
+            const scriptPath = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
+            matugenProc.command = ["bash", "-lc", '"' + scriptPath.replace(/"/g,'\\"') + '"']
+            matugenProc.running = true
+          }
+          leftPadding: 12
+          rightPadding: 12
+          Layout.leftMargin: 80
+          contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+          background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
+        }
       }
       Item { Layout.fillWidth: true }
     }
 
-    // THEME EDITOR
-    Flickable {
+    // THEME EDITOR (framed)
+    Rectangle {
       Layout.fillWidth: true
       Layout.fillHeight: true
-      contentWidth: parent.width
-      clip: true
+      radius: 6
+      color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+      border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+      border.width: 1
+
+      Flickable {
+        id: flick
+        anchors.fill: parent
+        anchors.margins: 8
+        clip: true
+        contentWidth: flick.width
+        contentHeight: editor.childrenRect.height
 
       ColumnLayout {
         id: editor
         spacing: 10
-        width: parent.width
+        width: flick.width
 
         function hexToRgba(hex) {
           if (!hex || hex.length < 7) return { r: 255, g: 255, b: 255, a: 255 }
@@ -285,9 +314,9 @@ Item {
               color: editor.getColor(modelData.key)
               border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
               Layout.alignment: Qt.AlignVCenter
-              Layout.preferredWidth: 30
-              Layout.minimumWidth: 30
-              Layout.maximumWidth: 30
+              Layout.preferredWidth: 95
+              Layout.minimumWidth: 95
+              Layout.maximumWidth: 95
               MouseArea {
                 anchors.fill: parent
                 enabled: !Globals.useMatugenColors
@@ -311,28 +340,6 @@ Item {
       }
     }
 
-    // Footer: Theme Mode toggle (Matugen only)
-    RowLayout {
-      Layout.fillWidth: true
-      spacing: 8
-      Button {
-        id: themeModeBtn
-        visible: Globals.useMatugenColors
-        enabled: Globals.useMatugenColors && !matugenProc.running
-        text: "Theme Mode: " + (page.currentMatugenMode !== "" ? page.currentMatugenMode : (Globals.useMatugenColors ? "unknown" : "disabled"))
-        onClicked: {
-          let next = (page.currentMatugenMode === "light") ? "dark" : (page.currentMatugenMode === "dark" ? "light" : "dark")
-          page.currentMatugenMode = next
-          const scriptPath = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
-          matugenProc.command = ["bash", "-lc", '"' + scriptPath.replace(/"/g,'\\"') + '"']
-          matugenProc.running = true
-        }
-        leftPadding: 12
-        rightPadding: 12
-        contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-        background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
       }
-      Item { Layout.fillWidth: true }
-    }
   }
 }

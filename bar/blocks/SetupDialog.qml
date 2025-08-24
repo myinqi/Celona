@@ -86,7 +86,7 @@ PopupWindow {
             { name: "Theme", comp: "ThemePage" },
             { name: "Layout", comp: "LayoutPage" },
             { name: "Modules", comp: "ModulesPage" },
-            { name: "Wallpaper", comp: "AdvancedPage" },
+            { name: "Wallpaper", comp: "WallpapersPage" },
             { name: "System", comp: "SystemPage" }
           ]
           delegate: Rectangle {
@@ -126,7 +126,7 @@ PopupWindow {
           Pages.ThemePage {}
           Pages.LayoutPage {}
           Pages.ModulesPage {}
-          Pages.AdvancedPage {}
+          Pages.WallpapersPage {}
           Pages.SystemPage {}
         }
       }
