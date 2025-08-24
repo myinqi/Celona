@@ -117,6 +117,20 @@ Singleton {
   // Development: keybindsPath read from repo config.json (root), applied after theme load
   property string _repoKeybindsPath: ""
 
+  // --- Wallpaper control ---
+  // Toggle animated wallpaper (mpvpaper)
+  property bool wallpaperAnimatedEnabled: false
+  // Video file path for animated wallpaper
+  property string wallpaperAnimatedPath: ""
+  // Image file path for static wallpaper
+  property string wallpaperStaticPath: ""
+  // Outputs to target (e.g., ["DP-3", "HDMI-A-1"]) — explicit to work on Hyprland and Niri
+  property var wallpaperOutputs: []
+  // mpvpaper options (without surrounding -o quotes)
+  property string mpvpaperOptions: "--loop --no-audio"
+  // Tool to set static wallpaper; currently supports "swww"
+  property string wallpaperTool: "swww"
+
   // --- Matugen colors handling ---
   // Helper: convert rgba(r,g,b,a) or #RRGGBB to #AARRGGBB
   function toArgb(hexOrRgba, alphaOverride) {
@@ -272,6 +286,14 @@ Singleton {
     keybindsPath = ""
     // Keybinds
     showKeybinds = false
+
+    // Wallpaper defaults
+    wallpaperAnimatedEnabled = false
+    wallpaperAnimatedPath = ""
+    wallpaperStaticPath = ""
+    wallpaperOutputs = []
+    mpvpaperOptions = "--loop --no-audio"
+    wallpaperTool = "swww"
   }
 
   // Apply keys from a loaded theme object safely
@@ -332,6 +354,13 @@ Singleton {
     setIf("weatherUnit")
     setIf("showWeather")
     setIf("keybindsPath")
+    // Wallpaper
+    setIf("wallpaperAnimatedEnabled")
+    setIf("wallpaperAnimatedPath")
+    setIf("wallpaperStaticPath")
+    setIf("wallpaperOutputs")
+    setIf("mpvpaperOptions")
+    setIf("wallpaperTool")
   }
 
   // Load theme from file on startup handled by loadThemeProc.running
@@ -397,6 +426,14 @@ Singleton {
       weatherUnit,
       // Keybinds (path at end for clarity)
       keybindsPath
+      ,
+      // Wallpaper (keep at end)
+      wallpaperAnimatedEnabled,
+      wallpaperAnimatedPath,
+      wallpaperStaticPath,
+      wallpaperOutputs,
+      mpvpaperOptions,
+      wallpaperTool
     }
     const json = JSON.stringify(obj, null, 2)
     // Avoid complex shell escaping by writing base64 and decoding
@@ -429,10 +466,87 @@ Singleton {
         Globals.keybindsPath = Globals._repoKeybindsPath
       }
       if (Globals.useMatugenColors) Globals.applyMatugenColors()
+      // Apply wallpaper state on startup
+      if (Globals.wallpaperAnimatedEnabled === true) {
+        Globals.startAnimatedWallpaper()
+      } else {
+        Globals.stopAnimatedAndSetStatic()
+      }
     }
   }
 
   Process { id: saveThemeProc; running: false }
+
+  // --- Wallpaper control processes ---
+  Process { id: wpProc; running: false }
+
+  // Start animated wallpaper with mpvpaper for configured outputs
+  function startAnimatedWallpaper() {
+    const vid = String(wallpaperAnimatedPath || "").trim()
+    const outs = Array.isArray(wallpaperOutputs) ? wallpaperOutputs : []
+    if (!vid || outs.length === 0) return
+    const opts = String(mpvpaperOptions || "").trim()
+    // Build a small bash script: kill existing mpvpaper, then start one per output
+    let script = "set -e\n" +
+                 "pkill -x mpvpaper 2>/dev/null || true\n" +
+                 "sleep 0.2\n" +
+                 "vid=\"" + vid.replace(/"/g, '\\"') + "\"\n" +
+                 "if [ \"${vid#~/}\" != \"$vid\" ]; then vid=\"$HOME/${vid#~/}\"; fi\n" +
+                 "opts=\"" + opts.replace(/"/g, '\\"') + "\"\n"
+    for (let i = 0; i < outs.length; i++) {
+      const o = String(outs[i])
+      if (!o) continue
+      script += "nohup mpvpaper -o \"$opts\" \"" + o.replace(/"/g, '\\"') + "\" \"$vid\" >/dev/null 2>&1 &\n"
+    }
+    wpProc.command = ["bash", "-lc", script]
+    wpProc.running = true
+  }
+
+  // Stop mpvpaper and set static wallpaper via selected tool
+  function stopAnimatedAndSetStatic() {
+    const img = String(wallpaperStaticPath || "").trim()
+    const outs = Array.isArray(wallpaperOutputs) ? wallpaperOutputs : []
+    const tool = String(wallpaperTool || "swww").trim()
+    // Always stop mpvpaper
+    let script = "pkill -x mpvpaper 2>/dev/null || true\n"
+    // Proceed if we have an image; swww branch can handle empty or wildcard outputs
+    if (img) {
+      if (tool === "swww") {
+        script += "command -v swww >/dev/null 2>&1 || exit 0\n"
+        // modern swww: ensure daemon is running
+        script += "pgrep -x swww-daemon >/dev/null 2>&1 || (nohup swww-daemon >/dev/null 2>&1 & sleep 0.2)\n"
+        script += "img=\\\"" + img.replace(/"/g, '\\\\"') + "\\\"\n"
+        script += "if [ \\\"${img#~/}\\\" != \\\"$img\\\" ]; then img=\\\"$HOME/${img#~/}\\\"; fi\n"
+        if (outs.length === 0 || outs.indexOf("*") !== -1) {
+          script += "swww img \\\"$img\\\" >/dev/null 2>&1 || true\n"
+        } else {
+          for (let i = 0; i < outs.length; i++) {
+            const o = String(outs[i])
+            if (!o) continue
+            script += "swww img \\\"$img\\\" --outputs \\\"" + o.replace(/"/g, '\\\\"') + "\\\" >/dev/null 2>&1 || true\n"
+          }
+        }
+      } else if (tool === "hyprpaper") {
+        // Only applicable on Hyprland where hyprctl is available
+        script += "command -v hyprctl >/dev/null 2>&1 || exit 0\n"
+        // Ensure hyprpaper is running
+        script += "pgrep -x hyprpaper >/dev/null 2>&1 || (nohup hyprpaper >/dev/null 2>&1 & sleep 0.2)\n"
+        // Prepare image path and preload
+        script += "img=\"" + img.replace(/"/g, '\\"') + "\"\n"
+        script += "if [ \"${img#~/}\" != \"$img\" ]; then img=\"$HOME/${img#~/}\"; fi\n"
+        script += "hyprctl hyprpaper preload \"$img\" >/dev/null 2>&1 || true\n"
+        for (let i = 0; i < outs.length; i++) {
+          const o = String(outs[i])
+          if (!o) continue
+          script += "hyprctl hyprpaper wallpaper \"" + o.replace(/"/g, '\\"') + ",${img}\" >/dev/null 2>&1 || true\n"
+        }
+      } else {
+        // Unknown tool: no-op after stopping mpvpaper
+      }
+    }
+    wpProc.command = ["bash", "-lc", script]
+    wpProc.running = true
+  }
 
   // Read colors.css if present
   // Lightweight reader for defaults file
