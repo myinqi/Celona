@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import "../"
+import "../utils" as Utils
 import "root:/"
 
 BarBlock {
@@ -18,7 +19,8 @@ BarBlock {
   // Appearance
   // Use custom image instead of font glyph
   // Path relative to this file (bar/blocks -> bar/assets)
-  property url iconSource: "../assets/hyprland-icon.png"
+  // Dynamic compositor icon
+  property url iconSource: Utils.CompositorUtils.isHyprland ? "../assets/hyprland.svg" : "../assets/niri.svg"
   // Fine-tune visual alignment to match glyph-based icons
   property int iconSize: 20   // typical visual size matching text glyphs
   property int iconYOffset: 0 // nudge up/down if needed
@@ -52,10 +54,15 @@ BarBlock {
 
     onClicked: (mouse) => {
       tipWindow.visible = false
-      if (mouse.button === Qt.LeftButton) {
-        sidebarProc.running = true
-      } else if (mouse.button === Qt.RightButton) {
-        rofiProc.running = true
+      if (Utils.CompositorUtils.isHyprland) {
+        if (mouse.button === Qt.LeftButton) {
+          sidebarProc.running = true
+        } else if (mouse.button === Qt.RightButton) {
+          rofiProc.running = true
+        }
+      } else { // Niri
+        // Both left and right click start fuzzel
+        fuzzelProc.running = true
       }
     }
   }
@@ -96,7 +103,7 @@ BarBlock {
         id: tipLabel
         anchors.fill: parent
         anchors.margins: 10
-        text: "Left: Settings APP\nRight: Applauncher"
+        text: Utils.CompositorUtils.isHyprland ? "Left: Settings APP\nRight: Applauncher" : "Left: Fuzzel\nRight: Fuzzel"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap
@@ -117,5 +124,12 @@ BarBlock {
     id: rofiProc
     running: false
     command: ["sh", "-c", "sleep 0.2; pkill rofi || rofi -show drun -replace >/dev/null 2>&1 & disown || true"]
+  }
+
+  // Niri: fuzzel launcher for both left/right clicks
+  Process {
+    id: fuzzelProc
+    running: false
+    command: ["bash", "-lc", "sleep 0.2; pkill fuzzel || fuzzel >/dev/null 2>&1 & disown || true"]
   }
 }
