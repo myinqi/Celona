@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
@@ -17,6 +18,11 @@ PanelWindow {
   property bool __bgIsLight: (0.2126*__dockBg.r + 0.7152*__dockBg.g + 0.0722*__dockBg.b) > 0.5
   property color __markerColor: __bgIsLight ? Qt.rgba(0,0,0,0.65) : Qt.rgba(1,1,1,0.65)
 
+  // Autohide mode
+  property bool __autoHide: Globals.dockLayerPosition === "autohide"
+  property bool __expanded: false
+  // While collapsing, keep content visible for fade/size animation
+  property bool __collapsing: false
   // Visibility
   visible: Globals.showDock && Array.isArray(Globals.dockItems)
 
@@ -28,22 +34,56 @@ PanelWindow {
     right: Globals.dockPositionHorizontal === "right"
   }
   // Size follows content to avoid clipping when anchored only to top/bottom
-  implicitWidth: Math.max(Globals.dockIconSizePx + 16, 56)
+  // When autohide is active and not expanded, keep a 1px invisible trigger strip via implicitWidth
+  implicitWidth: (__autoHide && !__expanded)
+                  ? 1
+                  : Math.max(Globals.dockIconSizePx + 16, 56)
   implicitHeight: col.implicitHeight + 16
+
+  // Expand on enter, collapse after short delay on leave
+  Timer {
+    id: hideTimer
+    interval: 400
+    repeat: false
+    onTriggered: if (root.__autoHide) {
+      // start collapse sequence
+      root.__collapsing = true
+      root.__expanded = false
+      collapseDone.restart()
+    }
+  }
+
+  // Timer to end collapsing state after out-duration so visibility doesn't cut the fade
+  Timer {
+    id: collapseDone
+    interval: Globals.dockAutoHideOutDurationMs
+    repeat: false
+    onTriggered: root.__collapsing = false
+  }
 
   Flickable {
     id: flick
     anchors.fill: parent
-    contentWidth: width
-    // include symmetric margins to match implicitHeight
-    contentHeight: col.implicitHeight + 16
     clip: true
+    // Keep visible while collapsing so animations can play
+    visible: !root.__autoHide || root.__expanded || root.__collapsing
+    opacity: (!root.__autoHide || root.__expanded) ? 1 : 0
+    Behavior on opacity {
+      NumberAnimation {
+        duration: root.__expanded ? Globals.dockAutoHideInDurationMs : Globals.dockAutoHideOutDurationMs
+        easing.type: Easing.OutQuad
+      }
+    }
+    contentWidth: width
+    contentHeight: col.implicitHeight
+    interactive: false
 
     Column {
       id: col
       x: 0
       width: flick.width
-      spacing: Math.max(0, Globals.dockIconSpacing)
+      spacing: Globals.dockIconSpacing
+      anchors.margins: (root.__autoHide && !root.__expanded) ? 0 : 8
       // Position via y instead of anchors to avoid Column anchor warnings
       y: Globals.dockPositionVertical === "center"
          ? Math.max(8, Math.floor((flick.height - col.implicitHeight) / 2))
@@ -76,6 +116,7 @@ PanelWindow {
 
             MouseArea {
               anchors.fill: parent
+              enabled: !root.__autoHide || root.__expanded
               onClicked: {
                 // Only treat as click when not initiating a drag
                 if (!Globals.allowDockIconMovement || !delegateRoot.didDrag)
@@ -87,6 +128,7 @@ PanelWindow {
               // Always accept LeftButton so clicks work even when movement is disabled
               acceptedButtons: Qt.LeftButton
               onPressed: (mouse) => {
+                if (root.__autoHide && !root.__expanded) return
                 delegateRoot.didDrag = false
                 delegateRoot.pressX = mouse.x
                 delegateRoot.pressY = mouse.y
@@ -107,6 +149,7 @@ PanelWindow {
                 if (Globals.allowDockIconMovement) delegateRoot.didDrag = true
               }
               onPositionChanged: (mouse) => {
+                if (root.__autoHide && !root.__expanded) return
                 if (!Globals.allowDockIconMovement) return
                 const dx = mouse.x - delegateRoot.pressX
                 const dy = mouse.y - delegateRoot.pressY
@@ -131,6 +174,7 @@ PanelWindow {
                 }
               }
               onReleased: (mouse) => {
+                if (root.__autoHide && !root.__expanded) return
                 if (!Globals.allowDockIconMovement) return
                 if (delegateRoot.didDrag && root.dragFromIndex >= 0) {
                   const from = root.dragFromIndex
@@ -187,6 +231,35 @@ PanelWindow {
       y: col.y
       z: 10
       color: root.__markerColor
+    }
+
+    // Hover watcher for autohide: collapse when mouse leaves the dock
+    MouseArea {
+      anchors.fill: parent
+      visible: root.__autoHide && root.__expanded
+      enabled: visible
+      hoverEnabled: true
+      acceptedButtons: Qt.NoButton
+      onEntered: { hideTimer.stop(); collapseDone.stop(); root.__collapsing = false }
+      onExited: hideTimer.restart()
+    }
+  }
+
+  // Trigger area when collapsed: expand on hover
+  MouseArea {
+    anchors.fill: parent
+    visible: root.__autoHide && !root.__expanded
+    enabled: visible
+    hoverEnabled: true
+    acceptedButtons: Qt.NoButton
+    onEntered: { root.__expanded = true; hideTimer.stop(); collapseDone.stop(); root.__collapsing = false }
+  }
+
+  // Subtle animation for expand/collapse using implicitWidth
+  Behavior on implicitWidth {
+    NumberAnimation {
+      duration: root.__expanded ? Globals.dockAutoHideInDurationMs : Globals.dockAutoHideOutDurationMs
+      easing.type: Easing.OutQuad
     }
   }
 

@@ -162,6 +162,13 @@ Singleton {
   property bool showDock: true
   property string dockPositionHorizontal: "right"   // left|right
   property string dockPositionVertical: "center"     // top|center|bottom
+  // Layer/visibility behavior: "on top" | "behind" | "autohide"
+  property string dockLayerPosition: "on top"
+  // Autohide animation duration (ms)
+  property int dockAutoHideDurationMs: 120
+  // Separate durations for show/hide (ms)
+  property int dockAutoHideInDurationMs: 120
+  property int dockAutoHideOutDurationMs: 120
   // Icon appearance
   property int dockIconBorderPx: 2
   property int dockIconRadius: 10
@@ -500,6 +507,17 @@ Singleton {
     if (obj.DockIconBorderColor !== undefined) Globals.dockIconBorderColor = obj.DockIconBorderColor
     if (obj.DockIconLabelColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelColor
     if (obj.AllowDockIconMovement !== undefined) Globals.allowDockIconMovement = obj.AllowDockIconMovement
+    if (obj.DockLayerPosition !== undefined) Globals.dockLayerPosition = obj.DockLayerPosition
+    // durations: read specific first, then fallback to unified if provided
+    const hasIn = (obj.DockAutoHideInDurationMs !== undefined)
+    const hasOut = (obj.DockAutoHideOutDurationMs !== undefined)
+    if (hasIn) Globals.dockAutoHideInDurationMs = obj.DockAutoHideInDurationMs
+    if (hasOut) Globals.dockAutoHideOutDurationMs = obj.DockAutoHideOutDurationMs
+    if (obj.DockAutoHideDurationMs !== undefined && !hasIn && !hasOut) {
+      Globals.dockAutoHideDurationMs = obj.DockAutoHideDurationMs
+      Globals.dockAutoHideInDurationMs = obj.DockAutoHideDurationMs
+      Globals.dockAutoHideOutDurationMs = obj.DockAutoHideDurationMs
+    }
     if (obj.DockItems !== undefined) Globals.dockItems = obj.DockItems
   }
 
@@ -591,6 +609,9 @@ Singleton {
       DockIconBorderColor: dockIconBorderColor,
       DockIconLabelColor: dockIconLabelColor,
       AllowDockIconMovement: allowDockIconMovement,
+      DockLayerPosition: dockLayerPosition,
+      DockAutoHideInDurationMs: dockAutoHideInDurationMs,
+      DockAutoHideOutDurationMs: dockAutoHideOutDurationMs,
       DockItems: dockItems
     }
     const json = JSON.stringify(obj, null, 2)
