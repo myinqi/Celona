@@ -245,7 +245,7 @@ PanelWindow {
               horizontalAlignment: Text.AlignHCenter
               elide: Text.ElideRight
               font.pixelSize: Math.max(9, Math.min(13, Math.floor(parent.width * 0.18)))
-              style: Text.Outline
+              style: Text.Normal
               styleColor: "#A0000000"
             }
           }

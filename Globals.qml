@@ -505,7 +505,9 @@ Singleton {
     if (obj.DockIconSpacing !== undefined) Globals.dockIconSpacing = obj.DockIconSpacing
     if (obj.DockIconBGColor !== undefined) Globals.dockIconBGColor = obj.DockIconBGColor
     if (obj.DockIconBorderColor !== undefined) Globals.dockIconBorderColor = obj.DockIconBorderColor
-    if (obj.DockIconLabelColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelColor
+    // Prefer new DockIconLabelTextColor; fallback to legacy DockIconLabelColor
+    if (obj.DockIconLabelTextColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelTextColor
+    else if (obj.DockIconLabelColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelColor
     if (obj.AllowDockIconMovement !== undefined) Globals.allowDockIconMovement = obj.AllowDockIconMovement
     if (obj.DockLayerPosition !== undefined) Globals.dockLayerPosition = obj.DockLayerPosition
     // durations: read specific first, then fallback to unified if provided
@@ -607,7 +609,7 @@ Singleton {
       DockIconSpacing: dockIconSpacing,
       DockIconBGColor: dockIconBGColor,
       DockIconBorderColor: dockIconBorderColor,
-      DockIconLabelColor: dockIconLabelColor,
+      DockIconLabelTextColor: dockIconLabelColor,
       AllowDockIconMovement: allowDockIconMovement,
       DockLayerPosition: dockLayerPosition,
       DockAutoHideInDurationMs: dockAutoHideInDurationMs,
