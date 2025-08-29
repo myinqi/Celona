@@ -48,7 +48,7 @@
     "Power"
   ],
   "showWelcome": true,
-  "showWindowTitle": false,
+  "showWindowTitle": true,
   "showWorkspaces": true,
   "showSystemTray": true,
   "showUpdates": true,
@@ -63,7 +63,7 @@
   "showSound": true,
   "showKeybinds": false,
   "showBattery": true,
-  "showDate": true,
+  "showDate": false,
   "showTime": true,
   "showPower": true,
   "showWeather": false,
@@ -87,14 +87,14 @@
   "DockIconRadius": 10,
   "DockIconSizePx": 64,
   "DockIconLabel": true,
-  "DockIconSpacing": 0,
+  "DockIconSpacing": 1,
   "DockIconBGColor": "#ff101418",
   "DockIconBorderColor": "#ff2c638b",
   "DockIconLabelTextColor": "#ffe0e2e8",
-  "AllowDockIconMovement": false,
+  "AllowDockIconMovement": true,
   "DockLayerPosition": "autohide",
-  "DockAutoHideInDurationMs": 100,
-  "DockAutoHideOutDurationMs": 300,
+  "DockAutoHideInDurationMs": 120,
+  "DockAutoHideOutDurationMs": 250,
   "DockItems": [
     {
       "label": "Terminal",
@@ -105,7 +105,10 @@
     },
     {
       "label": "Browser",
-      "cmd": "zen-browser"
+      "cmd": "zen-browser", 
+      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/zen-browser.png",
+      "iconSizeRatio": 0.55,
+      "iconOffsetYPx": -8
     },
     {
       "label": "Coding",

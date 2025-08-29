@@ -67,10 +67,10 @@ PanelWindow {
     }
   }
 
-  // Timer to end collapsing state after out-duration so visibility doesn't cut the fade
+  // Timer to end collapsing state after in-duration (collapse) so visibility doesn't cut the fade
   Timer {
     id: collapseDone
-    interval: Globals.dockAutoHideOutDurationMs
+    interval: Globals.dockAutoHideInDurationMs
     repeat: false
     onTriggered: root.__collapsing = false
   }
@@ -84,7 +84,8 @@ PanelWindow {
     opacity: (!root.__autoHide || root.__expanded) ? 1 : 0
     Behavior on opacity {
       NumberAnimation {
-        duration: root.__expanded ? Globals.dockAutoHideInDurationMs : Globals.dockAutoHideOutDurationMs
+        // Use Out-duration when expanding (show), In-duration when collapsing (hide)
+        duration: root.__expanded ? Globals.dockAutoHideOutDurationMs : Globals.dockAutoHideInDurationMs
         easing.type: Easing.OutQuad
       }
     }
@@ -92,20 +93,27 @@ PanelWindow {
     contentHeight: col.implicitHeight
     interactive: false
 
-    Column {
-      id: col
+    // Content frame to precisely scope hover detection to the visible dock area
+    Item {
+      id: contentFrame
       x: 0
       width: flick.width
-      spacing: Globals.dockIconSpacing
-      anchors.margins: (root.__autoHide && !root.__expanded) ? 0 : 8
-      // Position via y instead of anchors to avoid Column anchor warnings
+      height: col.implicitHeight
+      // Position via y to support true center alignment (reserves space when centered)
       y: Globals.dockPositionVertical === "center"
-         ? Math.max(8, Math.floor((flick.height - col.implicitHeight) / 2))
+         ? Math.max(8, Math.floor((flick.height - height) / 2))
          : (Globals.dockPositionVertical === "bottom"
-            ? Math.max(8, flick.height - col.implicitHeight - 8)
+            ? Math.max(8, flick.height - height - 8)
             : 8)
 
-      Repeater {
+      Column {
+        id: col
+        x: 0
+        width: contentFrame.width
+        spacing: Globals.dockIconSpacing
+        anchors.margins: (root.__autoHide && !root.__expanded) ? 0 : 8
+
+        Repeater {
         id: reps
         model: Globals.dockItems
         delegate: Item {
@@ -250,6 +258,19 @@ PanelWindow {
             }
           }
         }
+        }
+
+        }
+
+      // Hover watcher for autohide: collapse when mouse leaves the visible dock area
+      MouseArea {
+        anchors.fill: parent
+        visible: root.__autoHide && root.__expanded
+        enabled: visible
+        hoverEnabled: true
+        acceptedButtons: Qt.NoButton
+        onEntered: { hideTimer.stop(); collapseDone.stop(); root.__collapsing = false }
+        onExited: hideTimer.restart()
       }
     }
 
@@ -265,16 +286,7 @@ PanelWindow {
       color: root.__markerColor
     }
 
-    // Hover watcher for autohide: collapse when mouse leaves the dock
-    MouseArea {
-      anchors.fill: parent
-      visible: root.__autoHide && root.__expanded
-      enabled: visible
-      hoverEnabled: true
-      acceptedButtons: Qt.NoButton
-      onEntered: { hideTimer.stop(); collapseDone.stop(); root.__collapsing = false }
-      onExited: hideTimer.restart()
-    }
+    // (expanded hover watcher moved into contentFrame to avoid full-window capture in center mode)
   }
 
   // Trigger area when collapsed: expand on hover
@@ -290,7 +302,8 @@ PanelWindow {
   // Subtle animation for expand/collapse using implicitWidth
   Behavior on implicitWidth {
     NumberAnimation {
-      duration: root.__expanded ? Globals.dockAutoHideInDurationMs : Globals.dockAutoHideOutDurationMs
+      // Use Out-duration when expanding (show), In-duration when collapsing (hide)
+      duration: root.__expanded ? Globals.dockAutoHideOutDurationMs : Globals.dockAutoHideInDurationMs
       easing.type: Easing.OutQuad
     }
   }

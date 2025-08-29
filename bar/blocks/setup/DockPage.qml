@@ -42,11 +42,12 @@ Item {
         anchors.leftMargin: 8
         anchors.topMargin: 8
         anchors.bottomMargin: 8
-        anchors.rightMargin: 40 // extra on the right to prevent clipping at control edge
+        anchors.rightMargin: 8
         clip: true
         contentWidth: flick.width
         contentHeight: editor.childrenRect.height
-        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOn }
+        // Hide vertical scrollbar for current menu scope
+        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
 
         ColumnLayout {
           id: editor
@@ -199,14 +200,11 @@ Item {
                 Layout.fillWidth: true
                 Label { text: "Dock Items"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.bold: true }
                 Item { Layout.fillWidth: true }
-                Button {
-                  text: "Add"
-                  onClicked: {
-                    const arr = Globals.dockItems ? Globals.dockItems.slice(0) : []
-                    arr.push({ label: "New Item", cmd: "", icon: "", iconSizeRatio: 0.55, iconOffsetYPx: -8 })
-                    Globals.dockItems = arr
-                    save()
-                  }
+                Text {
+                  text: "New Dock items must currently be defined in config.json."
+                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                  horizontalAlignment: Text.AlignRight
+                  wrapMode: Text.WordWrap
                 }
               }
 
@@ -214,7 +212,12 @@ Item {
                 id: items
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                model: Globals.dockItems || []
+                // Model is an index array to decouple from the dockItems object identity
+                model: (Array.isArray(Globals.dockItems)
+                        ? Globals.dockItems.map(function(_, i) { return i })
+                        : [])
+                // Avoid aggressive reuse while we mutate the array during edits
+                reuseItems: false
                 delegate: Rectangle {
                   width: ListView.view.width
                   height: 130
@@ -222,7 +225,9 @@ Item {
                   color: "transparent"
                   border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
                   border.width: 1
-                  property var itemRef: modelData
+                  // Access item by index to avoid model/object binding loops
+                  property int idx: modelData
+                  property var itemRef: (Array.isArray(Globals.dockItems) && idx < Globals.dockItems.length) ? Globals.dockItems[idx] : ({})
 
                   ColumnLayout {
                     anchors.fill: parent
@@ -233,10 +238,18 @@ Item {
                       Layout.fillWidth: true
                       spacing: 8
                       Label { text: "Label"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70 }
-                      TextField { Layout.fillWidth: true; text: String(itemRef.label||""); onTextChanged: { itemRef.label = text; touchDockItems(); save() } }
+                      TextField {
+                        Layout.fillWidth: true
+                        text: String(itemRef.label||"")
+                        onTextEdited: {
+                          if (itemRef.label !== text) {
+                            itemRef.label = text; touchDockItems(); save()
+                          }
+                        }
+                      }
                       Button { text: "Remove"; onClicked: {
                         const arr = Globals.dockItems ? Globals.dockItems.slice(0) : []
-                        arr.splice(index, 1)
+                        arr.splice(idx, 1)
                         Globals.dockItems = arr
                         save()
                       }}
@@ -246,14 +259,31 @@ Item {
                       Layout.fillWidth: true
                       spacing: 8
                       Label { text: "Command"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70 }
-                      TextField { Layout.fillWidth: true; text: String(itemRef.cmd||""); onTextChanged: { itemRef.cmd = text; touchDockItems(); save() } }
+                      TextField {
+                        Layout.fillWidth: true
+                        text: String(itemRef.cmd||"")
+                        onTextEdited: {
+                          if (itemRef.cmd !== text) {
+                            itemRef.cmd = text; touchDockItems(); save()
+                          }
+                        }
+                      }
                     }
 
                     RowLayout {
                       Layout.fillWidth: true
                       spacing: 8
                       Label { text: "Icon"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70 }
-                      TextField { id: iconField; Layout.fillWidth: true; text: String(itemRef.icon||""); onTextChanged: { itemRef.icon = text; touchDockItems(); save() } }
+                      TextField {
+                        id: iconField
+                        Layout.fillWidth: true
+                        text: String(itemRef.icon||"")
+                        onTextEdited: {
+                          if (itemRef.icon !== text) {
+                            itemRef.icon = text; touchDockItems(); save()
+                          }
+                        }
+                      }
                       Button { text: "Browse..."; onClicked: iconDialog.open() }
                     }
 
