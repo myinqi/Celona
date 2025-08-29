@@ -9,6 +9,9 @@ import "root:/"
 PanelWindow {
   id: dock
   color: "transparent"
+  // Reorder state (custom, no Qt DnD)
+  property int dragFromIndex: -1
+  property int dragToIndex: -1
 
   // Visibility
   visible: Globals.showDock && Array.isArray(Globals.dockItems)
@@ -56,12 +59,6 @@ PanelWindow {
           property real pressX: 0
           property real pressY: 0
           property bool didDrag: false
-          // internal flag to control Drag.active
-          property bool dragging: false
-          Drag.active: Globals.allowDockIconMovement && dragging
-          Drag.hotSpot.x: box.width/2
-          Drag.hotSpot.y: box.height/2
-          Drag.keys: ["dockItem"]
 
           Rectangle {
             id: box
@@ -77,13 +74,12 @@ PanelWindow {
               anchors.fill: parent
               onClicked: {
                 // Only treat as click when not initiating a drag
-                if (!Globals.allowDockIconMovement || (!delegateRoot.Drag.active && !delegateRoot.didDrag))
+                if (!Globals.allowDockIconMovement || !delegateRoot.didDrag)
                   runCmd(modelData && modelData.cmd ? String(modelData.cmd) : "")
               }
               hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
               id: dragArea
-              drag.target: null // we use Drag API, not visual move
               // Always accept LeftButton so clicks work even when movement is disabled
               acceptedButtons: Qt.LeftButton
               onPressed: (mouse) => {
@@ -91,34 +87,69 @@ PanelWindow {
                 delegateRoot.pressX = mouse.x
                 delegateRoot.pressY = mouse.y
                 if (Globals.allowDockIconMovement) {
-                  dragArea.drag.accepted = true
-                  delegateRoot.dragging = false
+                  dock.dragFromIndex = delegateRoot.myIndex
+                  dock.dragToIndex = delegateRoot.myIndex
+                  insertMarker.height = 4
+                  // position marker at current slot
+                  let acc = 0
+                  for (let i = 0; i < reps.count && i < delegateRoot.myIndex; i++) {
+                    const it = reps.itemAt(i)
+                    acc += (it ? it.height : Globals.dockIconSizePx) + col.spacing
+                  }
+                  insertMarker.y = col.y + Math.max(0, acc - col.spacing/2) - 2
                 }
               }
               onPressAndHold: {
-                if (Globals.allowDockIconMovement) {
-                  delegateRoot.didDrag = true
-                  delegateRoot.dragging = true
-                  delegateRoot.Drag.startDrag()
-                }
+                if (Globals.allowDockIconMovement) delegateRoot.didDrag = true
               }
               onPositionChanged: (mouse) => {
-                if (!Globals.allowDockIconMovement || delegateRoot.dragging) return
+                if (!Globals.allowDockIconMovement) return
                 const dx = mouse.x - delegateRoot.pressX
                 const dy = mouse.y - delegateRoot.pressY
                 const dist = Math.sqrt(dx*dx + dy*dy)
                 const thresh = Qt.styleHints.startDragDistance
                 if (dist >= thresh) {
                   delegateRoot.didDrag = true
-                  delegateRoot.dragging = true
-                  delegateRoot.Drag.startDrag()
+                  // compute target index relative to column
+                  const relY = col.mapFromItem(dragArea, Qt.point(mouse.x, mouse.y)).y
+                  const N = reps.count
+                  let acc = 0
+                  let to = 0
+                  for (let i = 0; i < N; i++) {
+                    const it = reps.itemAt(i)
+                    const h = (it ? it.height : Globals.dockIconSizePx)
+                    if (relY < acc + h/2) { to = i; break }
+                    acc += h + col.spacing
+                    to = i + 1
+                  }
+                  dock.dragToIndex = to
+                  insertMarker.y = col.y + Math.max(0, acc - col.spacing/2) - 2
                 }
               }
               onReleased: (mouse) => {
-                if (delegateRoot.dragging) {
-                  // end of drag; let DropArea handle reorder; prevent click
-                  delegateRoot.dragging = false
+                if (!Globals.allowDockIconMovement) return
+                if (delegateRoot.didDrag && dock.dragFromIndex >= 0) {
+                  const from = dock.dragFromIndex
+                  let to = dock.dragToIndex
+                  const N = reps.count
+                  if (from >= 0 && from < N) {
+                    if (to < 0) to = 0
+                    if (to > N) to = N
+                    // adjust when moving downwards (array shrinks before insert)
+                    if (to > from) to -= 1
+                    if (to !== from) {
+                      const a = Array.prototype.slice.call(Globals.dockItems)
+                      const [item] = a.splice(from, 1)
+                      a.splice(to, 0, item)
+                      Globals.dockItems = a
+                      Globals.saveTheme()
+                    }
+                  }
                 }
+                // reset marker/state
+                dock.dragFromIndex = -1
+                dock.dragToIndex = -1
+                delegateRoot.didDrag = false
               }
             }
 
@@ -142,77 +173,16 @@ PanelWindow {
       }
     }
 
-    // Visual insert marker and overlay DropArea (not inside Column)
+    // Visual insert marker during custom DnD (not inside Column)
     Rectangle {
       id: insertMarker
-      visible: Globals.allowDockIconMovement && dropArea.containsDrag
-      x: (width - 2) / 2
+      visible: Globals.allowDockIconMovement && dock.dragFromIndex >= 0
+      x: Math.floor(flick.width / 2) - 1
       width: 2
-      height: 0 // set dynamically
+      height: 4 // may be updated during drag
       y: col.y
       z: 10
       color: Qt.rgba(1,1,1,0.6)
-    }
-
-    DropArea {
-      id: dropArea
-      visible: Globals.allowDockIconMovement
-      x: 0
-      y: col.y
-      width: flick.width
-      height: col.implicitHeight
-      z: 10
-      keys: ["dockItem"]
-      onEntered: function(event) { if (event) event.acceptProposedAction() }
-      onPositionChanged: function(event) {
-        if (!event) return
-        event.acceptProposedAction()
-        // compute insert index by y position relative to column
-        const relY = event.y - col.y
-        const N = reps.count
-        let acc = 0
-        let to = 0
-        for (let i = 0; i < N; i++) {
-          const it = reps.itemAt(i)
-          if (!it) continue
-          const h = it.height || Globals.dockIconSizePx
-          if (relY < acc + h/2) { to = i; break }
-          acc += h + col.spacing
-          to = i + 1
-        }
-        // position insert marker
-        insertMarker.height = 4
-        insertMarker.y = col.y + Math.max(0, acc - col.spacing/2) - 2
-      }
-      onDropped: function(event) {
-        if (!event) return
-        event.acceptProposedAction()
-        const src = event.source
-        if (!src || src.myIndex === undefined) return
-        let from = src.myIndex
-        // compute target index similar to onPositionChanged
-        const relY = event.y - col.y
-        const N = reps.count
-        let acc = 0
-        let to = 0
-        for (let i = 0; i < N; i++) {
-          const it = reps.itemAt(i)
-          if (!it) continue
-          const h = it.height || Globals.dockIconSizePx
-          if (relY < acc + h/2) { to = i; break }
-          acc += h + col.spacing
-          to = i + 1
-        }
-        if (from < 0 || from >= N) return
-        if (to < 0) to = 0
-        if (to > N) to = N
-        if (from === to || from === to - 1) return
-        const a = Array.prototype.slice.call(Globals.dockItems)
-        const [item] = a.splice(from, 1)
-        a.splice(to > from ? to - 1 : to, 0, item)
-        Globals.dockItems = a
-        Globals.saveTheme()
-      }
     }
   }
 
