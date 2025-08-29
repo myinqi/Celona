@@ -267,9 +267,9 @@ Item {
             { label: "Tray Icon", key: "trayIconColor" },
             { label: "Window Title", key: "windowTitleColor" },
             { label: "Visualizer Bars", key: "visualizerBarColor" },
-            { label: "Dock Icon Background", key: "DockIconBGColor" },
-            { label: "Dock Icon Border", key: "DockIconBorderColor" },
-            { label: "Dock Icon Label Text", key: "DockIconLabelTextColor" }
+            { label: "Dock Icon Background", key: "dockIconBGColor" },
+            { label: "Dock Icon Border", key: "dockIconBorderColor" },
+            { label: "Dock Icon Label Text", key: "dockIconLabelColor" }
           ]
           delegate: RowLayout {
             Layout.fillWidth: true
