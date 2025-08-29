@@ -10,6 +10,20 @@ import "root:/"
 PanelWindow {
   id: root
   color: "transparent"
+  // Resolve icon path: absolute/file URLs pass-through; relative -> root:/ prefix
+  // Also percent-encode spaces to avoid QML URL loading issues
+  function resolveIconPath(p) {
+    const s = String(p || "").trim()
+    if (!s.length) return ""
+    const enc = (x) => x.replace(/ /g, "%20")
+    const rootPrefix = "~/.config/quickshell/Celona/"
+    if (s.startsWith(rootPrefix)) {
+      // Map to project-root-relative
+      return enc("root:/" + s.substring(rootPrefix.length))
+    }
+    if (s.startsWith("/") || s.startsWith("file:") || s.startsWith("root:/")) return enc(s)
+    return enc("root:/" + s)
+  }
   // Reorder state (custom, no Qt DnD)
   property int dragFromIndex: -1
   property int dragToIndex: -1
@@ -105,14 +119,27 @@ PanelWindow {
           property bool didDrag: false
 
           Rectangle {
-            id: box
-            width: Globals.dockIconSizePx
-            height: Globals.dockIconSizePx
+            id: iconRect
+            anchors.fill: parent
             radius: Globals.dockIconRadius
             color: Globals.dockIconBGColor
             border.width: Math.max(0, Globals.dockIconBorderPx)
             border.color: Globals.dockIconBorderColor
             anchors.horizontalCenter: parent.horizontalCenter
+
+            // Optional centered PNG icon
+            Image {
+              anchors.centerIn: parent
+              anchors.verticalCenterOffset: -Math.floor(parent.height * 0.12)
+              visible: !!(modelData && modelData.icon)
+              source: root.resolveIconPath(modelData && modelData.icon ? modelData.icon : "")
+              fillMode: Image.PreserveAspectFit
+              asynchronous: true
+              cache: true
+              smooth: true
+              width: Math.floor(parent.width * 0.55)
+              height: Math.floor(parent.height * 0.55)
+            }
 
             MouseArea {
               anchors.fill: parent
