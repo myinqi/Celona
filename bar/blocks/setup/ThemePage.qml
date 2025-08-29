@@ -266,7 +266,10 @@ Item {
             { label: "Popup Border", key: "popupBorder" },
             { label: "Tray Icon", key: "trayIconColor" },
             { label: "Window Title", key: "windowTitleColor" },
-            { label: "Visualizer Bars", key: "visualizerBarColor" }
+            { label: "Visualizer Bars", key: "visualizerBarColor" },
+            { label: "Dock Icon Background", key: "DockIconBGColor" },
+            { label: "Dock Icon Border", key: "DockIconBorderColor" },
+            { label: "Dock Icon Label Text", key: "DockIconLabelTextColor" }
           ]
           delegate: RowLayout {
             Layout.fillWidth: true
