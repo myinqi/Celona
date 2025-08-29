@@ -130,15 +130,20 @@ PanelWindow {
             // Optional centered PNG icon
             Image {
               anchors.centerIn: parent
-              anchors.verticalCenterOffset: -Math.floor(parent.height * 0.12)
+              anchors.verticalCenterOffset: (modelData && modelData.iconOffsetYPx !== undefined)
+                                              ? Number(modelData.iconOffsetYPx)
+                                              : -Math.floor(parent.height * 0.12)
               visible: !!(modelData && modelData.icon)
               source: root.resolveIconPath(modelData && modelData.icon ? modelData.icon : "")
               fillMode: Image.PreserveAspectFit
               asynchronous: true
               cache: true
               smooth: true
-              width: Math.floor(parent.width * 0.55)
-              height: Math.floor(parent.height * 0.55)
+              readonly property real __ratio: (modelData && modelData.iconSizeRatio !== undefined)
+                                               ? Math.max(0.1, Math.min(1.0, Number(modelData.iconSizeRatio)))
+                                               : 0.55
+              width: Math.floor(parent.width * __ratio)
+              height: Math.floor(parent.height * __ratio)
             }
 
             MouseArea {

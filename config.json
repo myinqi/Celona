@@ -91,19 +91,21 @@
   "DockIconBGColor": "#fff7f9ff",
   "DockIconBorderColor": "#ff99ccfa",
   "DockIconLabelColor": "#ff181c20",
-  "AllowDockIconMovement": false,
+  "AllowDockIconMovement": true,
   "DockLayerPosition": "autohide",
   "DockAutoHideInDurationMs": 100,
   "DockAutoHideOutDurationMs": 300,
   "DockItems": [
     {
-      "label": "Browser",
-      "cmd": "zen-browser"
-    },
-    {
       "label": "Terminal",
       "cmd": "ghostty",
-      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/ghostty.png"
+      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/ghostty.png",
+      "iconSizeRatio": 0.55,
+      "iconOffsetYPx": -8
+    },
+    {
+      "label": "Browser",
+      "cmd": "zen-browser"
     }
   ]
 }
