@@ -7,11 +7,15 @@ import "root:/"
 
 // New rectangle-based Dock using Globals.* config-only
 PanelWindow {
-  id: dock
+  id: root
   color: "transparent"
   // Reorder state (custom, no Qt DnD)
   property int dragFromIndex: -1
   property int dragToIndex: -1
+  // Theme-aware marker color contrast based on icon background
+  property color __dockBg: Globals.dockIconBGColor
+  property bool __bgIsLight: (0.2126*__dockBg.r + 0.7152*__dockBg.g + 0.0722*__dockBg.b) > 0.5
+  property color __markerColor: __bgIsLight ? Qt.rgba(0,0,0,0.65) : Qt.rgba(1,1,1,0.65)
 
   // Visibility
   visible: Globals.showDock && Array.isArray(Globals.dockItems)
@@ -87,8 +91,8 @@ PanelWindow {
                 delegateRoot.pressX = mouse.x
                 delegateRoot.pressY = mouse.y
                 if (Globals.allowDockIconMovement) {
-                  dock.dragFromIndex = delegateRoot.myIndex
-                  dock.dragToIndex = delegateRoot.myIndex
+                  root.dragFromIndex = delegateRoot.myIndex
+                  root.dragToIndex = delegateRoot.myIndex
                   insertMarker.height = 4
                   // position marker at current slot
                   let acc = 0
@@ -122,15 +126,15 @@ PanelWindow {
                     acc += h + col.spacing
                     to = i + 1
                   }
-                  dock.dragToIndex = to
+                  root.dragToIndex = to
                   insertMarker.y = col.y + Math.max(0, acc - col.spacing/2) - 2
                 }
               }
               onReleased: (mouse) => {
                 if (!Globals.allowDockIconMovement) return
-                if (delegateRoot.didDrag && dock.dragFromIndex >= 0) {
-                  const from = dock.dragFromIndex
-                  let to = dock.dragToIndex
+                if (delegateRoot.didDrag && root.dragFromIndex >= 0) {
+                  const from = root.dragFromIndex
+                  let to = root.dragToIndex
                   const N = reps.count
                   if (from >= 0 && from < N) {
                     if (to < 0) to = 0
@@ -147,8 +151,8 @@ PanelWindow {
                   }
                 }
                 // reset marker/state
-                dock.dragFromIndex = -1
-                dock.dragToIndex = -1
+                root.dragFromIndex = -1
+                root.dragToIndex = -1
                 delegateRoot.didDrag = false
               }
             }
@@ -176,13 +180,13 @@ PanelWindow {
     // Visual insert marker during custom DnD (not inside Column)
     Rectangle {
       id: insertMarker
-      visible: Globals.allowDockIconMovement && dock.dragFromIndex >= 0
+      visible: Globals.allowDockIconMovement && root.dragFromIndex >= 0
       x: Math.floor(flick.width / 2) - 1
       width: 2
       height: 4 // may be updated during drag
       y: col.y
       z: 10
-      color: Qt.rgba(1,1,1,0.6)
+      color: root.__markerColor
     }
   }
 
