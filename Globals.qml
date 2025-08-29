@@ -142,6 +142,39 @@ Singleton {
   // Show bar visualizer module
   property bool showBarvisualizer: false
 
+  // Dock settings
+  // Vertical dock position on screen edge: "left" or "right"
+  // When false, the dock window is not shown
+  property bool dockEnabled: true
+  // Vertical dock position on screen edge: "left" or "right"
+  property string dockPosition: "right"
+  // Show labels under/next to icons
+  property bool dockShowLabels: true
+  // Tile size in pixels
+  property int dockTileSize: 64
+  // Vertical spacing between tiles in pixels
+  property int dockTileSpacing: 8
+  // Items: array of { icon: string, label: string, cmd: string }
+  property var dockItems: []
+
+  // New Dock config (config.json-driven only)
+  // Visibility and positioning
+  property bool showDock: true
+  property string dockPositionHorizontal: "right"   // left|right
+  property string dockPositionVertical: "center"     // top|center|bottom
+  // Icon appearance
+  property int dockIconBorderPx: 2
+  property int dockIconRadius: 10
+  property int dockIconSizePx: 64
+  property bool dockIconLabel: true
+  property int dockIconSpacing: 0
+  // Icon colors (Matugen-aware)
+  property string dockIconBGColor: "#202020"
+  property string dockIconBorderColor: "#808080"
+  property string dockIconLabelColor: "#FFFFFF"
+  // Behavior
+  property bool allowDockIconMovement: false
+
   // --- Matugen colors handling ---
   // Helper: convert rgba(r,g,b,a) or #RRGGBB to #AARRGGBB
   function toArgb(hexOrRgba, alphaOverride) {
@@ -200,6 +233,10 @@ Singleton {
     workspaceInactiveBg = '#00000000'
     // visualizer bars align with border/accent
     visualizerBarColor = toArgb(invPrim)
+    // Dock colors (align with bar theme)
+    dockIconBGColor = toArgb(bg)              // solid base background
+    dockIconBorderColor = toArgb(invPrim)     // accent border like barBorderColor
+    dockIconLabelColor = toArgb(onSurf)       // readable text color
   }
 
   function applyMatugenColors() {
@@ -340,6 +377,30 @@ Singleton {
     // Keybinds
     showKeybinds = false
 
+    // Dock (legacy)
+    dockEnabled = true
+    dockPosition = "right"
+    dockShowLabels = true
+    dockTileSize = 64
+    dockTileSpacing = 8
+    dockItems = []
+    // Dock (new)
+    showDock = true
+    dockPositionHorizontal = "right"
+    dockPositionVertical = "center"
+    dockIconBorderPx = 2
+    dockIconRadius = 10
+    dockIconSizePx = 64
+    dockIconLabel = true
+    dockIconSpacing = 0
+    dockIconBGColor = "#202020"
+    dockIconBorderColor = "#808080"
+    dockIconLabelColor = "#FFFFFF"
+    allowDockIconMovement = false
+    dockItems = [
+      { label: "Browser", cmd: "xdg-open https://example.com" },
+      { label: "Terminal", cmd: "alacritty" }
+    ]
     // Wallpaper defaults
     wallpaperAnimatedEnabled = false
     wallpaperAnimatedPath = ""
@@ -419,6 +480,27 @@ Singleton {
     // Setup UI
     setIf("useNewSetupUI")
     setIf("showBarvisualizer")
+    // Dock (legacy)
+    setIf("dockEnabled")
+    setIf("dockPosition")
+    setIf("dockShowLabels")
+    setIf("dockTileSize")
+    setIf("dockTileSpacing")
+    setIf("dockItems")
+    // Dock (new): map uppercase JSON keys to lowercase QML properties
+    if (obj.ShowDock !== undefined) Globals.showDock = obj.ShowDock
+    if (obj.DockPositionHorizontal !== undefined) Globals.dockPositionHorizontal = obj.DockPositionHorizontal
+    if (obj.DockPositionVertical !== undefined) Globals.dockPositionVertical = obj.DockPositionVertical
+    if (obj.DockIconBorderPx !== undefined) Globals.dockIconBorderPx = obj.DockIconBorderPx
+    if (obj.DockIconRadius !== undefined) Globals.dockIconRadius = obj.DockIconRadius
+    if (obj.DockIconSizePx !== undefined) Globals.dockIconSizePx = obj.DockIconSizePx
+    if (obj.DockIconLabel !== undefined) Globals.dockIconLabel = obj.DockIconLabel
+    if (obj.DockIconSpacing !== undefined) Globals.dockIconSpacing = obj.DockIconSpacing
+    if (obj.DockIconBGColor !== undefined) Globals.dockIconBGColor = obj.DockIconBGColor
+    if (obj.DockIconBorderColor !== undefined) Globals.dockIconBorderColor = obj.DockIconBorderColor
+    if (obj.DockIconLabelColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelColor
+    if (obj.AllowDockIconMovement !== undefined) Globals.allowDockIconMovement = obj.AllowDockIconMovement
+    if (obj.DockItems !== undefined) Globals.dockItems = obj.DockItems
   }
 
   // Load theme from file on startup handled by loadThemeProc.running
@@ -495,7 +577,21 @@ Singleton {
       wallpaperTool,
       // Setup UI flag
       useNewSetupUI,
-      showBarvisualizer
+      showBarvisualizer,
+      // Dock (new, persisted with uppercase keys for config.json)
+      ShowDock: showDock,
+      DockPositionHorizontal: dockPositionHorizontal,
+      DockPositionVertical: dockPositionVertical,
+      DockIconBorderPx: dockIconBorderPx,
+      DockIconRadius: dockIconRadius,
+      DockIconSizePx: dockIconSizePx,
+      DockIconLabel: dockIconLabel,
+      DockIconSpacing: dockIconSpacing,
+      DockIconBGColor: dockIconBGColor,
+      DockIconBorderColor: dockIconBorderColor,
+      DockIconLabelColor: dockIconLabelColor,
+      AllowDockIconMovement: allowDockIconMovement,
+      DockItems: dockItems
     }
     const json = JSON.stringify(obj, null, 2)
     // Avoid complex shell escaping by writing base64 and decoding
