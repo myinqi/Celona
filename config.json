@@ -105,7 +105,7 @@
     },
     {
       "label": "Browser",
-      "cmd": "zen-browser", 
+      "cmd": "zen-browser",
       "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/zen-browser.png",
       "iconSizeRatio": 0.55,
       "iconOffsetYPx": -8
