@@ -8,6 +8,9 @@ import Qt5Compat.GraphicalEffects
 import "root:/"
 
 Text {
+  // Determine if bar background is visually light to tune shadow strength
+  readonly property color __barBg: Globals.barBgColor
+  readonly property bool __barIsLight: (0.2126*__barBg.r + 0.7152*__barBg.g + 0.0722*__barBg.b) > 0.5
   property string mainFont: "FiraCode"
   property string symbolFont: "Symbols Nerd Font Mono"
   property int pointSize: 12
@@ -39,9 +42,12 @@ Text {
 
   DropShadow {
     anchors.fill: parent
-    horizontalOffset: 1
-    verticalOffset: 1
-    color: "#000000"
+    horizontalOffset: __barIsLight ? 0 : 1
+    verticalOffset: __barIsLight ? 0 : 1
+    // In light mode, make shadow very subtle to avoid halo; in dark keep stronger
+    radius: __barIsLight ? 2 : 8
+    samples: __barIsLight ? 7 : 17
+    color: __barIsLight ? "#22000000" : "#66000000"
     source: textcopy
   }
 
