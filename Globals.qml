@@ -10,6 +10,9 @@ Singleton {
   readonly property string themeFile: "~/.config/quickshell/Celona/config.json"
   // Expand tilde for components that don't expand it (e.g., FileView path)
   readonly property string themeFileAbs: themeFile.indexOf("~/") === 0 ? ("/home/khrom/" + themeFile.slice(2)) : themeFile
+  // Niri config path (for optional color sync)
+  readonly property string niriConfigFile: "~/.config/niri/config.kdl"
+  readonly property string niriConfigFileAbs: niriConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + niriConfigFile.slice(2)) : niriConfigFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
@@ -246,6 +249,8 @@ Singleton {
     dockIconBGColor = toArgb(bg)              // solid base background
     dockIconBorderColor = toArgb(invPrim)     // accent border like barBorderColor
     dockIconLabelColor = toArgb(onSurf)       // readable text color
+    // Also sync Niri colors if requested
+    if (useMatugenColors) updateNiriColorsFromTheme()
   }
 
   function applyMatugenColors() {
@@ -253,6 +258,46 @@ Singleton {
     // Clear cached hash so a re-enable forces re-apply even if colors.css didn't change
     _matugenHash = ""
     if (matugenView) matugenView.reload()
+  }
+
+  // Update Niri colors (active/inactive) based on current theme values
+  // Strategy: use barBorderColor as active (accent), hoverHighlightColor as inactive (neutral)
+  function updateNiriColorsFromTheme() {
+    try {
+      const f = niriConfigFileAbs
+      if (!f || !niriView) return
+      const text = String(niriView.text()||"")
+      if (!text || text.length === 0) return
+      const active = String(barBorderColor||"").trim()
+      const inactive = String(hoverHighlightColor||"").trim()
+      if (!/^#?[0-9a-fA-F]{6,8}$/.test(active.replace(/^#/,'#'))) return
+      if (!/^#?[0-9a-fA-F]{6,8}$/.test(inactive.replace(/^#/,'#'))) return
+      function toRgb6(hex) {
+        let s = String(hex).trim()
+        if (!s.startsWith('#')) s = '#' + s
+        // #AARRGGBB -> #RRGGBB
+        if (s.length === 9) return '#' + s.slice(3)
+        // already #RRGGBB
+        if (s.length === 7) return s
+        return s
+      }
+      const aHex = toRgb6(active)
+      const iHex = toRgb6(inactive)
+      // Replace first occurrences; preserve indentation and original quote style
+      // Match forms like: active-color "#rrggbb", active-color '#rrggbb', with optional colon
+      let out = text
+      out = out.replace(/(^|\n)([\t ]*)active-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
+        return pre + indent + "active-color " + q + aHex + q
+      })
+      out = out.replace(/(^|\n)([\t ]*)inactive-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
+        return pre + indent + "inactive-color " + q + iHex + q
+      })
+      if (out !== text) {
+        const b64 = Qt.btoa(out)
+        niriSaveProc.command = ["bash","-lc","printf '%s' '" + b64 + "' | base64 -d > " + niriConfigFile]
+        niriSaveProc.running = true
+      }
+    } catch (e) { /* ignore */ }
   }
 
   // Reset all theme colors to their built-in defaults
@@ -662,7 +707,17 @@ Singleton {
     }
   }
 
+  // Lightweight reader for Niri config to allow in-memory edits
+  FileView {
+    id: niriView
+    path: niriConfigFileAbs
+    onLoaded: { /* noop */ }
+    onLoadFailed: (error) => { /* ignore (Niri may not be installed) */ }
+  }
+
   Process { id: saveThemeProc; running: false }
+  // Writer for Niri config updates
+  Process { id: niriSaveProc; running: false }
 
   // --- Wallpaper control processes ---
   // Single process used for wallpaper commands; we queue when busy
