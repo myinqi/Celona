@@ -97,13 +97,16 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Layer Mode:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 110 }
-            ComboBox {
-              id: layerMode
-              model: ["on top", "autohide"]
-              currentIndex: Math.max(0, model.indexOf(Globals.dockLayerPosition || "on top"))
-              onActivated: { Globals.dockLayerPosition = model[currentIndex]; save() }
+            Label { text: "Auto Hide:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 110 }
+            Switch {
+              id: autoHideSwitch
+              checked: (Globals.dockLayerPosition === "autohide")
+              onToggled: {
+                Globals.dockLayerPosition = checked ? "autohide" : "on top"
+                save()
+              }
             }
+            Text { text: autoHideSwitch.checked ? "On" : "Off"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignLeft }
             Item { Layout.fillWidth: true }
           }
 

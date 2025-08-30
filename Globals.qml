@@ -8,6 +8,8 @@ Singleton {
   // Global popup context used by Tooltip.qml
   property PopupContext popupContext: PopupContext {}
   readonly property string themeFile: "~/.config/quickshell/Celona/config.json"
+  // Expand tilde for components that don't expand it (e.g., FileView path)
+  readonly property string themeFileAbs: themeFile.indexOf("~/") === 0 ? ("/home/khrom/" + themeFile.slice(2)) : themeFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
@@ -509,7 +511,10 @@ Singleton {
     if (obj.DockIconLabelTextColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelTextColor
     else if (obj.DockIconLabelColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelColor
     if (obj.AllowDockIconMovement !== undefined) Globals.allowDockIconMovement = obj.AllowDockIconMovement
+    // Back-compat: accept DockLayerPosition ("on top"|"autohide")
     if (obj.DockLayerPosition !== undefined) Globals.dockLayerPosition = obj.DockLayerPosition
+    // New: AutoHide boolean has priority if present
+    if (obj.AutoHide !== undefined) Globals.dockLayerPosition = (obj.AutoHide ? "autohide" : "on top")
     // durations: read specific first, then fallback to unified if provided
     const hasIn = (obj.DockAutoHideInDurationMs !== undefined)
     const hasOut = (obj.DockAutoHideOutDurationMs !== undefined)
@@ -611,7 +616,8 @@ Singleton {
       DockIconBorderColor: dockIconBorderColor,
       DockIconLabelTextColor: dockIconLabelColor,
       AllowDockIconMovement: allowDockIconMovement,
-      DockLayerPosition: dockLayerPosition,
+      // New: persist boolean instead of string mode
+      AutoHide: (dockLayerPosition === "autohide"),
       DockAutoHideInDurationMs: dockAutoHideInDurationMs,
       DockAutoHideOutDurationMs: dockAutoHideOutDurationMs,
       DockItems: dockItems
@@ -855,6 +861,86 @@ Singleton {
     onTriggered: {
       if (Globals.useMatugenColors) matugenView.reload()
     }
+  }
+
+  // --- Live watch for Dock settings in theme file (config.json) ---
+  // Only applies Dock-related keys to avoid side effects.
+  // Detect changes using a reduced JSON subset hash.
+  property string _dockConfigHash: ""
+  // Buffer for base64 read of theme file
+  property string _dockBuf: ""
+  Process {
+    id: dockWatchProc
+    // Read as base64 to avoid line-splitting; shell expands ~ for any user
+    command: ["bash", "-lc", "base64 -w0 " + Globals.themeFile + " 2>/dev/null || true"]
+    running: false
+    stdout: SplitParser {
+      onRead: (data) => { Globals._dockBuf += String(data) }
+    }
+    onRunningChanged: if (!running) {
+      if (Globals._dockBuf && Globals._dockBuf.length) {
+        try {
+          const jsonText = Qt.atob(Globals._dockBuf)
+          const obj = JSON.parse(jsonText)
+          // Reduced Dock subset
+          const subset = {
+            ShowDock: obj.ShowDock,
+            DockPositionHorizontal: obj.DockPositionHorizontal,
+            DockPositionVertical: obj.DockPositionVertical,
+            DockIconBorderPx: obj.DockIconBorderPx,
+            DockIconRadius: obj.DockIconRadius,
+            DockIconSizePx: obj.DockIconSizePx,
+            DockIconLabel: obj.DockIconLabel,
+            DockIconSpacing: obj.DockIconSpacing,
+            DockIconBGColor: obj.DockIconBGColor,
+            DockIconBorderColor: obj.DockIconBorderColor,
+            DockIconLabelTextColor: obj.DockIconLabelTextColor !== undefined ? obj.DockIconLabelTextColor : obj.DockIconLabelColor,
+            AllowDockIconMovement: obj.AllowDockIconMovement,
+            AutoHide: obj.AutoHide,
+            DockLayerPosition: obj.DockLayerPosition,
+            DockAutoHideInDurationMs: obj.DockAutoHideInDurationMs,
+            DockAutoHideOutDurationMs: obj.DockAutoHideOutDurationMs,
+            DockItems: obj.DockItems
+          }
+          const hash = Qt.md5(JSON.stringify(subset))
+          if (hash !== Globals._dockConfigHash) {
+            Globals._dockConfigHash = hash
+            // Apply only Dock-related keys
+            if (subset.ShowDock !== undefined) Globals.showDock = subset.ShowDock
+            if (subset.DockPositionHorizontal !== undefined) Globals.dockPositionHorizontal = subset.DockPositionHorizontal
+            if (subset.DockPositionVertical !== undefined) Globals.dockPositionVertical = subset.DockPositionVertical
+            if (subset.DockIconBorderPx !== undefined) Globals.dockIconBorderPx = subset.DockIconBorderPx
+            if (subset.DockIconRadius !== undefined) Globals.dockIconRadius = subset.DockIconRadius
+            if (subset.DockIconSizePx !== undefined) Globals.dockIconSizePx = subset.DockIconSizePx
+            if (subset.DockIconLabel !== undefined) Globals.dockIconLabel = subset.DockIconLabel
+            if (subset.DockIconSpacing !== undefined) Globals.dockIconSpacing = subset.DockIconSpacing
+            if (subset.DockIconBGColor !== undefined) Globals.dockIconBGColor = subset.DockIconBGColor
+            if (subset.DockIconBorderColor !== undefined) Globals.dockIconBorderColor = subset.DockIconBorderColor
+            if (subset.DockIconLabelTextColor !== undefined) Globals.dockIconLabelColor = subset.DockIconLabelTextColor
+            if (subset.AllowDockIconMovement !== undefined) Globals.allowDockIconMovement = subset.AllowDockIconMovement
+            // New boolean has priority; fallback to legacy string
+            if (subset.AutoHide !== undefined) Globals.dockLayerPosition = (subset.AutoHide ? "autohide" : "on top")
+            else if (subset.DockLayerPosition !== undefined) Globals.dockLayerPosition = subset.DockLayerPosition
+            if (subset.DockAutoHideInDurationMs !== undefined && subset.DockAutoHideOutDurationMs === undefined) {
+              Globals.dockAutoHideInDurationMs = subset.DockAutoHideInDurationMs
+              Globals.dockAutoHideOutDurationMs = subset.DockAutoHideInDurationMs
+            } else {
+              if (subset.DockAutoHideInDurationMs !== undefined) Globals.dockAutoHideInDurationMs = subset.DockAutoHideInDurationMs
+              if (subset.DockAutoHideOutDurationMs !== undefined) Globals.dockAutoHideOutDurationMs = subset.DockAutoHideOutDurationMs
+            }
+            if (subset.DockItems !== undefined) Globals.dockItems = subset.DockItems
+          }
+        } catch (e) { /* ignore parse errors */ }
+      }
+      Globals._dockBuf = ""
+    }
+  }
+  Timer {
+    id: themeWatch
+    interval: 1500
+    repeat: true
+    running: true
+    onTriggered: if (!dockWatchProc.running) dockWatchProc.running = true
   }
 
   // Note: we don't use Component.onCompleted in Singleton context

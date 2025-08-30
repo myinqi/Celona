@@ -91,10 +91,10 @@
   "DockIconBGColor": "#ff101418",
   "DockIconBorderColor": "#ff2c638b",
   "DockIconLabelTextColor": "#ffe0e2e8",
-  "AllowDockIconMovement": true,
-  "DockLayerPosition": "autohide",
+  "AllowDockIconMovement": false,
+  "AutoHide": true,
   "DockAutoHideInDurationMs": 120,
-  "DockAutoHideOutDurationMs": 250,
+  "DockAutoHideOutDurationMs": 220,
   "DockItems": [
     {
       "label": "Terminal",
