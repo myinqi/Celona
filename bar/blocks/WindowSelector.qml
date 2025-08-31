@@ -16,8 +16,39 @@ BarBlock {
   // Internal model of windows
   property var windows: [] // [{ id, title, app, workspace }]
 
+  // Map common app classes to Nerd Font glyphs for a small icon in the list
+  function iconForApp(appName) {
+    const a = String(appName || "").toLowerCase()
+    // Common mappings; extend as needed
+    if (a.includes("firefox")) return "󰈹"
+    if (a.includes("chromium") || a.includes("chrome")) return ""
+    if (a.includes("vscode") || a.includes("code")) return ""
+    if (a.includes("kitty")) return "󰄛"
+    if (a.includes("alacritty")) return "󰞷"
+    if (a.includes("ghostty")) return "󱘖"
+    if (a.includes("wezterm")) return "󰮤"
+    if (a.includes("foot")) return "󰆍"
+    if (a.includes("terminal") || a.includes("term")) return ""
+    if (a.includes("thunar") || a.includes("nautilus") || a.includes("dolphin") || a.includes("nemo")) return "󰉋"
+    if (a.includes("spotify")) return "󰓇"
+    if (a.includes("discord")) return "󰙯"
+    if (a.includes("steam")) return ""
+    if (a.includes("vlc")) return "󰕼"
+    if (a.includes("gimp")) return ""
+    if (a.includes("inkscape")) return ""
+    if (a.includes("libreoffice") || a.includes("writer")) return "󰈬"
+    if (a.includes("signal")) return "󰍩"
+    if (a.includes("thunderbird")) return "󰇰"
+    if (a.includes("obsidian")) return "󰠮"
+    if (a.includes("obs")) return "󰐰"
+    if (a.includes("gcolor") || a.includes("color")) return "󰏘"
+    // Fallback generic window icon
+    return "󰣆"
+  }
+
   // Niri integration only for now
-  readonly property bool isNiri: !Utils.CompositorUtils.isHyprland
+  readonly property bool isHyprland: Utils.CompositorUtils.isHyprland
+  readonly property bool isNiri: !isHyprland
 
   content: BarText {
     mainFont: "JetBrains Mono Nerd Font"
@@ -65,6 +96,34 @@ BarBlock {
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         wrapMode: Text.NoWrap
         verticalAlignment: Text.AlignVCenter
+      }
+    }
+  }
+
+  // Hyprland: list clients and map to windows
+  Process {
+    id: hyprListProc
+    running: false
+    stdout: SplitParser { onRead: data => { root.winQueryBuf += String(data) } }
+    onRunningChanged: if (!running) {
+      try {
+        const txt = String(root.winQueryBuf || "").trim()
+        let list = []
+        if (txt) {
+          const arr = JSON.parse(txt)
+          for (let i = 0; i < arr.length; i++) {
+            const c = arr[i] || {}
+            // Hyprland client has address, class, title, workspace: { id }
+            const addr = c.address || c.addr || null
+            const title = c.title || ""
+            const app = c.class || c.app || ""
+            const ws = (c.workspace && (c.workspace.id !== undefined)) ? c.workspace.id : null
+            list.push({ id: addr, title: title, app: app, workspace: ws })
+          }
+        }
+        root.setWindows(list)
+      } catch (e) {
+        root.setWindows([])
       }
     }
   }
@@ -155,12 +214,22 @@ BarBlock {
                 anchors.fill: parent
                 anchors.margins: 8
                 spacing: 8
+                // Small app icon glyph
+                Text {
+                  id: iconText
+                  text: iconForApp(app)
+                  color: Globals.moduleIconColor !== "" ? Globals.moduleIconColor : (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
+                  font.family: "Symbols Nerd Font Mono"
+                  font.pixelSize: 14
+                  verticalAlignment: Text.AlignVCenter
+                  width: 18
+                }
                 Text {
                   text: `${title || app || "Window"}`
                   color: Globals.popupText
                   elide: Text.ElideRight
                   verticalAlignment: Text.AlignVCenter
-                  width: parent.width - wsText.width - 16
+                  width: parent.width - wsText.width - iconText.width - 16
                 }
                 Text {
                   id: wsText
@@ -196,10 +265,17 @@ BarBlock {
 
   // Query windows on Niri; best-effort parsing and graceful fallback
   function refreshWindows() {
-    if (!isNiri) return
-    winQueryBuf = ""
-    niriListProc.command = ["bash", "-lc", "niri msg -j windows 2>/dev/null || niri msg -j tree 2>/dev/null || true"]
-    niriListProc.running = true
+    if (isHyprland) {
+      winQueryBuf = ""
+      hyprListProc.command = ["bash", "-lc", "hyprctl clients -j 2>/dev/null || true"]
+      hyprListProc.running = true
+      return
+    }
+    if (isNiri) {
+      winQueryBuf = ""
+      niriListProc.command = ["bash", "-lc", "niri msg -j windows 2>/dev/null || niri msg -j tree 2>/dev/null || true"]
+      niriListProc.running = true
+    }
   }
 
   function setWindows(arr) {
@@ -213,22 +289,33 @@ BarBlock {
 
   // Focus using Niri actions (subject to installed version capabilities)
   function focusWindow(model) {
-    if (!isNiri) return
     const id = model.id
     const ws = model.workspace
-    // Try to focus workspace first (if provided)
-    if (ws !== undefined && ws !== null) {
-      niriActionProc.command = ["bash", "-lc", `niri msg action focus-workspace ${ws} || true`]
-      niriActionProc.running = true
+    if (isHyprland) {
+      if (ws !== undefined && ws !== null) {
+        hyprWsProc.command = ["bash", "-lc", `hyprctl dispatch workspace ${ws} || true`]
+        hyprWsProc.running = true
+      }
+      if (id !== undefined && id !== null) {
+        // id carries the client's address for Hyprland
+        hyprFocusProc.command = ["bash", "-lc", `hyprctl dispatch focuswindow address:${id} || true`]
+        hyprFocusProc.running = true
+      }
+      menuWindow.visible = false
+      return
     }
-    // Try focus-window by id (if available)
-    if (id !== undefined && id !== null) {
-      niriActionProc2.command = ["bash", "-lc", `niri msg action focus-window ${id} || true`]
-      niriActionProc2.running = true
+    if (isNiri) {
+      if (ws !== undefined && ws !== null) {
+        niriActionProc.command = ["bash", "-lc", `niri msg action focus-workspace ${ws} || true`]
+        niriActionProc.running = true
+      }
+      if (id !== undefined && id !== null) {
+        niriActionProc2.command = ["bash", "-lc", `niri msg action focus-window ${id} || true`]
+        niriActionProc2.running = true
+      }
+      Qt.callLater(() => refreshWindows())
+      menuWindow.visible = false
     }
-    // Short refresh
-    Qt.callLater(() => refreshWindows())
-    menuWindow.visible = false
   }
 
   // Processes
@@ -283,11 +370,13 @@ BarBlock {
 
   Process { id: niriActionProc; running: false }
   Process { id: niriActionProc2; running: false }
+  Process { id: hyprWsProc; running: false }
+  Process { id: hyprFocusProc; running: false }
 
   // Keep in sync with compositor events (reuse CompositorUtils event stream)
   Connections {
     target: Utils.CompositorUtils
-    enabled: isNiri
+    enabled: isNiri || isHyprland
     function onWorkspacesChanged() { if (menuWindow.visible) refreshWindows() }
     function onActiveTitleChanged() { if (menuWindow.visible) refreshWindows() }
   }
