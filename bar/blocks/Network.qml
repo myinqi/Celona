@@ -109,7 +109,11 @@ BarBlock {
     anchors.fill: parent
     hoverEnabled: true
     acceptedButtons: Qt.LeftButton | Qt.RightButton
-    onEntered: tipWindow.visible = true
+    onEntered: {
+      if (!Globals.popupContext || !Globals.popupContext.popup) {
+        tipWindow.visible = true
+      }
+    }
     onExited: tipWindow.visible = false
     onClicked: ev => {
       if (ev.button === Qt.RightButton) {

@@ -29,7 +29,11 @@ BarBlock {
     hoverEnabled: true
 
     // Show tooltip below the bar (like CPU/Sound) to avoid covering the icon
-    onEntered: tipWindow.visible = true
+    onEntered: {
+      if (!Globals.popupContext || !Globals.popupContext.popup) {
+        tipWindow.visible = true
+      }
+    }
     onExited: tipWindow.visible = false
 
     onClicked: (mouse) => {
@@ -98,6 +102,19 @@ BarBlock {
     implicitWidth: contentCol.implicitWidth + 20
     implicitHeight: contentCol.implicitHeight + 20
     color: "transparent"
+    onVisibleChanged: {
+      if (visible) {
+        // Enforce exclusivity with other module popups
+        if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== menuWindow) {
+          if (Globals.popupContext.popup.visible !== undefined)
+            Globals.popupContext.popup.visible = false
+        }
+        if (Globals.popupContext) Globals.popupContext.popup = menuWindow
+      } else {
+        if (Globals.popupContext && Globals.popupContext.popup === menuWindow)
+          Globals.popupContext.popup = null
+      }
+    }
 
     anchor {
       window: root.QsWindow?.window
@@ -241,6 +258,13 @@ BarBlock {
       const gap = 5
       const y = (Globals.barPosition === "top") ? (root.height + gap) : (-(root.height + gap))
       menuWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+      if (!menuWindow.visible) {
+        // Close any other globally registered popup first
+        if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== menuWindow) {
+          if (Globals.popupContext.popup.visible !== undefined)
+            Globals.popupContext.popup.visible = false
+        }
+      }
       menuWindow.visible = !menuWindow.visible
     }
   }

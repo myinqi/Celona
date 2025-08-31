@@ -248,7 +248,11 @@ BarBlock {
   MouseArea {
     anchors.fill: parent
     hoverEnabled: true
-    onEntered: tip.visible = true
+    onEntered: {
+      if (!Globals.popupContext || !Globals.popupContext.popup) {
+        tip.visible = true
+      }
+    }
     onExited: tip.visible = false
     acceptedButtons: Qt.LeftButton | Qt.RightButton
     onClicked: (mouse) => {

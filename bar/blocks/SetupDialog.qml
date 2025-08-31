@@ -116,6 +116,7 @@ PopupWindow {
             { name: "Layout", comp: "LayoutPage" },
             { name: "Modules", comp: "ModulesPage" },
             { name: "Wallpaper", comp: "WallpapersPage" },
+            { name: "Dock", comp: "DockPage" },
             { name: "System", comp: "SystemPage" }
           ]
           delegate: Rectangle {
@@ -136,11 +137,12 @@ PopupWindow {
           }
           onCurrentIndexChanged: {
             switch (currentIndex) {
-              case 0: stack.currentIndex = 0; break
-              case 1: stack.currentIndex = 1; break
-              case 2: stack.currentIndex = 2; break
-              case 3: stack.currentIndex = 3; break
-              case 4: stack.currentIndex = 4; break
+              case 0: stack.currentIndex = 0; break // Theme
+              case 1: stack.currentIndex = 1; break // Layout
+              case 2: stack.currentIndex = 2; break // Modules
+              case 3: stack.currentIndex = 3; break // Wallpaper
+              case 4: stack.currentIndex = 4; break // Dock
+              case 5: stack.currentIndex = 5; break // System
             }
           }
         }
@@ -156,6 +158,7 @@ PopupWindow {
           Pages.LayoutPage {}
           Pages.ModulesPage {}
           Pages.WallpapersPage {}
+          Pages.DockPage {}
           Pages.SystemPage {}
         }
       }

@@ -13,7 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CONFIG_JSON="${REPO_DIR}/config.json"
 COLORS_CSS="${REPO_DIR}/colors.css"
-MODE_FILE="${REPO_DIR}/colors.mode"
 
 # State file to remember last mode
 STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/Celona"
@@ -140,7 +139,6 @@ else
   echo -e "${GREEN}GTK theme set to:${RESET} default (light)"
 fi
 
-# Persist new mode for next toggle
+# Persist new mode for next toggle (canonical)
 echo "$MODE" > "$STATE_FILE"
-echo "$MODE" > "$MODE_FILE"
 echo -e "${CYAN}Next toggle will switch to:${RESET} $( [[ "$MODE" == "dark" ]] && echo light || echo dark )"

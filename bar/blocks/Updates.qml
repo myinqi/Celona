@@ -153,6 +153,17 @@ BarBlock {
     implicitWidth: listContent.implicitWidth + 20
     implicitHeight: listContent.implicitHeight + 20
     color: "transparent"
+    onVisibleChanged: {
+      if (visible) {
+        tipWindow.visible = false
+        if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== listWindow) {
+          if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+        }
+        if (Globals.popupContext) Globals.popupContext.popup = listWindow
+      } else {
+        if (Globals.popupContext && Globals.popupContext.popup === listWindow) Globals.popupContext.popup = null
+      }
+    }
 
     anchor {
       window: root.QsWindow?.window
@@ -223,7 +234,11 @@ BarBlock {
     anchors.fill: parent
     hoverEnabled: true
     acceptedButtons: Qt.LeftButton | Qt.RightButton
-    onEntered: tipWindow.visible = true
+    onEntered: {
+      if (!Globals.popupContext || !Globals.popupContext.popup) {
+        tipWindow.visible = true
+      }
+    }
     onExited: tipWindow.visible = false
     onClicked: (mouse) => {
       if (mouse.button === Qt.LeftButton) {

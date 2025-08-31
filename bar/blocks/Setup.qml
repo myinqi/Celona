@@ -163,10 +163,10 @@ BarBlock {
       border.width: 1
       radius: 8
 
-      // Read current Matugen mode written by matugen-toggle.sh (repo-local)
+      // Read current Matugen mode written by matugen-toggle.sh (canonical: root:/matugen_mode)
       FileView {
         id: matugenModeView
-        path: Qt.resolvedUrl("root:/colors.mode")
+        path: Qt.resolvedUrl("root:/matugen_mode")
         onLoaded: {
           try {
             const t = String(matugenModeView.text()).trim()

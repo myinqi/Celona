@@ -12,13 +12,13 @@ Item {
   width: parent ? parent.width : 0
   height: parent ? parent.height : 0
 
-  // Track current Matugen mode from root:/colors.mode
+  // Track current Matugen mode from root:/matugen_mode (canonical)
   property string currentMatugenMode: ""
 
   // Read current Matugen mode written by scripts/matugen-toggle.sh
   FileView {
     id: matugenModeView
-    path: Qt.resolvedUrl("root:/colors.mode")
+    path: Qt.resolvedUrl("root:/matugen_mode")
     onLoaded: {
       try {
         const t = String(matugenModeView.text()).trim()
@@ -266,7 +266,10 @@ Item {
             { label: "Popup Border", key: "popupBorder" },
             { label: "Tray Icon", key: "trayIconColor" },
             { label: "Window Title", key: "windowTitleColor" },
-            { label: "Visualizer Bars", key: "visualizerBarColor" }
+            { label: "Visualizer Bars", key: "visualizerBarColor" },
+            { label: "Dock Icon Background", key: "dockIconBGColor" },
+            { label: "Dock Icon Border", key: "dockIconBorderColor" },
+            { label: "Dock Icon Label Text", key: "dockIconLabelColor" }
           ]
           delegate: RowLayout {
             Layout.fillWidth: true

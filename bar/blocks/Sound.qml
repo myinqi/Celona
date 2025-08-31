@@ -40,7 +40,11 @@ BarBlock {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onEntered: tipWindow.visible = true
+        onEntered: {
+            if (!Globals.popupContext || !Globals.popupContext.popup) {
+                tipWindow.visible = true
+            }
+        }
         onExited: tipWindow.visible = false
         onClicked: (mouse) => {
             tipWindow.visible = false
@@ -205,15 +209,22 @@ BarBlock {
             }
         }
 
-        // Start/stop cava when popup toggles
+        // Start/stop cava when popup toggles and manage global popup context
         onVisibleChanged: {
             if (visible) {
+                // Enforce exclusivity
+                if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== vizWindow) {
+                    if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+                }
+                if (Globals.popupContext) Globals.popupContext.popup = vizWindow
+
                 vizWindow.errorText = ""
                 vizWindow.cavaAvailable = true
                 vizWindow.values = new Array(vizWindow.bars).fill(0)
                 vizProc.running = true
                 nowProc.running = true
             } else {
+                if (Globals.popupContext && Globals.popupContext.popup === vizWindow) Globals.popupContext.popup = null
                 vizProc.running = false
                 nowProc.running = false
             }
@@ -283,6 +294,17 @@ BarBlock {
         visible: false
         // Ensure the window background is transparent so rounded corners show correctly
         color: "transparent"
+        onVisibleChanged: {
+            if (visible) {
+                // Enforce exclusivity
+                if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== menuWindow) {
+                    if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+                }
+                if (Globals.popupContext) Globals.popupContext.popup = menuWindow
+            } else {
+                if (Globals.popupContext && Globals.popupContext.popup === menuWindow) Globals.popupContext.popup = null
+            }
+        }
 
         anchor {
             // Align and behave like Tooltip: pop downward from the bar block
@@ -420,6 +442,12 @@ BarBlock {
               ? (root.height + gap)
               : (-(root.height + gap))
             menuWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+            if (!menuWindow.visible) {
+                // Close any other global popup first
+                if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== menuWindow) {
+                    if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+                }
+            }
             if (vizWindow.visible) vizWindow.visible = false
             menuWindow.visible = !menuWindow.visible
         }
@@ -432,6 +460,12 @@ BarBlock {
               ? (root.height + gap)
               : (-(root.height + gap))
             vizWindow.anchor.rect = root.QsWindow.window.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+            if (!vizWindow.visible) {
+                // Close any other global popup first
+                if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== vizWindow) {
+                    if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+                }
+            }
             if (menuWindow.visible) menuWindow.visible = false
             vizWindow.visible = !vizWindow.visible
         }

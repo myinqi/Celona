@@ -8,6 +8,14 @@ Singleton {
   // Global popup context used by Tooltip.qml
   property PopupContext popupContext: PopupContext {}
   readonly property string themeFile: "~/.config/quickshell/Celona/config.json"
+  // Expand tilde for components that don't expand it (e.g., FileView path)
+  readonly property string themeFileAbs: themeFile.indexOf("~/") === 0 ? ("/home/khrom/" + themeFile.slice(2)) : themeFile
+  // Niri config path (for optional color sync)
+  readonly property string niriConfigFile: "~/.config/niri/config.kdl"
+  readonly property string niriConfigFileAbs: niriConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + niriConfigFile.slice(2)) : niriConfigFile
+  // Ghostty theme path
+  readonly property string ghosttyThemeFile: "~/.config/ghostty/themes/matugen_colors.conf"
+  readonly property string ghosttyThemeFileAbs: ghosttyThemeFile.indexOf("~/") === 0 ? ("/home/khrom/" + ghosttyThemeFile.slice(2)) : ghosttyThemeFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
@@ -77,6 +85,8 @@ Singleton {
   property bool showPowerProfiles: true
   property bool showClipboard: true
   property bool showNotifications: true
+  // New: Window selector (popup listing open windows)
+  property bool showWindowSelector: true
   property bool showSound: true
   // Keybinds cheatsheet
   property bool showKeybinds: false
@@ -103,7 +113,7 @@ Singleton {
   // Default matches current static order
   property var rightModulesOrder: [
     "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
-    "PowerProfiles","Clipboard","Keybinds","Notifications","Sound","Battery","Date","Time","Power"
+    "PowerProfiles","Clipboard","Keybinds","Notifications","WindowSelector","Sound","Battery","Date","Time","Power"
   ]
 
   // Window title
@@ -142,6 +152,46 @@ Singleton {
   // Show bar visualizer module
   property bool showBarvisualizer: false
 
+  // Dock settings
+  // Vertical dock position on screen edge: "left" or "right"
+  // When false, the dock window is not shown
+  property bool dockEnabled: true
+  // Vertical dock position on screen edge: "left" or "right"
+  property string dockPosition: "right"
+  // Show labels under/next to icons
+  property bool dockShowLabels: true
+  // Tile size in pixels
+  property int dockTileSize: 64
+  // Vertical spacing between tiles in pixels
+  property int dockTileSpacing: 8
+  // Items: array of { icon: string, label: string, cmd: string }
+  property var dockItems: []
+
+  // New Dock config (config.json-driven only)
+  // Visibility and positioning
+  property bool showDock: true
+  property string dockPositionHorizontal: "right"   // left|right
+  property string dockPositionVertical: "center"     // top|center|bottom
+  // Layer/visibility behavior: "on top" | "behind" | "autohide"
+  property string dockLayerPosition: "on top"
+  // Autohide animation duration (ms)
+  property int dockAutoHideDurationMs: 120
+  // Separate durations for show/hide (ms)
+  property int dockAutoHideInDurationMs: 120
+  property int dockAutoHideOutDurationMs: 120
+  // Icon appearance
+  property int dockIconBorderPx: 2
+  property int dockIconRadius: 10
+  property int dockIconSizePx: 64
+  property bool dockIconLabel: true
+  property int dockIconSpacing: 0
+  // Icon colors (Matugen-aware)
+  property string dockIconBGColor: "#202020"
+  property string dockIconBorderColor: "#808080"
+  property string dockIconLabelColor: "#FFFFFF"
+  // Behavior
+  property bool allowDockIconMovement: false
+
   // --- Matugen colors handling ---
   // Helper: convert rgba(r,g,b,a) or #RRGGBB to #AARRGGBB
   function toArgb(hexOrRgba, alphaOverride) {
@@ -166,6 +216,124 @@ Singleton {
       }
       return '#ff000000'
     } catch (e) { return '#ff000000' }
+  }
+
+  // Helper: convert rgba(...)|#AARRGGBB|#RRGGBB -> rrggbb (no leading #)
+  function toRgb6(hexOrRgba) {
+    try {
+      const s0 = String(hexOrRgba||'').trim()
+      const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x))
+      const hx = n => (n.toString(16).padStart(2, '0'))
+      if (s0.startsWith('rgba')) {
+        const m = s0.match(/rgba\(([^)]+)\)/i)
+        if (!m) return '000000'
+        const parts = m[1].split(',').map(p => p.trim())
+        const r = clamp(parseInt(parts[0], 10), 0, 255)
+        const g = clamp(parseInt(parts[1], 10), 0, 255)
+        const b = clamp(parseInt(parts[2], 10), 0, 255)
+        return hx(r) + hx(g) + hx(b)
+      }
+      let s = s0
+      if (s.startsWith('#')) s = s.slice(1)
+      if (s.length === 8) return s.slice(2)
+      if (s.length === 6) return s
+      return '000000'
+    } catch (e) { return '000000' }
+  }
+
+  // Update Ghostty theme keys from Matugen map (also adjust a few palette entries)
+  function updateGhosttyThemeFromMap(map) {
+    try {
+      const text0 = String(ghosttyView && ghosttyView.text ? (ghosttyView.text()||"") : "")
+      const pick = (k, d) => (map && map[k] !== undefined ? map[k] : d)
+      const bg = pick('background', '#111318')
+      const onSurf = pick('on_surface', '#e2e2e9')
+      const invPrim = pick('inverse_primary', '#415e91')
+      const surfVar = pick('surface_variant', '#2a2f37')
+      const onSurfVar = pick('on_surface_variant', '#c4c6d0')
+      const scHigh = pick('surface_container_high', '#343a46')
+      const scLow = pick('surface_container_low', '#1b1f27')
+
+      const bg6 = toRgb6(bg)
+      const fg6 = toRgb6(onSurf)
+      const inv6 = toRgb6(invPrim)
+      // luminance to choose selection background
+      const r = parseInt(bg6.slice(0,2),16)/255.0
+      const g = parseInt(bg6.slice(2,4),16)/255.0
+      const b = parseInt(bg6.slice(4,6),16)/255.0
+      const lum = 0.2126*r + 0.7152*g + 0.0722*b
+      const selBg6 = toRgb6(lum >= 0.5 ? scHigh : scLow)
+      const selFg6 = fg6
+
+      function setPalette(src, index, hex6) {
+        const re = new RegExp('(^|\\n)palette\\s*=\\s*' + index + '=#[0-9a-fA-F]{6}')
+        const line = 'palette = ' + index + '=#' + hex6
+        if (re.test(src)) return src.replace(re, function(m, pre) { return pre + line })
+        const sep = src.endsWith('\n') || src.length===0 ? '' : '\n'
+        return src + sep + line + '\n'
+      }
+
+      function setKV(src, key, value) {
+        const re = new RegExp('(^|\\n)('+key+')\\s*=\\s*[^\\n]*')
+        if (re.test(src)) return src.replace(re, function(m, pre, k) { return pre + k + ' = ' + value })
+        const sep = src.endsWith('\n') || src.length===0 ? '' : '\n'
+        return src + sep + key + ' = ' + value + '\n'
+      }
+
+      let out = text0
+      out = setKV(out, 'background', bg6)
+      out = setKV(out, 'foreground', fg6)
+      out = setKV(out, 'cursor-color', inv6)
+      out = setKV(out, 'cursor-text', bg6)
+      out = setKV(out, 'selection-background', selBg6)
+      out = setKV(out, 'selection-foreground', selFg6)
+      // Map all 16 palette entries. Use Matugen hues where available and derive brights by lightening.
+      const surfVar6 = toRgb6(surfVar)
+      const onSurfVar6 = toRgb6(onSurfVar)
+      const primary6 = toRgb6(pick('primary', '#89b4fa'))
+      const secondary6 = toRgb6(pick('secondary', '#f5c2e7'))
+      const tertiary6 = toRgb6(pick('tertiary', '#94e2d5'))
+      const error6 = toRgb6(pick('error', '#f38ba8'))
+      const invPrim6 = toRgb6(invPrim)
+      function lighten(hex6, pct) {
+        try {
+          const p = Math.max(0, Math.min(100, pct)) / 100.0
+          const r = parseInt(hex6.slice(0,2),16)
+          const g = parseInt(hex6.slice(2,4),16)
+          const b = parseInt(hex6.slice(4,6),16)
+          const lr = Math.round(r + (255 - r) * p)
+          const lg = Math.round(g + (255 - g) * p)
+          const lb = Math.round(b + (255 - b) * p)
+          const hx = n => n.toString(16).padStart(2,'0')
+          return hx(lr) + hx(lg) + hx(lb)
+        } catch (e) { return hex6 }
+      }
+      // Base 0-7: black, red, green, yellow, blue, magenta, cyan, white
+      out = setPalette(out, 0, surfVar6)         // black-ish from surface_variant
+      out = setPalette(out, 1, error6)           // red
+      out = setPalette(out, 2, tertiary6)        // green-like
+      out = setPalette(out, 3, invPrim6)         // yellow-ish accent substitute
+      out = setPalette(out, 4, primary6)         // blue
+      out = setPalette(out, 5, secondary6)       // magenta
+      out = setPalette(out, 6, tertiary6)        // cyan-like (same family)
+      out = setPalette(out, 7, onSurfVar6)       // white-ish
+      // Bright 8-15: lightened variants
+      out = setPalette(out, 8,  lighten(surfVar6, 20))
+      out = setPalette(out, 9,  lighten(error6, 15))
+      out = setPalette(out, 10, lighten(tertiary6, 15))
+      out = setPalette(out, 11, lighten(invPrim6, 15))
+      out = setPalette(out, 12, lighten(primary6, 15))
+      out = setPalette(out, 13, lighten(secondary6, 15))
+      out = setPalette(out, 14, lighten(tertiary6, 25))
+      out = setPalette(out, 15, fg6)             // bright white = on_surface
+
+      // Always write to ensure terminal picks up changes across theme toggles
+      const b64 = Qt.btoa(out)
+      console.log('[Ghostty] writing theme to', ghosttyThemeFileAbs)
+      ghosttySaveProc.command = ["bash","-lc",
+        "mkdir -p ~/.config/ghostty/themes && printf '%s' '" + b64 + "' | base64 -d > " + ghosttyThemeFileAbs]
+      ghosttySaveProc.running = true
+    } catch (e) { /* ignore */ }
   }
 
   function applyMatugenMap(map) {
@@ -200,6 +368,15 @@ Singleton {
     workspaceInactiveBg = '#00000000'
     // visualizer bars align with border/accent
     visualizerBarColor = toArgb(invPrim)
+    // Dock colors (align with bar theme)
+    dockIconBGColor = toArgb(bg)              // solid base background
+    dockIconBorderColor = toArgb(invPrim)     // accent border like barBorderColor
+    dockIconLabelColor = toArgb(onSurf)       // readable text color
+    // Also sync external configs if requested
+    if (useMatugenColors) {
+      updateNiriColorsFromTheme()
+      updateGhosttyThemeFromMap(map)
+    }
   }
 
   function applyMatugenColors() {
@@ -207,6 +384,46 @@ Singleton {
     // Clear cached hash so a re-enable forces re-apply even if colors.css didn't change
     _matugenHash = ""
     if (matugenView) matugenView.reload()
+  }
+
+  // Update Niri colors (active/inactive) based on current theme values
+  // Strategy: use barBorderColor as active (accent), hoverHighlightColor as inactive (neutral)
+  function updateNiriColorsFromTheme() {
+    try {
+      const f = niriConfigFileAbs
+      if (!f || !niriView) return
+      const text = String(niriView.text()||"")
+      if (!text || text.length === 0) return
+      const active = String(barBorderColor||"").trim()
+      const inactive = String(hoverHighlightColor||"").trim()
+      if (!/^#?[0-9a-fA-F]{6,8}$/.test(active.replace(/^#/,'#'))) return
+      if (!/^#?[0-9a-fA-F]{6,8}$/.test(inactive.replace(/^#/,'#'))) return
+      function toRgb6(hex) {
+        let s = String(hex).trim()
+        if (!s.startsWith('#')) s = '#' + s
+        // #AARRGGBB -> #RRGGBB
+        if (s.length === 9) return '#' + s.slice(3)
+        // already #RRGGBB
+        if (s.length === 7) return s
+        return s
+      }
+      const aHex = toRgb6(active)
+      const iHex = toRgb6(inactive)
+      // Replace first occurrences; preserve indentation and original quote style
+      // Match forms like: active-color "#rrggbb", active-color '#rrggbb', with optional colon
+      let out = text
+      out = out.replace(/(^|\n)([\t ]*)active-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
+        return pre + indent + "active-color " + q + aHex + q
+      })
+      out = out.replace(/(^|\n)([\t ]*)inactive-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
+        return pre + indent + "inactive-color " + q + iHex + q
+      })
+      if (out !== text) {
+        const b64 = Qt.btoa(out)
+        niriSaveProc.command = ["bash","-lc","printf '%s' '" + b64 + "' | base64 -d > " + niriConfigFile]
+        niriSaveProc.running = true
+      }
+    } catch (e) { /* ignore */ }
   }
 
   // Reset all theme colors to their built-in defaults
@@ -313,6 +530,7 @@ Singleton {
     showPowerProfiles = true
     showClipboard = true
     showNotifications = true
+    showWindowSelector = true
     showSound = true
     showBattery = true
     showDate = true
@@ -323,7 +541,7 @@ Singleton {
     swapTitleAndWorkspaces = false
     rightModulesOrder = [
       "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
-      "PowerProfiles","Battery","Clipboard","Notifications","Sound","Weather",
+      "PowerProfiles","Battery","Clipboard","Notifications","WindowSelector","Sound","Weather",
       "Date","Time","Keybinds","Power"
     ]
     // Window title
@@ -340,6 +558,30 @@ Singleton {
     // Keybinds
     showKeybinds = false
 
+    // Dock (legacy)
+    dockEnabled = true
+    dockPosition = "right"
+    dockShowLabels = true
+    dockTileSize = 64
+    dockTileSpacing = 8
+    dockItems = []
+    // Dock (new)
+    showDock = true
+    dockPositionHorizontal = "right"
+    dockPositionVertical = "center"
+    dockIconBorderPx = 2
+    dockIconRadius = 10
+    dockIconSizePx = 64
+    dockIconLabel = true
+    dockIconSpacing = 0
+    dockIconBGColor = "#202020"
+    dockIconBorderColor = "#808080"
+    dockIconLabelColor = "#FFFFFF"
+    allowDockIconMovement = false
+    dockItems = [
+      { label: "Browser", cmd: "xdg-open https://example.com" },
+      { label: "Terminal", cmd: "alacritty" }
+    ]
     // Wallpaper defaults
     wallpaperAnimatedEnabled = false
     wallpaperAnimatedPath = ""
@@ -397,6 +639,7 @@ Singleton {
     setIf("showPowerProfiles")
     setIf("showClipboard")
     setIf("showNotifications")
+    setIf("showWindowSelector")
     setIf("showSound")
     setIf("showKeybinds")
     setIf("showBattery")
@@ -419,6 +662,43 @@ Singleton {
     // Setup UI
     setIf("useNewSetupUI")
     setIf("showBarvisualizer")
+    // Dock (legacy)
+    setIf("dockEnabled")
+    setIf("dockPosition")
+    setIf("dockShowLabels")
+    setIf("dockTileSize")
+    setIf("dockTileSpacing")
+    setIf("dockItems")
+    // Dock (new): map uppercase JSON keys to lowercase QML properties
+    if (obj.ShowDock !== undefined) Globals.showDock = obj.ShowDock
+    if (obj.DockPositionHorizontal !== undefined) Globals.dockPositionHorizontal = obj.DockPositionHorizontal
+    if (obj.DockPositionVertical !== undefined) Globals.dockPositionVertical = obj.DockPositionVertical
+    if (obj.DockIconBorderPx !== undefined) Globals.dockIconBorderPx = obj.DockIconBorderPx
+    if (obj.DockIconRadius !== undefined) Globals.dockIconRadius = obj.DockIconRadius
+    if (obj.DockIconSizePx !== undefined) Globals.dockIconSizePx = obj.DockIconSizePx
+    if (obj.DockIconLabel !== undefined) Globals.dockIconLabel = obj.DockIconLabel
+    if (obj.DockIconSpacing !== undefined) Globals.dockIconSpacing = obj.DockIconSpacing
+    if (obj.DockIconBGColor !== undefined) Globals.dockIconBGColor = obj.DockIconBGColor
+    if (obj.DockIconBorderColor !== undefined) Globals.dockIconBorderColor = obj.DockIconBorderColor
+    // Prefer new DockIconLabelTextColor; fallback to legacy DockIconLabelColor
+    if (obj.DockIconLabelTextColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelTextColor
+    else if (obj.DockIconLabelColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelColor
+    if (obj.AllowDockIconMovement !== undefined) Globals.allowDockIconMovement = obj.AllowDockIconMovement
+    // Back-compat: accept DockLayerPosition ("on top"|"autohide")
+    if (obj.DockLayerPosition !== undefined) Globals.dockLayerPosition = obj.DockLayerPosition
+    // New: AutoHide boolean has priority if present
+    if (obj.AutoHide !== undefined) Globals.dockLayerPosition = (obj.AutoHide ? "autohide" : "on top")
+    // durations: read specific first, then fallback to unified if provided
+    const hasIn = (obj.DockAutoHideInDurationMs !== undefined)
+    const hasOut = (obj.DockAutoHideOutDurationMs !== undefined)
+    if (hasIn) Globals.dockAutoHideInDurationMs = obj.DockAutoHideInDurationMs
+    if (hasOut) Globals.dockAutoHideOutDurationMs = obj.DockAutoHideOutDurationMs
+    if (obj.DockAutoHideDurationMs !== undefined && !hasIn && !hasOut) {
+      Globals.dockAutoHideDurationMs = obj.DockAutoHideDurationMs
+      Globals.dockAutoHideInDurationMs = obj.DockAutoHideDurationMs
+      Globals.dockAutoHideOutDurationMs = obj.DockAutoHideDurationMs
+    }
+    if (obj.DockItems !== undefined) Globals.dockItems = obj.DockItems
   }
 
   // Load theme from file on startup handled by loadThemeProc.running
@@ -474,6 +754,7 @@ Singleton {
       showPowerProfiles,
       showClipboard,
       showNotifications,
+      showWindowSelector,
       showSound,
       showKeybinds,
       showBattery,
@@ -495,7 +776,25 @@ Singleton {
       wallpaperTool,
       // Setup UI flag
       useNewSetupUI,
-      showBarvisualizer
+      showBarvisualizer,
+      // Dock (new, persisted with uppercase keys for config.json)
+      ShowDock: showDock,
+      DockPositionHorizontal: dockPositionHorizontal,
+      DockPositionVertical: dockPositionVertical,
+      DockIconBorderPx: dockIconBorderPx,
+      DockIconRadius: dockIconRadius,
+      DockIconSizePx: dockIconSizePx,
+      DockIconLabel: dockIconLabel,
+      DockIconSpacing: dockIconSpacing,
+      DockIconBGColor: dockIconBGColor,
+      DockIconBorderColor: dockIconBorderColor,
+      DockIconLabelTextColor: dockIconLabelColor,
+      AllowDockIconMovement: allowDockIconMovement,
+      // New: persist boolean instead of string mode
+      AutoHide: (dockLayerPosition === "autohide"),
+      DockAutoHideInDurationMs: dockAutoHideInDurationMs,
+      DockAutoHideOutDurationMs: dockAutoHideOutDurationMs,
+      DockItems: dockItems
     }
     const json = JSON.stringify(obj, null, 2)
     // Avoid complex shell escaping by writing base64 and decoding
@@ -537,7 +836,27 @@ Singleton {
     }
   }
 
+  // Lightweight reader for Niri config to allow in-memory edits
+  FileView {
+    id: niriView
+    path: niriConfigFileAbs
+    onLoaded: { /* noop */ }
+    onLoadFailed: (error) => { /* ignore (Niri may not be installed) */ }
+  }
+
+  // Lightweight reader for Ghostty theme file
+  FileView {
+    id: ghosttyView
+    path: ghosttyThemeFileAbs
+    onLoaded: { /* noop */ }
+    onLoadFailed: (error) => { /* ok if file doesn't exist; we'll create it on write */ }
+  }
+
   Process { id: saveThemeProc; running: false }
+  // Writer for Niri config updates
+  Process { id: niriSaveProc; running: false }
+  // Writer for Ghostty theme updates
+  Process { id: ghosttySaveProc; running: false }
 
   // --- Wallpaper control processes ---
   // Single process used for wallpaper commands; we queue when busy
@@ -736,6 +1055,86 @@ Singleton {
     onTriggered: {
       if (Globals.useMatugenColors) matugenView.reload()
     }
+  }
+
+  // --- Live watch for Dock settings in theme file (config.json) ---
+  // Only applies Dock-related keys to avoid side effects.
+  // Detect changes using a reduced JSON subset hash.
+  property string _dockConfigHash: ""
+  // Buffer for base64 read of theme file
+  property string _dockBuf: ""
+  Process {
+    id: dockWatchProc
+    // Read as base64 to avoid line-splitting; shell expands ~ for any user
+    command: ["bash", "-lc", "base64 -w0 " + Globals.themeFile + " 2>/dev/null || true"]
+    running: false
+    stdout: SplitParser {
+      onRead: (data) => { Globals._dockBuf += String(data) }
+    }
+    onRunningChanged: if (!running) {
+      if (Globals._dockBuf && Globals._dockBuf.length) {
+        try {
+          const jsonText = Qt.atob(Globals._dockBuf)
+          const obj = JSON.parse(jsonText)
+          // Reduced Dock subset
+          const subset = {
+            ShowDock: obj.ShowDock,
+            DockPositionHorizontal: obj.DockPositionHorizontal,
+            DockPositionVertical: obj.DockPositionVertical,
+            DockIconBorderPx: obj.DockIconBorderPx,
+            DockIconRadius: obj.DockIconRadius,
+            DockIconSizePx: obj.DockIconSizePx,
+            DockIconLabel: obj.DockIconLabel,
+            DockIconSpacing: obj.DockIconSpacing,
+            DockIconBGColor: obj.DockIconBGColor,
+            DockIconBorderColor: obj.DockIconBorderColor,
+            DockIconLabelTextColor: obj.DockIconLabelTextColor !== undefined ? obj.DockIconLabelTextColor : obj.DockIconLabelColor,
+            AllowDockIconMovement: obj.AllowDockIconMovement,
+            AutoHide: obj.AutoHide,
+            DockLayerPosition: obj.DockLayerPosition,
+            DockAutoHideInDurationMs: obj.DockAutoHideInDurationMs,
+            DockAutoHideOutDurationMs: obj.DockAutoHideOutDurationMs,
+            DockItems: obj.DockItems
+          }
+          const hash = Qt.md5(JSON.stringify(subset))
+          if (hash !== Globals._dockConfigHash) {
+            Globals._dockConfigHash = hash
+            // Apply only Dock-related keys
+            if (subset.ShowDock !== undefined) Globals.showDock = subset.ShowDock
+            if (subset.DockPositionHorizontal !== undefined) Globals.dockPositionHorizontal = subset.DockPositionHorizontal
+            if (subset.DockPositionVertical !== undefined) Globals.dockPositionVertical = subset.DockPositionVertical
+            if (subset.DockIconBorderPx !== undefined) Globals.dockIconBorderPx = subset.DockIconBorderPx
+            if (subset.DockIconRadius !== undefined) Globals.dockIconRadius = subset.DockIconRadius
+            if (subset.DockIconSizePx !== undefined) Globals.dockIconSizePx = subset.DockIconSizePx
+            if (subset.DockIconLabel !== undefined) Globals.dockIconLabel = subset.DockIconLabel
+            if (subset.DockIconSpacing !== undefined) Globals.dockIconSpacing = subset.DockIconSpacing
+            if (subset.DockIconBGColor !== undefined) Globals.dockIconBGColor = subset.DockIconBGColor
+            if (subset.DockIconBorderColor !== undefined) Globals.dockIconBorderColor = subset.DockIconBorderColor
+            if (subset.DockIconLabelTextColor !== undefined) Globals.dockIconLabelColor = subset.DockIconLabelTextColor
+            if (subset.AllowDockIconMovement !== undefined) Globals.allowDockIconMovement = subset.AllowDockIconMovement
+            // New boolean has priority; fallback to legacy string
+            if (subset.AutoHide !== undefined) Globals.dockLayerPosition = (subset.AutoHide ? "autohide" : "on top")
+            else if (subset.DockLayerPosition !== undefined) Globals.dockLayerPosition = subset.DockLayerPosition
+            if (subset.DockAutoHideInDurationMs !== undefined && subset.DockAutoHideOutDurationMs === undefined) {
+              Globals.dockAutoHideInDurationMs = subset.DockAutoHideInDurationMs
+              Globals.dockAutoHideOutDurationMs = subset.DockAutoHideInDurationMs
+            } else {
+              if (subset.DockAutoHideInDurationMs !== undefined) Globals.dockAutoHideInDurationMs = subset.DockAutoHideInDurationMs
+              if (subset.DockAutoHideOutDurationMs !== undefined) Globals.dockAutoHideOutDurationMs = subset.DockAutoHideOutDurationMs
+            }
+            if (subset.DockItems !== undefined) Globals.dockItems = subset.DockItems
+          }
+        } catch (e) { /* ignore parse errors */ }
+      }
+      Globals._dockBuf = ""
+    }
+  }
+  Timer {
+    id: themeWatch
+    interval: 1500
+    repeat: true
+    running: true
+    onTriggered: if (!dockWatchProc.running) dockWatchProc.running = true
   }
 
   // Note: we don't use Component.onCompleted in Singleton context

@@ -20,7 +20,11 @@ BarBlock {
     anchors.fill: parent
     hoverEnabled: true
     acceptedButtons: Qt.LeftButton
-    onEntered: tipWindow.visible = true
+    onEntered: {
+      if (!calWindow.visible && (!Globals.popupContext || !Globals.popupContext.popup)) {
+        tipWindow.visible = true
+      }
+    }
     onExited: tipWindow.visible = false
     function positionCal() {
       const win = text.QsWindow?.window
@@ -116,7 +120,20 @@ BarBlock {
       }
     }
 
-    onVisibleChanged: if (visible) { bgRect.forceActiveFocus(); mouseArea.positionCal(); posFixTimer.start() }
+    onVisibleChanged: {
+      if (visible) {
+        tipWindow.visible = false
+        if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== calWindow) {
+          if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+        }
+        if (Globals.popupContext) Globals.popupContext.popup = calWindow
+        bgRect.forceActiveFocus()
+        mouseArea.positionCal()
+        posFixTimer.start()
+      } else {
+        if (Globals.popupContext && Globals.popupContext.popup === calWindow) Globals.popupContext.popup = null
+      }
+    }
 
     // After becoming visible, implicitHeight becomes accurate; adjust position once more
     Timer {
