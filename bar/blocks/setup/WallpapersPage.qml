@@ -15,6 +15,44 @@ Item {
   width: parent ? parent.width : 0
   height: parent ? parent.height : 0
 
+  // Track current Matugen mode from root:/colors.mode
+  property string currentMatugenMode: ""
+
+  // Read current Matugen mode (source of truth)
+  FileView {
+    id: matugenModeView
+    path: Qt.resolvedUrl("root:/matugen_mode")
+    onLoaded: {
+      try {
+        const t = String(matugenModeView.text()).trim()
+        page.currentMatugenMode = (t === "light" || t === "dark") ? t : ""
+      } catch (e) { page.currentMatugenMode = "" }
+    }
+  }
+
+  // Runner to force-generate Matugen colors for current mode
+  Process {
+    id: matugenProc
+    running: false
+    property bool _pendingSecond: false
+    onRunningChanged: if (!running) {
+      if (matugenProc._pendingSecond) {
+        // Run second toggle to return to original mode but regenerate colors
+        matugenProc._pendingSecond = false
+        const togglePath = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
+        matugenProc.command = ["bash", "-lc", '"' + togglePath.replace(/"/g,'\\"') + '"']
+        matugenProc.running = true
+        return
+      }
+      if (matugenModeView) matugenModeView.reload()
+      if (Globals.useMatugenColors) Globals.applyMatugenColors()
+    }
+  }
+
+  Component.onCompleted: {
+    if (matugenModeView) matugenModeView.reload()
+  }
+
   ColumnLayout {
     anchors.fill: parent
     anchors.margins: 14
@@ -115,6 +153,11 @@ Item {
               wpSwitch.checked = false  // Update UI switch
               Globals.stopAnimatedAndSetStatic()
               Globals.saveTheme()
+              // Regenerate Matugen colors without changing final mode: run toggle twice
+              const togglePath = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
+              matugenProc._pendingSecond = true
+              matugenProc.command = ["bash", "-lc", '"' + togglePath.replace(/"/g,'\\"') + '"']
+              matugenProc.running = true
             }
             ToolTip {
               id: staticApplyTip
@@ -156,6 +199,11 @@ Item {
                 Globals.startAnimatedWallpaper()
               }
               Globals.saveTheme()
+              // Regenerate Matugen colors without changing final mode: run toggle twice
+              const togglePath2 = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
+              matugenProc._pendingSecond = true
+              matugenProc.command = ["bash", "-lc", '"' + togglePath2.replace(/"/g,'\\"') + '"']
+              matugenProc.running = true
             }
             ToolTip {
               id: animatedApplyTip
