@@ -239,7 +239,7 @@ Singleton {
     } catch (e) { return '000000' }
   }
 
-  // Update Ghostty theme keys from Matugen map (palette left untouched)
+  // Update Ghostty theme keys from Matugen map (also adjust a few palette entries)
   function updateGhosttyThemeFromMap(map) {
     try {
       const text0 = String(ghosttyView && ghosttyView.text ? (ghosttyView.text()||"") : "")
@@ -247,6 +247,8 @@ Singleton {
       const bg = pick('background', '#111318')
       const onSurf = pick('on_surface', '#e2e2e9')
       const invPrim = pick('inverse_primary', '#415e91')
+      const surfVar = pick('surface_variant', '#2a2f37')
+      const onSurfVar = pick('on_surface_variant', '#c4c6d0')
       const scHigh = pick('surface_container_high', '#343a46')
       const scLow = pick('surface_container_low', '#1b1f27')
 
@@ -260,6 +262,14 @@ Singleton {
       const lum = 0.2126*r + 0.7152*g + 0.0722*b
       const selBg6 = toRgb6(lum >= 0.5 ? scHigh : scLow)
       const selFg6 = fg6
+
+      function setPalette(src, index, hex6) {
+        const re = new RegExp('(^|\\n)palette\\s*=\\s*' + index + '=#[0-9a-fA-F]{6}')
+        const line = 'palette = ' + index + '=#' + hex6
+        if (re.test(src)) return src.replace(re, function(m, pre) { return pre + line })
+        const sep = src.endsWith('\n') || src.length===0 ? '' : '\n'
+        return src + sep + line + '\n'
+      }
 
       function setKV(src, key, value) {
         const re = new RegExp('(^|\\n)('+key+')\\s*=\\s*[^\\n]*')
@@ -275,6 +285,45 @@ Singleton {
       out = setKV(out, 'cursor-text', bg6)
       out = setKV(out, 'selection-background', selBg6)
       out = setKV(out, 'selection-foreground', selFg6)
+      // Map all 16 palette entries. Use Matugen hues where available and derive brights by lightening.
+      const surfVar6 = toRgb6(surfVar)
+      const onSurfVar6 = toRgb6(onSurfVar)
+      const primary6 = toRgb6(pick('primary', '#89b4fa'))
+      const secondary6 = toRgb6(pick('secondary', '#f5c2e7'))
+      const tertiary6 = toRgb6(pick('tertiary', '#94e2d5'))
+      const error6 = toRgb6(pick('error', '#f38ba8'))
+      const invPrim6 = toRgb6(invPrim)
+      function lighten(hex6, pct) {
+        try {
+          const p = Math.max(0, Math.min(100, pct)) / 100.0
+          const r = parseInt(hex6.slice(0,2),16)
+          const g = parseInt(hex6.slice(2,4),16)
+          const b = parseInt(hex6.slice(4,6),16)
+          const lr = Math.round(r + (255 - r) * p)
+          const lg = Math.round(g + (255 - g) * p)
+          const lb = Math.round(b + (255 - b) * p)
+          const hx = n => n.toString(16).padStart(2,'0')
+          return hx(lr) + hx(lg) + hx(lb)
+        } catch (e) { return hex6 }
+      }
+      // Base 0-7: black, red, green, yellow, blue, magenta, cyan, white
+      out = setPalette(out, 0, surfVar6)         // black-ish from surface_variant
+      out = setPalette(out, 1, error6)           // red
+      out = setPalette(out, 2, tertiary6)        // green-like
+      out = setPalette(out, 3, invPrim6)         // yellow-ish accent substitute
+      out = setPalette(out, 4, primary6)         // blue
+      out = setPalette(out, 5, secondary6)       // magenta
+      out = setPalette(out, 6, tertiary6)        // cyan-like (same family)
+      out = setPalette(out, 7, onSurfVar6)       // white-ish
+      // Bright 8-15: lightened variants
+      out = setPalette(out, 8,  lighten(surfVar6, 20))
+      out = setPalette(out, 9,  lighten(error6, 15))
+      out = setPalette(out, 10, lighten(tertiary6, 15))
+      out = setPalette(out, 11, lighten(invPrim6, 15))
+      out = setPalette(out, 12, lighten(primary6, 15))
+      out = setPalette(out, 13, lighten(secondary6, 15))
+      out = setPalette(out, 14, lighten(tertiary6, 25))
+      out = setPalette(out, 15, fg6)             // bright white = on_surface
 
       // Always write to ensure terminal picks up changes across theme toggles
       const b64 = Qt.btoa(out)
