@@ -13,6 +13,9 @@ Singleton {
   // Niri config path (for optional color sync)
   readonly property string niriConfigFile: "~/.config/niri/config.kdl"
   readonly property string niriConfigFileAbs: niriConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + niriConfigFile.slice(2)) : niriConfigFile
+  // Ghostty theme path
+  readonly property string ghosttyThemeFile: "~/.config/ghostty/themes/matugen_colors.conf"
+  readonly property string ghosttyThemeFileAbs: ghosttyThemeFile.indexOf("~/") === 0 ? ("/home/khrom/" + ghosttyThemeFile.slice(2)) : ghosttyThemeFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
@@ -213,6 +216,75 @@ Singleton {
     } catch (e) { return '#ff000000' }
   }
 
+  // Helper: convert rgba(...)|#AARRGGBB|#RRGGBB -> rrggbb (no leading #)
+  function toRgb6(hexOrRgba) {
+    try {
+      const s0 = String(hexOrRgba||'').trim()
+      const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x))
+      const hx = n => (n.toString(16).padStart(2, '0'))
+      if (s0.startsWith('rgba')) {
+        const m = s0.match(/rgba\(([^)]+)\)/i)
+        if (!m) return '000000'
+        const parts = m[1].split(',').map(p => p.trim())
+        const r = clamp(parseInt(parts[0], 10), 0, 255)
+        const g = clamp(parseInt(parts[1], 10), 0, 255)
+        const b = clamp(parseInt(parts[2], 10), 0, 255)
+        return hx(r) + hx(g) + hx(b)
+      }
+      let s = s0
+      if (s.startsWith('#')) s = s.slice(1)
+      if (s.length === 8) return s.slice(2)
+      if (s.length === 6) return s
+      return '000000'
+    } catch (e) { return '000000' }
+  }
+
+  // Update Ghostty theme keys from Matugen map (palette left untouched)
+  function updateGhosttyThemeFromMap(map) {
+    try {
+      const text0 = String(ghosttyView && ghosttyView.text ? (ghosttyView.text()||"") : "")
+      const pick = (k, d) => (map && map[k] !== undefined ? map[k] : d)
+      const bg = pick('background', '#111318')
+      const onSurf = pick('on_surface', '#e2e2e9')
+      const invPrim = pick('inverse_primary', '#415e91')
+      const scHigh = pick('surface_container_high', '#343a46')
+      const scLow = pick('surface_container_low', '#1b1f27')
+
+      const bg6 = toRgb6(bg)
+      const fg6 = toRgb6(onSurf)
+      const inv6 = toRgb6(invPrim)
+      // luminance to choose selection background
+      const r = parseInt(bg6.slice(0,2),16)/255.0
+      const g = parseInt(bg6.slice(2,4),16)/255.0
+      const b = parseInt(bg6.slice(4,6),16)/255.0
+      const lum = 0.2126*r + 0.7152*g + 0.0722*b
+      const selBg6 = toRgb6(lum >= 0.5 ? scHigh : scLow)
+      const selFg6 = fg6
+
+      function setKV(src, key, value) {
+        const re = new RegExp('(^|\\n)('+key+')\\s*=\\s*[^\\n]*')
+        if (re.test(src)) return src.replace(re, function(m, pre, k) { return pre + k + ' = ' + value })
+        const sep = src.endsWith('\n') || src.length===0 ? '' : '\n'
+        return src + sep + key + ' = ' + value + '\n'
+      }
+
+      let out = text0
+      out = setKV(out, 'background', bg6)
+      out = setKV(out, 'foreground', fg6)
+      out = setKV(out, 'cursor-color', inv6)
+      out = setKV(out, 'cursor-text', bg6)
+      out = setKV(out, 'selection-background', selBg6)
+      out = setKV(out, 'selection-foreground', selFg6)
+
+      // Always write to ensure terminal picks up changes across theme toggles
+      const b64 = Qt.btoa(out)
+      console.log('[Ghostty] writing theme to', ghosttyThemeFileAbs)
+      ghosttySaveProc.command = ["bash","-lc",
+        "mkdir -p ~/.config/ghostty/themes && printf '%s' '" + b64 + "' | base64 -d > " + ghosttyThemeFileAbs]
+      ghosttySaveProc.running = true
+    } catch (e) { /* ignore */ }
+  }
+
   function applyMatugenMap(map) {
     // Map Matugen names to our config keys
     // Fallbacks if a key is missing
@@ -249,8 +321,11 @@ Singleton {
     dockIconBGColor = toArgb(bg)              // solid base background
     dockIconBorderColor = toArgb(invPrim)     // accent border like barBorderColor
     dockIconLabelColor = toArgb(onSurf)       // readable text color
-    // Also sync Niri colors if requested
-    if (useMatugenColors) updateNiriColorsFromTheme()
+    // Also sync external configs if requested
+    if (useMatugenColors) {
+      updateNiriColorsFromTheme()
+      updateGhosttyThemeFromMap(map)
+    }
   }
 
   function applyMatugenColors() {
@@ -715,9 +790,19 @@ Singleton {
     onLoadFailed: (error) => { /* ignore (Niri may not be installed) */ }
   }
 
+  // Lightweight reader for Ghostty theme file
+  FileView {
+    id: ghosttyView
+    path: ghosttyThemeFileAbs
+    onLoaded: { /* noop */ }
+    onLoadFailed: (error) => { /* ok if file doesn't exist; we'll create it on write */ }
+  }
+
   Process { id: saveThemeProc; running: false }
   // Writer for Niri config updates
   Process { id: niriSaveProc; running: false }
+  // Writer for Ghostty theme updates
+  Process { id: ghosttySaveProc; running: false }
 
   // --- Wallpaper control processes ---
   // Single process used for wallpaper commands; we queue when busy
