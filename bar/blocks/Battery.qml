@@ -24,7 +24,11 @@ BarBlock {
   MouseArea {
     anchors.fill: parent
     hoverEnabled: true
-    onEntered: tipWindow.visible = true
+    onEntered: {
+      if (!Globals.popupContext || !Globals.popupContext.popup) {
+        tipWindow.visible = true
+      }
+    }
     onExited: tipWindow.visible = false
   }
 

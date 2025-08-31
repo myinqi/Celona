@@ -74,7 +74,11 @@ BarBlock {
     anchors.fill: parent
     acceptedButtons: Qt.LeftButton
     hoverEnabled: true
-    onEntered: { if (!menuWindow.visible) tipWindow.visible = true }
+    onEntered: {
+      if (!menuWindow.visible && (!Globals.popupContext || !Globals.popupContext.popup)) {
+        tipWindow.visible = true
+      }
+    }
     onExited: tipWindow.visible = false
     onClicked: () => { tipWindow.visible = false; togglePopup() }
   }
@@ -89,7 +93,17 @@ BarBlock {
     implicitWidth: 360
     implicitHeight: listHeight + 20
     color: "transparent"
-    onVisibleChanged: if (visible) tipWindow.visible = false
+    onVisibleChanged: {
+      if (visible) {
+        tipWindow.visible = false
+        if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== menuWindow) {
+          if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+        }
+        if (Globals.popupContext) Globals.popupContext.popup = menuWindow
+      } else {
+        if (Globals.popupContext && Globals.popupContext.popup === menuWindow) Globals.popupContext.popup = null
+      }
+    }
 
     anchor {
       window: root.QsWindow?.window

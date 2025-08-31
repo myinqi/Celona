@@ -74,6 +74,17 @@ BarBlock {
     implicitHeight: manageCol.implicitHeight + 20
     visible: false
     color: "transparent"
+    onVisibleChanged: {
+      if (visible) {
+        tipWindow.visible = false
+        if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== manageWindow) {
+          if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+        }
+        if (Globals.popupContext) Globals.popupContext.popup = manageWindow
+      } else {
+        if (Globals.popupContext && Globals.popupContext.popup === manageWindow) Globals.popupContext.popup = null
+      }
+    }
 
     anchor {
       window: root.QsWindow?.window
@@ -294,7 +305,11 @@ BarBlock {
     anchors.fill: parent
     acceptedButtons: Qt.LeftButton | Qt.RightButton
     hoverEnabled: true
-    onEntered: tipWindow.visible = true
+    onEntered: {
+      if (!Globals.popupContext || !Globals.popupContext.popup) {
+        tipWindow.visible = true
+      }
+    }
     onExited: tipWindow.visible = false
     onClicked: (mouse) => {
       tipWindow.visible = false
@@ -306,6 +321,11 @@ BarBlock {
       const rect = root.QsWindow.window.contentItem.mapFromItem(root, x, y, menuWindow.implicitWidth, menuWindow.implicitHeight)
       if (mouse.button === Qt.LeftButton) {
         menuWindow.anchor.rect = rect
+        if (!menuWindow.visible) {
+          if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== menuWindow) {
+            if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+          }
+        }
         menuWindow.visible = !menuWindow.visible
         if (menuWindow.visible) {
           // Refresh once on open. Disable periodic refresh to avoid stealing focus and resetting scroll.
@@ -322,6 +342,9 @@ BarBlock {
         } else {
           const mrect = root.QsWindow.window.contentItem.mapFromItem(root, mx, my, manageWindow.implicitWidth, manageWindow.implicitHeight)
           manageWindow.anchor.rect = mrect
+          if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== manageWindow) {
+            if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+          }
           manageWindow.visible = true
         }
       }
@@ -334,8 +357,19 @@ BarBlock {
     implicitHeight: 220
     visible: false
     color: "transparent"
-    // Update indicators on open for accuracy
-    onVisibleChanged: if (visible) { refreshCount(); refreshLastId() }
+    // Update indicators on open for accuracy and manage global popup exclusivity
+    onVisibleChanged: {
+      if (visible) {
+        tipWindow.visible = false
+        if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== menuWindow) {
+          if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+        }
+        if (Globals.popupContext) Globals.popupContext.popup = menuWindow
+        refreshCount(); refreshLastId()
+      } else {
+        if (Globals.popupContext && Globals.popupContext.popup === menuWindow) Globals.popupContext.popup = null
+      }
+    }
 
     anchor {
       window: root.QsWindow?.window
