@@ -178,6 +178,7 @@ Scope {
             Component { id: sClipboard; Blocks.Clipboard { visible: Globals.showClipboard } }
             Component { id: sKeybinds; Blocks.InfoKeybinds { visible: Globals.showKeybinds } }
             Component { id: sNotifications; Blocks.Notifications { visible: Globals.showNotifications } }
+            Component { id: sWindowSelector; Blocks.WindowSelector { visible: Globals.showWindowSelector } }
             Component { id: sSound; Blocks.Sound { visible: Globals.showSound } }
             Component { id: sWeather; Blocks.Weather { visible: Globals.showWeather } }
             Component { id: sBattery; Blocks.Battery { visible: Globals.showBattery } }
@@ -214,6 +215,7 @@ Scope {
                   modelData === "Clipboard" ? sClipboard :
                   modelData === "Keybinds" ? sKeybinds :
                   modelData === "Notifications" ? sNotifications :
+                  modelData === "WindowSelector" ? sWindowSelector :
                   modelData === "Sound" ? sSound :
                   modelData === "Weather" ? sWeather :
                   modelData === "Battery" ? sBattery :
@@ -241,6 +243,7 @@ Scope {
                 case "Clipboard": return Globals.showClipboard
                 case "Keybinds": return Globals.showKeybinds
                 case "Notifications": return Globals.showNotifications
+                case "WindowSelector": return Globals.showWindowSelector
                 case "Sound": return Globals.showSound
                 case "Weather": return Globals.showWeather
                 case "Battery": return Globals.showBattery
@@ -290,6 +293,7 @@ Scope {
             Component { id: cClipboard; Blocks.Clipboard { visible: Globals.showClipboard } }
             Component { id: cKeybinds; Blocks.InfoKeybinds { visible: Globals.showKeybinds } }
             Component { id: cNotifications; Blocks.Notifications { visible: Globals.showNotifications } }
+            Component { id: cWindowSelector; Blocks.WindowSelector { visible: Globals.showWindowSelector } }
             Component { id: cSound; Blocks.Sound { visible: Globals.showSound } }
             Component { id: cBattery; Blocks.Battery { visible: Globals.showBattery } }
             Component { id: cDate; Blocks.Date { visible: Globals.showDate } }
@@ -437,6 +441,7 @@ Scope {
                     modWrap.modName === "Clipboard" ? cClipboard :
                     modWrap.modName === "Keybinds" ? cKeybinds :
                     modWrap.modName === "Notifications" ? cNotifications :
+                    modWrap.modName === "WindowSelector" ? cWindowSelector :
                     modWrap.modName === "Sound" ? cSound :
                     modWrap.modName === "Battery" ? cBattery :
                     modWrap.modName === "Date" ? cDate :

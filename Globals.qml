@@ -85,6 +85,8 @@ Singleton {
   property bool showPowerProfiles: true
   property bool showClipboard: true
   property bool showNotifications: true
+  // New: Window selector (popup listing open windows)
+  property bool showWindowSelector: true
   property bool showSound: true
   // Keybinds cheatsheet
   property bool showKeybinds: false
@@ -111,7 +113,7 @@ Singleton {
   // Default matches current static order
   property var rightModulesOrder: [
     "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
-    "PowerProfiles","Clipboard","Keybinds","Notifications","Sound","Battery","Date","Time","Power"
+    "PowerProfiles","Clipboard","Keybinds","Notifications","WindowSelector","Sound","Battery","Date","Time","Power"
   ]
 
   // Window title
@@ -528,6 +530,7 @@ Singleton {
     showPowerProfiles = true
     showClipboard = true
     showNotifications = true
+    showWindowSelector = true
     showSound = true
     showBattery = true
     showDate = true
@@ -538,7 +541,7 @@ Singleton {
     swapTitleAndWorkspaces = false
     rightModulesOrder = [
       "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
-      "PowerProfiles","Battery","Clipboard","Notifications","Sound","Weather",
+      "PowerProfiles","Battery","Clipboard","Notifications","WindowSelector","Sound","Weather",
       "Date","Time","Keybinds","Power"
     ]
     // Window title
@@ -636,6 +639,7 @@ Singleton {
     setIf("showPowerProfiles")
     setIf("showClipboard")
     setIf("showNotifications")
+    setIf("showWindowSelector")
     setIf("showSound")
     setIf("showKeybinds")
     setIf("showBattery")
@@ -750,6 +754,7 @@ Singleton {
       showPowerProfiles,
       showClipboard,
       showNotifications,
+      showWindowSelector,
       showSound,
       showKeybinds,
       showBattery,

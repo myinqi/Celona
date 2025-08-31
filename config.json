@@ -43,6 +43,7 @@
     "Sound",
     "Weather",
     "Date",
+    "WindowSelector",
     "Time",
     "Keybinds",
     "Power"
@@ -60,6 +61,7 @@
   "showPowerProfiles": true,
   "showClipboard": false,
   "showNotifications": false,
+  "showWindowSelector": true,
   "showSound": true,
   "showKeybinds": false,
   "showBattery": true,
