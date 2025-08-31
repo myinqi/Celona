@@ -15,7 +15,7 @@ Item {
   width: parent ? parent.width : 0
   height: parent ? parent.height : 0
 
-  // Track current Matugen mode from root:/colors.mode
+  // Track current Matugen mode from root:/matugen_mode (canonical)
   property string currentMatugenMode: ""
 
   // Read current Matugen mode (source of truth)
