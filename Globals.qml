@@ -22,6 +22,9 @@ Singleton {
   // Hyprgreetr config path
   readonly property string hyprgreetrConfigFile: "~/.config/hyprgreetr/config.toml"
   readonly property string hyprgreetrConfigFileAbs: hyprgreetrConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + hyprgreetrConfigFile.slice(2)) : hyprgreetrConfigFile
+  // Cava config path
+  readonly property string cavaConfigFile: "~/.config/cava/config"
+  readonly property string cavaConfigFileAbs: cavaConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + cavaConfigFile.slice(2)) : cavaConfigFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
@@ -245,6 +248,96 @@ Singleton {
       if (s.length === 6) return s
       return '000000'
     } catch (e) { return '000000' }
+  }
+
+  // Update Cava colors (gradient) based on Matugen map
+  function updateCavaThemeFromMap(map) {
+    try {
+      console.log('[Cava] updating from matugen map')
+      const pick = (k, d) => (map && map[k] !== undefined ? map[k] : d)
+      const bg = pick('background', '#111318')
+      const onSurf = pick('on_surface', '#e2e2e9')
+      const primary = pick('primary', '#89b4fa')
+      const invPrim = pick('inverse_primary', '#415e91')
+
+      // luminance branch for gradient endpoints
+      const bg6 = toRgb6(bg)
+      const r = parseInt(bg6.slice(0,2),16)/255.0
+      const g = parseInt(bg6.slice(2,4),16)/255.0
+      const b = parseInt(bg6.slice(4,6),16)/255.0
+      const lum = 0.2126*r + 0.7152*g + 0.0722*b
+      const startHex = (lum >= 0.5) ? toRgb6(invPrim) : toRgb6(primary)
+      const endHex = toRgb6(onSurf)
+
+      function lerp(a, b, t) { return Math.round(a + (b - a) * t) }
+      function hex6ToRgb(hex6) {
+        return [parseInt(hex6.slice(0,2),16), parseInt(hex6.slice(2,4),16), parseInt(hex6.slice(4,6),16)]
+      }
+      function rgbToHex6(r,g,b) {
+        const hx = (n) => Math.max(0,Math.min(255, n|0)).toString(16).padStart(2,'0')
+        return hx(r) + hx(g) + hx(b)
+      }
+      const s = hex6ToRgb(startHex)
+      const e = hex6ToRgb(endHex)
+      const steps = 7
+      const grad = []
+      for (let i = 0; i < steps; i++) {
+        const t = i/(steps-1)
+        const rr = lerp(s[0], e[0], t)
+        const gg = lerp(s[1], e[1], t)
+        const bb = lerp(s[2], e[2], t)
+        grad.push('#' + rgbToHex6(rr,gg,bb))
+      }
+
+      let text0 = String(cavaView && cavaView.text ? (cavaView.text()||"") : "")
+      if (!text0 || !text0.length) text0 = "[color]\n"
+
+      // Replace key within a section [color]
+      function replaceKVInSection(src, section, key, value) {
+        try {
+          const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          const reSec = new RegExp('(\\n|^)[\t ]*\\[' + esc(section) + '\\][\t ]*(?:\\n|$)')
+          let m = reSec.exec(src)
+          if (!m) {
+            const sep = src.endsWith('\n') ? '' : '\n'
+            src = src + sep + '[' + section + ']\n'
+            m = reSec.exec(src)
+          }
+          const startIdx = m.index + m[0].length
+          const rest = src.slice(startIdx)
+          const mNext = /(\n|^)\s*\[[^\]]+\]\s*(?:\n|$)/.exec(rest)
+          const endIdx = startIdx + (mNext ? mNext.index : rest.length)
+          const before = src.slice(0, startIdx)
+          const secBody = src.slice(startIdx, endIdx)
+          const after = src.slice(endIdx)
+          const lines = secBody.split('\n')
+          const reKey = new RegExp('^\s*' + esc(key) + '\s*=')
+          let found = false
+          for (let i = 0; i < lines.length; i++) {
+            if (reKey.test(lines[i])) {
+              const indent = (lines[i].match(/^[\t ]*/) || [''])[0]
+              lines[i] = indent + key + ' = ' + value
+              found = true
+              break
+            }
+          }
+          if (!found) lines.push(key + ' = ' + value)
+          return before + lines.join('\n') + after
+        } catch (e) { return src }
+      }
+
+      let out = text0
+      out = replaceKVInSection(out, 'color', 'gradient', '1')
+      for (let i = 0; i < grad.length; i++) {
+        out = replaceKVInSection(out, 'color', 'gradient_color_' + (i+1), "'" + grad[i] + "'")
+      }
+
+      const b64 = Qt.btoa(out)
+      console.log('[Cava] writing theme to', cavaConfigFileAbs)
+      cavaSaveProc.command = ["bash","-lc",
+        "mkdir -p ~/.config/cava && printf '%s' '" + b64 + "' | base64 -d > '" + cavaConfigFileAbs + "' && pkill -USR1 -x cava 2>/dev/null || true"]
+      cavaSaveProc.running = true
+    } catch (e) { /* ignore */ }
   }
 
   // Helper: convert rgba(...)|#AARRGGBB|#RRGGBB -> rrggbbaa (no leading #)
@@ -529,6 +622,7 @@ Singleton {
       updateGhosttyThemeFromMap(map)
       updateFuzzelThemeFromMap(map)
       updateHyprgreetrThemeFromMap(map)
+      updateCavaThemeFromMap(map)
     }
   }
 
@@ -1011,6 +1105,13 @@ Singleton {
     onLoaded: { /* noop */ }
     onLoadFailed: (error) => { /* ignore (Hyprgreetr may not be installed) */ }
   }
+  // Lightweight reader for Cava config file
+  FileView {
+    id: cavaView
+    path: cavaConfigFileAbs
+    onLoaded: { /* noop */ }
+    onLoadFailed: (error) => { /* ignore (Cava may not be installed) */ }
+  }
 
   Process { id: saveThemeProc; running: false }
   // Writer for Niri config updates
@@ -1021,6 +1122,8 @@ Singleton {
   Process { id: fuzzelSaveProc; running: false }
   // Writer for Hyprgreetr updates
   Process { id: hyprgreetrSaveProc; running: false }
+  // Writer for Cava updates
+  Process { id: cavaSaveProc; running: false }
 
   // --- Wallpaper control processes ---
   // Single process used for wallpaper commands; we queue when busy
