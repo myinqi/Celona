@@ -135,13 +135,28 @@ BarBlock {
         }
     }
 
+    // Robust restart routine for the embedded cava process
+    function restartVisualizer() {
+        try {
+            // Stop then start next tick to ensure the process is fully torn down
+            vizProc.running = false
+            Qt.callLater(() => { if (root.visible) vizProc.running = true })
+        } catch (e) { /* ignore */ }
+    }
+
+    onVisibleChanged: {
+        // Ensure a clean start when the module becomes visible again
+        if (visible) restartVisualizer()
+    }
+
     // Cava process for audio data
     Process {
         id: vizProc
         running: root.visible
         command: ["sh", "-c",
+            // Use a custom process name (cava_bar) so global `pkill -USR1 -x cava` doesn't hit this instance
             `if command -v cava >/dev/null 2>&1; then \\
-               printf '[general]\\nframerate=60\\nbars=${root.bars}\\nsleep_timer=3\\n[output]\\nchannels=mono\\nmethod=raw\\nraw_target=/dev/stdout\\ndata_format=ascii\\nascii_max_range=100' | cava -p /dev/stdin; \\
+               printf '[general]\\nframerate=60\\nbars=${root.bars}\\nsleep_timer=3\\n[output]\\nchannels=mono\\nmethod=raw\\nraw_target=/dev/stdout\\ndata_format=ascii\\nascii_max_range=100' | exec -a cava_bar cava -p /dev/stdin; \\
              else \\
                echo '__CAVA_MISSING__'; \\
              fi`
@@ -206,6 +221,15 @@ BarBlock {
         target: Globals
         function onBarPositionChanged() {
             if (tipWindow.visible) tipWindow.visible = false
+        }
+        // When theme changes (Matugen apply) we also update visualizerBarColor in Globals.
+        // Use that change as a signal to force-restart the embedded cava process to avoid freezes.
+        function onVisualizerBarColorChanged() {
+            restartVisualizer()
+        }
+        // Also listen to a generic theme epoch bump so we restart even if color values didn't change
+        function onThemeEpochChanged() {
+            restartVisualizer()
         }
     }
 }

@@ -117,6 +117,9 @@ Singleton {
   property bool matugenAvailable: false
   // last applied colors.css content hash to detect changes
   property string _matugenHash: ""
+  // Monotonic counter that increments whenever themes are applied.
+  // Modules can watch this to react even when specific color values remain equal.
+  property int themeEpoch: 0
 
   // Custom order for right-side modules (used for dynamic rendering)
   // Default matches current static order
@@ -624,6 +627,8 @@ Singleton {
       updateHyprgreetrThemeFromMap(map)
       updateCavaThemeFromMap(map)
     }
+    // Bump epoch so listeners (e.g., Barvisualizer) can restart/refresh even if values are identical
+    themeEpoch = themeEpoch + 1
   }
 
   function applyMatugenColors() {
