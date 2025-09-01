@@ -19,6 +19,9 @@ Singleton {
   // Fuzzel theme path
   readonly property string fuzzelThemeFile: "~/.config/fuzzel/themes/matugen_colors.ini"
   readonly property string fuzzelThemeFileAbs: fuzzelThemeFile.indexOf("~/") === 0 ? ("/home/khrom/" + fuzzelThemeFile.slice(2)) : fuzzelThemeFile
+  // Hyprgreetr config path
+  readonly property string hyprgreetrConfigFile: "~/.config/hyprgreetr/config.toml"
+  readonly property string hyprgreetrConfigFileAbs: hyprgreetrConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + hyprgreetrConfigFile.slice(2)) : hyprgreetrConfigFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
@@ -351,6 +354,96 @@ Singleton {
     } catch (e) { /* ignore */ }
   }
 
+  // Update Hyprgreetr colors inside config.toml from Matugen map
+  function updateHyprgreetrThemeFromMap(map) {
+    try {
+      const pick = (k, d) => (map && map[k] !== undefined ? map[k] : d)
+      const bg = pick('background', '#111318')
+      const onSurf = pick('on_surface', '#e2e2e9')
+      const onSurfVar = pick('on_surface_variant', '#c4c6d0')
+      const invPrim = pick('inverse_primary', '#415e91')
+      const primary = pick('primary', '#89b4fa')
+
+      // Luminance on background to branch light/dark if needed later
+      const bg6 = toRgb6(bg)
+      const r = parseInt(bg6.slice(0,2),16)/255.0
+      const g = parseInt(bg6.slice(2,4),16)/255.0
+      const b = parseInt(bg6.slice(4,6),16)/255.0
+      const lum = 0.2126*r + 0.7152*g + 0.0722*b
+      const isLight = (lum >= 0.5)
+
+      // Ensure 6-digit hex with leading '#'
+      const H6 = (x) => ('#' + toRgb6(x))
+      const titleHex     = H6(primary)
+      const moduleHex    = H6(invPrim)
+      const infoHex      = H6(onSurf)
+      const separatorHex = H6(onSurfVar)
+      const borderHex    = moduleHex
+
+      let text0 = String(hyprgreetrView && hyprgreetrView.text ? (hyprgreetrView.text()||"") : "")
+      if (!text0 || !text0.length) {
+        // Minimal template to ensure sections exist
+        text0 = "" +
+          "[general]\n" +
+          "\n" +
+          "[general.colors]\n" +
+          "title = \"#ffffff\"\n" +
+          "module = \"#ffffff\"\n" +
+          "info = \"#ffffff\"\n" +
+          "separator = \"#cccccc\"\n" +
+          "\n" +
+          "[display]\n" +
+          "border_color = \"#ffffff\"\n"
+      }
+
+      // Replace key within TOML section [section] without complex regex quoting
+      function replaceKVInSection(src, section, key, value) {
+        try {
+          const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          const reSec = new RegExp('(\\n|^)[\t ]*\\[' + esc(section) + '\\][\t ]*(?:\\n|$)')
+          const m = reSec.exec(src)
+          if (!m) return src
+          const startIdx = m.index + m[0].length
+          const rest = src.slice(startIdx)
+          const mNext = /(\n|^)\s*\[[^\]]+\]\s*(?:\n|$)/.exec(rest)
+          const endIdx = startIdx + (mNext ? mNext.index : rest.length)
+          const before = src.slice(0, startIdx)
+          const secBody = src.slice(startIdx, endIdx)
+          const after = src.slice(endIdx)
+          const lines = secBody.split('\n')
+          const reKey = new RegExp('^\\s*' + esc(key) + '\\s*=')
+          let found = false
+          for (let i = 0; i < lines.length; i++) {
+            if (reKey.test(lines[i])) {
+              const indent = (lines[i].match(/^[\t ]*/) || [''])[0]
+              lines[i] = indent + key + ' = "' + value + '"'
+              found = true
+              break
+            }
+          }
+          if (!found) lines.push(key + ' = "' + value + '"')
+          let newBody = lines.join('\n')
+          // Ensure trailing newline matches original formatting
+          if (secBody.endsWith('\n') && !newBody.endsWith('\n')) newBody += '\n'
+          return before + newBody + after
+        } catch (e) { return src }
+      }
+
+      let out = text0
+      out = replaceKVInSection(out, 'general.colors', 'title', titleHex)
+      out = replaceKVInSection(out, 'general.colors', 'module', moduleHex)
+      out = replaceKVInSection(out, 'general.colors', 'info', infoHex)
+      out = replaceKVInSection(out, 'general.colors', 'separator', separatorHex)
+      out = replaceKVInSection(out, 'display', 'border_color', borderHex)
+
+      // Always write to ensure consistent updates like other integrators
+      const b64 = Qt.btoa(out)
+      console.log('[Hyprgreetr] writing theme to', hyprgreetrConfigFileAbs)
+      hyprgreetrSaveProc.command = ["bash","-lc", "printf '%s' '" + b64 + "' | base64 -d > " + hyprgreetrConfigFileAbs]
+      hyprgreetrSaveProc.running = true
+    } catch (e) { /* ignore */ }
+  }
+
   function applyMatugenMap(map) {
     // Map Matugen names to our config keys
     // Fallbacks if a key is missing
@@ -392,6 +485,7 @@ Singleton {
       updateNiriColorsFromTheme()
       updateGhosttyThemeFromMap(map)
       updateFuzzelThemeFromMap(map)
+      updateHyprgreetrThemeFromMap(map)
     }
   }
 
@@ -867,6 +961,13 @@ Singleton {
     onLoaded: { /* noop */ }
     onLoadFailed: (error) => { /* ok if file doesn't exist; we'll create it on write */ }
   }
+  // Lightweight reader for Hyprgreetr config file
+  FileView {
+    id: hyprgreetrView
+    path: hyprgreetrConfigFileAbs
+    onLoaded: { /* noop */ }
+    onLoadFailed: (error) => { /* ignore (Hyprgreetr may not be installed) */ }
+  }
 
   Process { id: saveThemeProc; running: false }
   // Writer for Niri config updates
@@ -875,6 +976,8 @@ Singleton {
   Process { id: ghosttySaveProc; running: false }
   // Writer for Fuzzel theme updates
   Process { id: fuzzelSaveProc; running: false }
+  // Writer for Hyprgreetr updates
+  Process { id: hyprgreetrSaveProc; running: false }
 
   // --- Wallpaper control processes ---
   // Single process used for wallpaper commands; we queue when busy
