@@ -25,6 +25,9 @@ Singleton {
   // Cava config path
   readonly property string cavaConfigFile: "~/.config/cava/config"
   readonly property string cavaConfigFileAbs: cavaConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + cavaConfigFile.slice(2)) : cavaConfigFile
+  // SwayNC Matugen CSS path (new unified theme file)
+  readonly property string swayncMatugenCssFile: "~/.config/swaync/matugen_colors.css"
+  readonly property string swayncMatugenCssFileAbs: swayncMatugenCssFile.indexOf("~/") === 0 ? ("/home/khrom/" + swayncMatugenCssFile.slice(2)) : swayncMatugenCssFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
@@ -343,6 +346,82 @@ Singleton {
     } catch (e) { /* ignore */ }
   }
 
+  // New: Write ~/.config/swaync/matugen_colors.css using Ghostty-style palette keys
+  function updateSwayncMatugenCssFromMap(map) {
+    try {
+      console.log('[SwayNC] updateSwayncMatugenCssFromMap: begin; css path=', swayncMatugenCssFileAbs)
+      const pick = (k, d) => (map && map[k] !== undefined ? map[k] : d)
+      const bg = pick('background', '#111318')
+      const onSurf = pick('on_surface', '#e2e2e9')
+      const onSurfVar = pick('on_surface_variant', '#c4c6d0')
+      const invPrim = pick('inverse_primary', '#415e91')
+      const surfVar = pick('surface_variant', '#2a2f37')
+      const primary = pick('primary', '#89b4fa')
+      const secondary = pick('secondary', '#f5c2e7')
+      const tertiary = pick('tertiary', '#94e2d5')
+      const error = pick('error', '#f38ba8')
+
+      function H6(x) { return '#' + toRgb6(x) }
+      function lighten(hex6, pct) {
+        try {
+          const p = Math.max(0, Math.min(100, pct)) / 100.0
+          const r = parseInt(hex6.slice(0,2),16)
+          const g = parseInt(hex6.slice(2,4),16)
+          const b = parseInt(hex6.slice(4,6),16)
+          const lr = Math.round(r + (255 - r) * p)
+          const lg = Math.round(g + (255 - g) * p)
+          const lb = Math.round(b + (255 - b) * p)
+          const hx = n => n.toString(16).padStart(2,'0')
+          return hx(lr) + hx(lg) + hx(lb)
+        } catch (e) { return hex6 }
+      }
+
+      const surfVar6 = toRgb6(surfVar)
+      const onSurfVar6 = toRgb6(onSurfVar)
+      const primary6 = toRgb6(primary)
+      const secondary6 = toRgb6(secondary)
+      const tertiary6 = toRgb6(tertiary)
+      const error6 = toRgb6(error)
+      const invPrim6 = toRgb6(invPrim)
+      const fg6 = toRgb6(onSurf)
+
+      let out = ''
+      out += '@define-color shadow rgba(0, 0, 0, 0.25);\n'
+      out += '/*\n * Unified Matugen palette for SwayNC (auto-generated)\n */\n\n'
+      out += '/* Special */\n'
+      out += '@define-color background ' + H6(bg) + ';\n'
+      out += '@define-color foreground ' + H6(onSurf) + ';\n'
+      out += '@define-color cursor #' + invPrim6 + ';\n\n'
+      out += '/* Colors */\n'
+      // Base 0-7
+      out += '@define-color color0 #' + surfVar6 + ';\n'
+      out += '@define-color color1 #' + error6 + ';\n'
+      out += '@define-color color2 #' + tertiary6 + ';\n'
+      out += '@define-color color3 #' + invPrim6 + ';\n'
+      out += '@define-color color4 #' + primary6 + ';\n'
+      out += '@define-color color5 #' + secondary6 + ';\n'
+      out += '@define-color color6 #' + tertiary6 + ';\n'
+      out += '@define-color color7 #' + onSurfVar6 + ';\n'
+      // Bright 8-15
+      out += '@define-color color8 #'  + lighten(surfVar6, 20) + ';\n'
+      out += '@define-color color9 #'  + lighten(error6, 15) + ';\n'
+      out += '@define-color color10 #' + lighten(tertiary6, 15) + ';\n'
+      out += '@define-color color11 #' + lighten(invPrim6, 15) + ';\n'
+      out += '@define-color color12 #' + lighten(primary6, 15) + ';\n'
+      out += '@define-color color13 #' + lighten(secondary6, 15) + ';\n'
+      out += '@define-color color14 #' + lighten(tertiary6, 25) + ';\n'
+      out += '@define-color color15 #' + fg6 + ';\n'
+
+      const b64 = Qt.btoa(out)
+      console.log('[SwayNC] writing matugen_colors.css to', swayncMatugenCssFileAbs)
+      swayncSaveProc.command = [
+        'bash','-lc',
+        "mkdir -p ~/.config/swaync && printf '%s' '" + b64 + "' | base64 -d > '" + swayncMatugenCssFileAbs + "' && (command -v swaync-client >/dev/null 2>&1 && swaync-client -R -rs || true)"
+      ]
+      swayncSaveProc.running = true
+    } catch (e) { /* ignore */ }
+  }
+
   // Helper: convert rgba(...)|#AARRGGBB|#RRGGBB -> rrggbbaa (no leading #)
   function toRgba8(hexOrRgba, alphaOverride) {
     try {
@@ -584,6 +663,7 @@ Singleton {
   }
 
   function applyMatugenMap(map) {
+    console.log('[Matugen] applyMatugenMap: starting apply; useMatugenColors=', useMatugenColors)
     // Map Matugen names to our config keys
     // Fallbacks if a key is missing
     const pick = (k, d) => (map[k] !== undefined ? map[k] : d)
@@ -621,15 +701,20 @@ Singleton {
     dockIconLabelColor = toArgb(onSurf)       // readable text color
     // Also sync external configs if requested
     if (useMatugenColors) {
+      console.log('[Matugen] applying external theme integrations (Niri, Ghostty, Fuzzel, Hyprgreetr, Cava, SwayNC)')
       updateNiriColorsFromTheme()
       updateGhosttyThemeFromMap(map)
       updateFuzzelThemeFromMap(map)
       updateHyprgreetrThemeFromMap(map)
       updateCavaThemeFromMap(map)
+      updateSwayncMatugenCssFromMap(map)
     }
     // Bump epoch so listeners (e.g., Barvisualizer) can restart/refresh even if values are identical
     themeEpoch = themeEpoch + 1
+    console.log('[Matugen] applyMatugenMap: done; themeEpoch ->', themeEpoch)
   }
+
+  
 
   function applyMatugenColors() {
     if (!useMatugenColors) return
@@ -1117,6 +1202,7 @@ Singleton {
     onLoaded: { /* noop */ }
     onLoadFailed: (error) => { /* ignore (Cava may not be installed) */ }
   }
+  
 
   Process { id: saveThemeProc; running: false }
   // Writer for Niri config updates
@@ -1129,6 +1215,8 @@ Singleton {
   Process { id: hyprgreetrSaveProc; running: false }
   // Writer for Cava updates
   Process { id: cavaSaveProc; running: false }
+  // Writer for SwayNC style updates
+  Process { id: swayncSaveProc; running: false }
 
   // --- Wallpaper control processes ---
   // Single process used for wallpaper commands; we queue when busy
