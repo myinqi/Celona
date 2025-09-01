@@ -16,6 +16,9 @@ Singleton {
   // Ghostty theme path
   readonly property string ghosttyThemeFile: "~/.config/ghostty/themes/matugen_colors.conf"
   readonly property string ghosttyThemeFileAbs: ghosttyThemeFile.indexOf("~/") === 0 ? ("/home/khrom/" + ghosttyThemeFile.slice(2)) : ghosttyThemeFile
+  // Fuzzel theme path
+  readonly property string fuzzelThemeFile: "~/.config/fuzzel/themes/matugen_colors.ini"
+  readonly property string fuzzelThemeFileAbs: fuzzelThemeFile.indexOf("~/") === 0 ? ("/home/khrom/" + fuzzelThemeFile.slice(2)) : fuzzelThemeFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
@@ -241,6 +244,18 @@ Singleton {
     } catch (e) { return '000000' }
   }
 
+  // Helper: convert rgba(...)|#AARRGGBB|#RRGGBB -> rrggbbaa (no leading #)
+  function toRgba8(hexOrRgba, alphaOverride) {
+    try {
+      // Reuse toArgb to normalize, then rotate AARRGGBB -> RRGGBBAA (strip '#')
+      const aargb = toArgb(hexOrRgba, alphaOverride)
+      if (!aargb || aargb.length !== 9 || aargb[0] !== '#') return '000000ff'
+      const aa = aargb.slice(1,3)
+      const rrggbb = aargb.slice(3)
+      return rrggbb + aa
+    } catch (e) { return '000000ff' }
+  }
+
   // Update Ghostty theme keys from Matugen map (also adjust a few palette entries)
   function updateGhosttyThemeFromMap(map) {
     try {
@@ -376,6 +391,7 @@ Singleton {
     if (useMatugenColors) {
       updateNiriColorsFromTheme()
       updateGhosttyThemeFromMap(map)
+      updateFuzzelThemeFromMap(map)
     }
   }
 
@@ -857,6 +873,8 @@ Singleton {
   Process { id: niriSaveProc; running: false }
   // Writer for Ghostty theme updates
   Process { id: ghosttySaveProc; running: false }
+  // Writer for Fuzzel theme updates
+  Process { id: fuzzelSaveProc; running: false }
 
   // --- Wallpaper control processes ---
   // Single process used for wallpaper commands; we queue when busy
@@ -1044,6 +1062,62 @@ Singleton {
       } catch (e) { /* ignore */ }
     }
     onLoadFailed: (error) => { Globals.matugenAvailable = false }
+  }
+
+  // Update Fuzzel theme keys from Matugen map
+  function updateFuzzelThemeFromMap(map) {
+    try {
+      const pick = (k, d) => (map && map[k] !== undefined ? map[k] : d)
+      const bg = pick('background', '#111318')
+      const onSurf = pick('on_surface', '#e2e2e9')
+      const onSurfVar = pick('on_surface_variant', '#c4c6d0')
+      const invPrim = pick('inverse_primary', '#415e91')
+      const surfVar = pick('surface_variant', '#2a2f37')
+      const scHigh = pick('surface_container_high', '#343a46')
+      const scLow = pick('surface_container_low', '#1b1f27')
+      const primary = pick('primary', '#89b4fa')
+      const blur8 = pick('blur_background8', 'rgba(17,19,24,0.8)')
+
+      // Decide selection bg based on background luminance
+      const bg6 = toRgb6(bg)
+      const r = parseInt(bg6.slice(0,2),16)/255.0
+      const g = parseInt(bg6.slice(2,4),16)/255.0
+      const b = parseInt(bg6.slice(4,6),16)/255.0
+      const lum = 0.2126*r + 0.7152*g + 0.0722*b
+      const selBg6 = toRgb6(lum >= 0.5 ? scHigh : scLow)
+
+      const background = toRgba8(blur8)
+      const text = toRgba8(onSurf)
+      const prompt = toRgba8(onSurfVar)
+      const placeholder = toRgba8(onSurfVar)
+      const input = toRgba8(onSurf)
+      const match = toRgba8(primary)
+      const selection = toRgba8('#' + selBg6)
+      const selectionText = toRgba8(onSurf)
+      const selectionMatch = toRgba8(primary)
+      const counter = toRgba8(onSurfVar)
+      const border = toRgba8(primary)
+
+      let out = ''
+      out += '[colors]\n'
+      out += 'background=' + background + '\n'
+      out += 'text=' + text + '\n'
+      out += 'prompt=' + prompt + '\n'
+      out += 'placeholder=' + placeholder + '\n'
+      out += 'input=' + input + '\n'
+      out += 'match=' + match + '\n'
+      out += 'selection=' + selection + '\n'
+      out += 'selection-text=' + selectionText + '\n'
+      out += 'selection-match=' + selectionMatch + '\n'
+      out += 'counter=' + counter + '\n'
+      out += 'border=' + border + '\n'
+
+      const b64 = Qt.btoa(out)
+      console.log('[Fuzzel] writing theme to', fuzzelThemeFileAbs)
+      fuzzelSaveProc.command = ["bash","-lc",
+        "mkdir -p ~/.config/fuzzel/themes && printf '%s' '" + b64 + "' | base64 -d > " + fuzzelThemeFileAbs]
+      fuzzelSaveProc.running = true
+    } catch (e) { /* ignore */ }
   }
 
   // Watcher: periodically reload colors.css when Matugen is enabled to auto-apply on changes
