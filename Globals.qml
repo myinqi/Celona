@@ -599,19 +599,11 @@ Singleton {
       const borderHex    = moduleHex
 
       let text0 = String(hyprgreetrView && hyprgreetrView.text ? (hyprgreetrView.text()||"") : "")
+      // Safety: if file content is not available yet, do NOT overwrite with a template.
+      // We only update when existing content is loaded to preserve unrelated settings.
       if (!text0 || !text0.length) {
-        // Minimal template to ensure sections exist
-        text0 = "" +
-          "[general]\n" +
-          "\n" +
-          "[general.colors]\n" +
-          "title = \"#ffffff\"\n" +
-          "module = \"#ffffff\"\n" +
-          "info = \"#ffffff\"\n" +
-          "separator = \"#cccccc\"\n" +
-          "\n" +
-          "[display]\n" +
-          "border_color = \"#ffffff\"\n"
+        console.log('[Hyprgreetr] skip write: config not loaded yet or empty; preserving file')
+        return
       }
 
       // Replace key within TOML section [section] without complex regex quoting
@@ -620,7 +612,11 @@ Singleton {
           const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
           const reSec = new RegExp('(\\n|^)[\t ]*\\[' + esc(section) + '\\][\t ]*(?:\\n|$)')
           const m = reSec.exec(src)
-          if (!m) return src
+          // If section is missing, append it at the end with the desired key to avoid destructive rewrites
+          if (!m) {
+            const sep = src.endsWith('\n') ? '' : '\n'
+            return src + sep + '[' + section + ']\n' + key + ' = "' + value + '"\n'
+          }
           const startIdx = m.index + m[0].length
           const rest = src.slice(startIdx)
           const mNext = /(\n|^)\s*\[[^\]]+\]\s*(?:\n|$)/.exec(rest)
@@ -657,7 +653,10 @@ Singleton {
       // Always write to ensure consistent updates like other integrators
       const b64 = Qt.btoa(out)
       console.log('[Hyprgreetr] writing theme to', hyprgreetrConfigFileAbs)
-      hyprgreetrSaveProc.command = ["bash","-lc", "printf '%s' '" + b64 + "' | base64 -d > " + hyprgreetrConfigFileAbs]
+      hyprgreetrSaveProc.command = [
+        "bash","-lc",
+        "mkdir -p ~/.config/hyprgreetr && printf '%s' '" + b64 + "' | base64 -d > '" + hyprgreetrConfigFileAbs + "'"
+      ]
       hyprgreetrSaveProc.running = true
     } catch (e) { /* ignore */ }
   }
