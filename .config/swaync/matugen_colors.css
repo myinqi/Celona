@@ -1,0 +1,27 @@
+@define-color shadow rgba(0, 0, 0, 0.25);
+/*
+ * Unified Matugen palette for SwayNC (auto-generated)
+ */
+
+/* Special */
+@define-color background #111318;
+@define-color foreground #e2e2e9;
+@define-color cursor #415e91;
+
+/* Colors */
+@define-color color0 #44474e;
+@define-color color1 #ffb4ab;
+@define-color color2 #ddbce0;
+@define-color color3 #415e91;
+@define-color color4 #aac7ff;
+@define-color color5 #bec6dc;
+@define-color color6 #ddbce0;
+@define-color color7 #c4c6d0;
+@define-color color8 #696c71;
+@define-color color9 #ffbfb8;
+@define-color color10 #e2c6e5;
+@define-color color11 #5e76a2;
+@define-color color12 #b7cfff;
+@define-color color13 #c8cfe1;
+@define-color color14 #e6cde8;
+@define-color color15 #e2e2e9;

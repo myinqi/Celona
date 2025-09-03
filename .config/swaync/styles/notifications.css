@@ -1,0 +1,128 @@
+/* applies only to floating block, not the notifications in control center */
+.floating-notifications .notification-row {
+  padding: 0;
+}
+
+.notification-row {
+  outline: none;
+  margin: 0;
+  padding: 0px;
+  /* BellotaText 13, Comfortaa 13, Jura 14, montserrat alternates 13 */
+  font: 1em JetBrains Mono Nerd Font, sans-serif;
+}
+
+.notification-row:focus,
+.notification-row:hover {
+  background: alpha(@color6, 0.2);
+    border-radius: 10px;
+}
+
+.notification-group {
+  background-color: transparent;
+}
+
+.notification-group-headers {
+  font: bold 0.85rem Megrim, sans-serif;
+  text-shadow: 3px 3px @background;
+  color: @foreground;
+  letter-spacing: 0px;
+  margin-left: 0px;
+}
+
+.notification-group-icon {
+  color: alpha(@color13, 0.7);
+  text-shadow: 1px 1px 3px @background;
+  margin-right: 8px;
+}
+
+.notification-group-collapse-button,
+.notification-group-close-all-button {
+  background: alpha(@background, 0.8);
+  border: none;
+}
+
+.notification-group-collapse-button:hover,
+.notification-group-close-all-button:hover {
+  background: alpha(@color6, 0.7);
+}
+
+.notification {
+  padding: 0.2em; /* 6px? */
+  box-shadow: 3px 3px 0 0 @color6;
+  border-radius: 10px;
+  background: @background;
+}
+
+.low {
+  border: 1px solid @color3;
+}
+.normal {
+  border: 1px solid @color13;
+} /* or color5 */
+.notification.critical {
+  background: alpha(black, 0.89);
+  border: 1px solid white;
+  color: #eeeeee;
+}
+
+.notification-content {
+  padding: 5px 0;
+  margin-left: 10px;
+  color: @foreground;
+  background: transparent;
+}
+
+/* no close button */
+.close-button,
+.close-button:hover {
+  background: transparent;
+  color: transparent;
+}
+
+/* yet another useless wrapper */
+.notification-default-action,
+.notification-action,
+.notification-default-action:hover,
+.notification-action:hover {
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+}
+
+.image {
+  margin-left: -3px;
+  margin-right: 8px; /* 1em? */
+  min-width: 68px;
+  min-height: 68px;
+  border-radius: 7px;
+}
+
+.body-image {
+  /* margin-top: 6px; */
+  background-color: white;
+  /* border-radius: 12px; */
+}
+
+.summary {
+  font: bold 1.1em Megrim, sans-serif;
+  background: transparent;
+  color: @color3;
+  text-shadow: none;
+}
+
+.time {
+  font-size: 1.0em;
+  font-weight: normal;
+  color: @color8;
+  margin-bottom: 5px;
+  font-style: italic;
+}
+
+.body {
+  font-size: 11pt;
+  font-weight: normal;
+  background: transparent;
+  color: @foreground;
+}

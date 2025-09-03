@@ -1,0 +1,7 @@
+[config]
+
+[templates.celona]
+input_path = '~/.config/matugen/templates/celona-colors.css'
+output_path = '~/.config/quickshell/Celona/colors.css'
+
+

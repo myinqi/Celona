@@ -1,0 +1,189 @@
+## Install a fresh CachyOS Niri DE to start this Rice, then follow the steps. ##
+## I suggest choosing "limine" or "grub" bootloader and "Btrfs" as filesystem.
+## Reason: so you can profit from snapper integration to load snapshots of the
+## system if something breaks.
+## I prefer fish shell over zsh, so if you wish you can deselect the CachyOS zsh config. 
+
+
+# after installation log into your system
+# hit SUPER+RETURN to open the Terminal
+micro /home/khrom/.config/niri/config.kdl
+# change in line 10 the keyboard layout to your prefered country settings, default is us, in my case I change it to de
+Ctrl+S
+Ctrl+Q
+
+### Preperations ###
+sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm ghostty gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
+sudo systemctl enable --now udisks2
+
+/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 & disown
+### Start Polkit Agent with systemd ###
+mkdir -p ~/.config/systemd/user
+
+micro ~/.config/systemd/user/polkit-agent.service
+	## past content ##
+
+[Unit]
+Description=Polkit authentication agent
+PartOf=niri.service
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+Restart=on-failure
+
+[Install]
+WantedBy=niri.service
+
+##end
+
+Ctrl+S
+Ctrl+Q
+
+
+## activate ##
+systemctl --user daemon-reload
+systemctl --user enable --now polkit-agent.service
+systemctl --user add-wants niri.service polkit-agent.service
+sudo systemctl enable sddm.service
+
+
+## Portals config ##
+micro /usr/share/xdg-desktop-portal/niri-portals.conf
+	## change content to ##
+[preferred]
+default=gnome;gtk;
+org.freedesktop.impl.portal.Access=gnome-shell;gtk;
+org.freedesktop.impl.portal.Secret=gnome-keyring;
+org.freedesktop.impl.portal.ScreenCast=gnome;
+org.freedesktop.impl.portal.FileChooser=gnome;
+org.freedesktop.impl.portal.Notification=gnome;gtk;	
+
+##end
+
+## activate ##
+systemctl --user restart xdg-desktop-portal.service \
+  xdg-desktop-portal-gtk.service xdg-desktop-portal-gnome.service
+
+
+# next step may take some time to complete
+git clone https://aur.archlinux.org/paru.git
+cd paru
+makepkg -si
+
+cd ..
+#remove Folder, not longer needed
+sudo rm -r paru
+
+micro /etc/paru.conf
+uncomment line 17 ->   BottomUP
+Ctrl+S
+Ctrl+Q
+
+micro ~/.config/micro/settings.json
+replace "catppuccin-macchiato" with "simple"
+Ctrl+S
+Ctrl+Q
+
+# next always choose option 1
+paru sddm-silent-theme 
+paru bibata-cursor-theme-bin
+paru nwg-look
+paru kora-icon-theme
+paru mpvpaper
+paru matugen
+paru tmatrix
+
+
+### Install the Celona Bar ###
+mkdir ~/.config/quickshell
+cd ~/.config/quickshell
+git clone https://github.com/myinqi/Celona.git
+cd 
+
+
+### Install Hyprgreetr
+git clone https://github.com/myinqi/hyprgreetr.git
+cd hyprgreetr
+cargo build --release
+cargo install --path .
+
+# add PATH 
+fish_add_path ~/.cargo/bin
+
+# preload config for hyprgreetr, simply type "hyprgreetr" and then RETURN
+hyprgreetr
+# if you cant to customize edit the hyprgreetr config -> micro ~/.config/hyprgreetr/config.toml
+# warning if you later choose in Celona to set colors with matugen, the hyprgreetr colors in the config will be changed,
+# so put not to much effort into colors. In ~/.config/hyprgreetr/pngs are some example Images to show in hyprgreetr, but
+# you can also use your own. 
+
+
+micro ~/.config/fish/config.fish
+	## past content at end of file ##
+	function fish_greeting
+		hyprgreetr
+	end
+
+Ctrl+S
+Ctrl+Q
+
+### Theme settings in terminal ###
+gsettings set org.gnome.desktop.interface icon-theme 'kora-pgrey'
+gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
+gsettings set org.gnome.desktop.interface cursor-size 28
+
+### configure SDDM Theme ###
+sudo micro /etc/sddm.conf
+	## past content ##
+[General]
+InputMethod=qtvirtualkeyboard
+GreeterEnvironment=QML2_IMPORT_PATH=/usr/share/sddm/themes/silent/components/,QT_IM_MODULE=qtvirtualkeyboard
+
+[Theme]
+Current=silent
+
+##end
+
+### Edit the niri configuration ###
+#Copy the .config Folder from the Celona Repo into your local .config Folder und override existing files there.
+
+reboot
+#log into the system, klick the gear icon on the lift side of the bar. Make your changes. Don't forget to set your Wallpaper.
+#for the frist days its a good choice to enable the Keybindis Module, so you can access the important Keybindings from
+#the Bar.
+
+#final setep:
+micro ~/.config/niri/config.kdl
+
+# on line 16 set your prefered keyboard layout again "us" "de" ...
+# on line 82 set your resolution and refresh rate. In my case mode "3440x1440@165.030" but yours is maybe "1920x1080@60.030"
+# on line 128 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
+
+
+## Optional!!!: only needed if not in the AUR. install matugen ## Only do this if its not in the AUR, but we should have it 
+## already installed in the paru-block
+#cargo install matugen
+#mkdir ~/.config/matugen
+#touch ~/.config/matugen/config.toml
+
+##CachyOS Settings
+#Open the Hello App
+Ctrl+SUPER+Return
+#Type "Hello" then RETURN
+#open Apps/Tweaks
+#Click on "Rank Mirrors"
+#Optional if you want to game: click on Install Gaming packages
+#Optional if you choose btrfs Filesystem and Limine or Grub bootloader:
+Ctrl+SUPER+Return
+#Type "Btrfs" then RETURN
+#Check if the snapshots are activated, with this option you can return to oder system states right from the bootmanager, damn cool!
+
+ToDo:
+config of SDDM Theme
+put the .config Folder in the repo
+theme the hyprlock with matugen
+
+add sample Wallpapers?
+maybe create install script
+
