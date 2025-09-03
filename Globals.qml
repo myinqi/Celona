@@ -22,6 +22,9 @@ Singleton {
   // Hyprgreetr config path
   readonly property string hyprgreetrConfigFile: "~/.config/hyprgreetr/config.toml"
   readonly property string hyprgreetrConfigFileAbs: hyprgreetrConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + hyprgreetrConfigFile.slice(2)) : hyprgreetrConfigFile
+  // Hyprlock config path
+  readonly property string hyprlockConfigFile: "~/.config/hypr/hyprlock.conf"
+  readonly property string hyprlockConfigFileAbs: hyprlockConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + hyprlockConfigFile.slice(2)) : hyprlockConfigFile
   // Cava config path
   readonly property string cavaConfigFile: "~/.config/cava/config"
   readonly property string cavaConfigFileAbs: cavaConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + cavaConfigFile.slice(2)) : cavaConfigFile
@@ -120,6 +123,8 @@ Singleton {
   property bool matugenAvailable: false
   // last applied colors.css content hash to detect changes
   property string _matugenHash: ""
+  // cache last applied matugen palette map to allow late consumers (e.g., hyprlock) to update on load
+  property var _lastMatugenMap: null
   // Monotonic counter that increments whenever themes are applied.
   // Modules can watch this to react even when specific color values remain equal.
   property int themeEpoch: 0
@@ -232,6 +237,88 @@ Singleton {
       return '#ff000000'
     } catch (e) { return '#ff000000' }
   }
+
+  // Update Hyprlock config (~/.config/hypr/hyprlock.conf) from Matugen map
+  function updateHyprlockThemeFromMap(map) {
+    try {
+      const pick = (k, d) => (map && map[k] !== undefined ? map[k] : d)
+      const onSurf = pick('on_surface', '#e2e2e9')
+      const onPrimary = pick('on_primary', '#ffffff')
+      const bg = pick('background', '#111318')
+      const invPrim = pick('inverse_primary', '#415e91')
+      const primary = pick('primary', '#89b4fa')
+      const tertiary = pick('tertiary', '#94e2d5')
+      const error = pick('error', '#f38ba8')
+
+      function toRgbDec(x) {
+        const h = toRgb6(x)
+        const r = parseInt(h.slice(0,2), 16)
+        const g = parseInt(h.slice(2,4), 16)
+        const b = parseInt(h.slice(4,6), 16)
+        return 'rgb(' + r + ', ' + g + ', ' + b + ')'
+      }
+      function rgba8Tag(x) { return 'rgba(' + toRgba8(x) + ')' }
+
+      const inner_color = 'rgba(0, 0, 0, 0.0)'
+      const outer_color = rgba8Tag(invPrim) + ' ' + rgba8Tag(primary) + ' 45deg'
+      const check_color = rgba8Tag(primary) + ' ' + rgba8Tag(tertiary) + ' 120deg'
+      const fail_color  = rgba8Tag(tertiary) + ' ' + rgba8Tag(error) + ' 40deg'
+      // Choose readable text: for light backgrounds use on_primary (typically light), otherwise on_surface
+      const bg6_for_lum = toRgb6(bg)
+      const br = parseInt(bg6_for_lum.slice(0,2),16)/255.0
+      const bg_gg = parseInt(bg6_for_lum.slice(2,4),16)/255.0
+      const bb = parseInt(bg6_for_lum.slice(4,6),16)/255.0
+      const bgLum = 0.2126*br + 0.7152*bg_gg + 0.0722*bb
+      const font_color  = (bgLum >= 0.5) ? toRgbDec(onPrimary) : toRgbDec(onSurf)
+
+      let text = ''
+      try { text = String(hyprlockView.text() || '') } catch (e) { text = '' }
+
+      function ensureInputFieldBlock(src) {
+        if (/(^|\n)\s*input-field\s*\{[\s\S]*?\n\s*\}/.test(src)) return src
+        const sep = src.endsWith('\n') || src.length===0 ? '' : '\n'
+        return src + sep + 'input-field {\n}\n'
+      }
+      function setInInputField(src, key, value) {
+        // Limit replacement to input-field block
+        const reBlock = /(^|\n)(\s*input-field\s*\{)([\s\S]*?)(\n\s*\})(?![\s\S]*\2)/
+        const m = reBlock.exec(src)
+        if (!m) return src
+        const before = src.slice(0, m.index)
+        const head = m[2]
+        const body = m[3]
+        const tail = m[4]
+        const reLine = new RegExp('(\\n|^)([\\t ]*)' + key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\s*=\\s*[^\\n]*')
+        let newBody
+        if (reLine.test(body)) {
+          newBody = body.replace(reLine, function(s, pre, indent) { return (pre||'') + indent + key + ' = ' + value })
+        } else {
+          const indent = '    '
+          const sep = body.endsWith('\n') ? '' : '\n'
+          newBody = body + sep + indent + key + ' = ' + value + '\n'
+        }
+        return before + (m[1] || '') + head + newBody + tail + src.slice(m.index + m[0].length)
+      }
+
+      let out = ensureInputFieldBlock(text)
+      out = setInInputField(out, 'inner_color', inner_color)
+      out = setInInputField(out, 'outer_color', outer_color)
+      out = setInInputField(out, 'check_color', check_color)
+      out = setInInputField(out, 'fail_color',  fail_color)
+      out = setInInputField(out, 'font_color',  font_color)
+
+      if (out !== text) {
+        const b64 = Qt.btoa(out)
+        console.log('[Hyprlock] writing theme to', hyprlockConfigFileAbs)
+        hyprlockSaveProc.command = [
+          'bash','-lc',
+          "mkdir -p ~/.config/hypr && printf '%s' '" + b64 + "' | base64 -d > '" + hyprlockConfigFileAbs + "'"
+        ]
+        hyprlockSaveProc.running = true
+      }
+    } catch (e) { /* ignore */ }
+  }
+
 
   // Helper: convert rgba(...)|#AARRGGBB|#RRGGBB -> rrggbb (no leading #)
   function toRgb6(hexOrRgba) {
@@ -700,20 +787,19 @@ Singleton {
     dockIconLabelColor = toArgb(onSurf)       // readable text color
     // Also sync external configs if requested
     if (useMatugenColors) {
-      console.log('[Matugen] applying external theme integrations (Niri, Ghostty, Fuzzel, Hyprgreetr, Cava, SwayNC)')
+      console.log('[Matugen] applying external theme integrations (Niri, Ghostty, Fuzzel, Hyprgreetr, Cava, SwayNC, Hyprlock)')
       updateNiriColorsFromTheme()
       updateGhosttyThemeFromMap(map)
       updateFuzzelThemeFromMap(map)
       updateHyprgreetrThemeFromMap(map)
       updateCavaThemeFromMap(map)
       updateSwayncMatugenCssFromMap(map)
+      updateHyprlockThemeFromMap(map)
     }
     // Bump epoch so listeners (e.g., Barvisualizer) can restart/refresh even if values are identical
     themeEpoch = themeEpoch + 1
     console.log('[Matugen] applyMatugenMap: done; themeEpoch ->', themeEpoch)
   }
-
-  
 
   function applyMatugenColors() {
     if (!useMatugenColors) return
@@ -1098,12 +1184,12 @@ Singleton {
       showTime,
       showPower,
       showWeather,
-      // Weather (keep at end)
+      // Weather
       weatherLocation,
       weatherUnit,
-      // Keybinds (path at end for clarity)
+      // Keybinds path
       keybindsPath,
-      // Wallpaper (keep at end)
+      // Wallpaper
       wallpaperAnimatedEnabled,
       wallpaperAnimatedPath,
       wallpaperStaticPath,
@@ -1194,6 +1280,18 @@ Singleton {
     onLoaded: { /* noop */ }
     onLoadFailed: (error) => { /* ignore (Hyprgreetr may not be installed) */ }
   }
+  // Lightweight reader for Hyprlock config file
+  FileView {
+    id: hyprlockView
+    path: hyprlockConfigFileAbs
+    onLoaded: {
+      // If Matugen is active and we have a cached map, apply immediately
+      if (Globals.useMatugenColors && Globals._lastMatugenMap) {
+        updateHyprlockThemeFromMap(Globals._lastMatugenMap)
+      }
+    }
+    onLoadFailed: (error) => { /* ignore (Hyprlock may not be installed) */ }
+  }
   // Lightweight reader for Cava config file
   FileView {
     id: cavaView
@@ -1201,7 +1299,6 @@ Singleton {
     onLoaded: { /* noop */ }
     onLoadFailed: (error) => { /* ignore (Cava may not be installed) */ }
   }
-  
 
   Process { id: saveThemeProc; running: false }
   // Writer for Niri config updates
@@ -1212,6 +1309,8 @@ Singleton {
   Process { id: fuzzelSaveProc; running: false }
   // Writer for Hyprgreetr updates
   Process { id: hyprgreetrSaveProc; running: false }
+  // Writer for Hyprlock updates
+  Process { id: hyprlockSaveProc; running: false }
   // Writer for Cava updates
   Process { id: cavaSaveProc; running: false }
   // Writer for SwayNC style updates
@@ -1396,8 +1495,9 @@ Singleton {
           if (m) map[m[1]] = m[2].trim()
         }
         if (changed) {
-          Globals.applyMatugenMap(map)
+          // Set hash first to avoid re-entrancy loops if anything causes another onLoaded during apply
           Globals._matugenHash = hash
+          Globals.applyMatugenMap(map)
           Globals.saveTheme()
         }
       } catch (e) { /* ignore */ }

@@ -13,6 +13,8 @@ BarBlock {
   // Using the same Nerd Font icon you use in Waybar: ""
   // If you prefer another glyph (e.g. nf-md-power), let me know.
   property string iconGlyph: ""
+  // Toggle for Hyprlock process logs (stdout/stderr). Default: off to reduce noise.
+  property bool logHyprlock: false
 
   content: BarText {
     mainFont: "JetBrains Mono Nerd Font"
@@ -208,8 +210,12 @@ BarBlock {
     id: lockProc
     running: false
     command: ["sh", "-c", "hyprlock"]
-    stdout: SplitParser { onRead: data => console.log(`[Power] LOCK OUT: ${String(data)}`) }
-    stderr: SplitParser { onRead: data => console.log(`[Power] LOCK ERR: ${String(data)}`) }
+    stdout: SplitParser {
+      onRead: data => { if (root.logHyprlock) console.log(`[Power] LOCK OUT: ${String(data)}`) }
+    }
+    stderr: SplitParser {
+      onRead: data => { if (root.logHyprlock) console.log(`[Power] LOCK ERR: ${String(data)}`) }
+    }
   }
 
   // Hyprland: open external wlogout menu directly (bypass our popup)

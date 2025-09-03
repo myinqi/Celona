@@ -72,7 +72,7 @@
   "weatherLocation": "90587, Obermichelbach, DE",
   "weatherUnit": "C",
   "keybindsPath": "~/.config/niri/config.kdl",
-  "wallpaperAnimatedEnabled": false,
+  "wallpaperAnimatedEnabled": true,
   "wallpaperAnimatedPath": "/home/khrom/Bilder/animated backgrounds/draeonor.mp4",
   "wallpaperStaticPath": "/home/khrom/Bilder/animated backgrounds/draeonor.png",
   "wallpaperOutputs": [
