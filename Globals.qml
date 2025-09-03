@@ -9,34 +9,50 @@ Singleton {
   property PopupContext popupContext: PopupContext {}
   readonly property string themeFile: "~/.config/quickshell/Celona/config.json"
   // Expand tilde for components that don't expand it (e.g., FileView path)
-  readonly property string themeFileAbs: themeFile.indexOf("~/") === 0 ? ("/home/khrom/" + themeFile.slice(2)) : themeFile
+  // Use dynamic HOME instead of hardcoded username; falls back to previous default until resolved.
+  property string homeDir: "/home/khrom"
+  readonly property string themeFileAbs: themeFile.indexOf("~/") === 0 ? (homeDir + themeFile.slice(1)) : themeFile
   // Niri config path (for optional color sync)
   readonly property string niriConfigFile: "~/.config/niri/config.kdl"
-  readonly property string niriConfigFileAbs: niriConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + niriConfigFile.slice(2)) : niriConfigFile
+  readonly property string niriConfigFileAbs: niriConfigFile.indexOf("~/") === 0 ? (homeDir + niriConfigFile.slice(1)) : niriConfigFile
   // Ghostty theme path
   readonly property string ghosttyThemeFile: "~/.config/ghostty/themes/matugen_colors.conf"
-  readonly property string ghosttyThemeFileAbs: ghosttyThemeFile.indexOf("~/") === 0 ? ("/home/khrom/" + ghosttyThemeFile.slice(2)) : ghosttyThemeFile
+  readonly property string ghosttyThemeFileAbs: ghosttyThemeFile.indexOf("~/") === 0 ? (homeDir + ghosttyThemeFile.slice(1)) : ghosttyThemeFile
   // Fuzzel theme path
   readonly property string fuzzelThemeFile: "~/.config/fuzzel/themes/matugen_colors.ini"
-  readonly property string fuzzelThemeFileAbs: fuzzelThemeFile.indexOf("~/") === 0 ? ("/home/khrom/" + fuzzelThemeFile.slice(2)) : fuzzelThemeFile
+  readonly property string fuzzelThemeFileAbs: fuzzelThemeFile.indexOf("~/") === 0 ? (homeDir + fuzzelThemeFile.slice(1)) : fuzzelThemeFile
   // Hyprgreetr config path
   readonly property string hyprgreetrConfigFile: "~/.config/hyprgreetr/config.toml"
-  readonly property string hyprgreetrConfigFileAbs: hyprgreetrConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + hyprgreetrConfigFile.slice(2)) : hyprgreetrConfigFile
+  readonly property string hyprgreetrConfigFileAbs: hyprgreetrConfigFile.indexOf("~/") === 0 ? (homeDir + hyprgreetrConfigFile.slice(1)) : hyprgreetrConfigFile
   // Hyprlock config path
   readonly property string hyprlockConfigFile: "~/.config/hypr/hyprlock.conf"
-  readonly property string hyprlockConfigFileAbs: hyprlockConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + hyprlockConfigFile.slice(2)) : hyprlockConfigFile
+  readonly property string hyprlockConfigFileAbs: hyprlockConfigFile.indexOf("~/") === 0 ? (homeDir + hyprlockConfigFile.slice(1)) : hyprlockConfigFile
   // Cava config path
   readonly property string cavaConfigFile: "~/.config/cava/config"
-  readonly property string cavaConfigFileAbs: cavaConfigFile.indexOf("~/") === 0 ? ("/home/khrom/" + cavaConfigFile.slice(2)) : cavaConfigFile
+  readonly property string cavaConfigFileAbs: cavaConfigFile.indexOf("~/") === 0 ? (homeDir + cavaConfigFile.slice(1)) : cavaConfigFile
   // SwayNC Matugen CSS path (new unified theme file)
   readonly property string swayncMatugenCssFile: "~/.config/swaync/matugen_colors.css"
-  readonly property string swayncMatugenCssFileAbs: swayncMatugenCssFile.indexOf("~/") === 0 ? ("/home/khrom/" + swayncMatugenCssFile.slice(2)) : swayncMatugenCssFile
+  readonly property string swayncMatugenCssFileAbs: swayncMatugenCssFile.indexOf("~/") === 0 ? (homeDir + swayncMatugenCssFile.slice(1)) : swayncMatugenCssFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
   property bool _resetFromDefaultsRequested: false
   // when true, load defaults file but apply only color-related properties
   property bool _resetColorsFromDefaultsRequested: false
+
+  // Resolve $HOME once at startup to avoid hardcoding usernames
+  Process {
+    id: homeProc
+    running: false
+    command: ["bash","-lc","printf %s \"$HOME\""]
+    stdout: SplitParser {
+      onRead: (data) => {
+        const s = String(data).trim()
+        if (s && s !== homeDir) homeDir = s
+      }
+    }
+  }
+  Component.onCompleted: { homeProc.running = true }
 
   // THEME COLORS (defaults reflect current bar style)
   // Bar
@@ -753,6 +769,8 @@ Singleton {
     // Map Matugen names to our config keys
     // Fallbacks if a key is missing
     const pick = (k, d) => (map[k] !== undefined ? map[k] : d)
+    // Cache the latest map so late-loading consumers (e.g., Hyprlock FileView) can update immediately
+    _lastMatugenMap = map
     const bg = pick('background', '#111318')
     const onSurf = pick('on_surface', '#e2e2e9')
     const onSurfVar = pick('on_surface_variant', '#c4c6d0')
@@ -1101,6 +1119,10 @@ Singleton {
     if (obj.DockIconLabel !== undefined) Globals.dockIconLabel = obj.DockIconLabel
     if (obj.DockIconSpacing !== undefined) Globals.dockIconSpacing = obj.DockIconSpacing
     if (obj.DockIconBGColor !== undefined) Globals.dockIconBGColor = obj.DockIconBGColor
+    // If Matugen is enabled, re-apply the cached palette to avoid theme loads overriding Matugen-driven colors
+    if (Globals.useMatugenColors && Globals._lastMatugenMap) {
+      Globals.applyMatugenMap(Globals._lastMatugenMap)
+    }
     if (obj.DockIconBorderColor !== undefined) Globals.dockIconBorderColor = obj.DockIconBorderColor
     // Prefer new DockIconLabelTextColor; fallback to legacy DockIconLabelColor
     if (obj.DockIconLabelTextColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelTextColor
@@ -1494,6 +1516,8 @@ Singleton {
           const m = raw.match(/@define-color\s+([a-zA-Z0-9_\-]+)\s+([^;]+);/)
           if (m) map[m[1]] = m[2].trim()
         }
+        // Always refresh the cached map for late consumers
+        Globals._lastMatugenMap = map
         if (changed) {
           // Set hash first to avoid re-entrancy loops if anything causes another onLoaded during apply
           Globals._matugenHash = hash
