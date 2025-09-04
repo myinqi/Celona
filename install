@@ -340,14 +340,34 @@ snapper_pre() {
   if ! command -v snapper >/dev/null 2>&1; then
     echo "snapper not found; skipping pre snapshots"; return 0; fi
   if [[ -f /etc/snapper/configs/root ]]; then
-    PRE_ROOT_ID=$(sudo snapper -c root create --type pre --cleanup-algorithms "" --print-number --description "Celona install pre (root)" 2>/dev/null || true)
-    echo "Root pre snapshot (cleanup disabled): ${PRE_ROOT_ID:-none}"
+    PRE_ROOT_ID=$(sudo snapper -c root create --type pre --print-number --description "Celona install pre (root)" 2> >(err=$(cat); typeset -p err >/dev/null) ) || true
+    if [[ -n "${PRE_ROOT_ID}" ]]; then
+      sudo snapper -c root modify --cleanup-algorithms "" "$PRE_ROOT_ID" 2>/dev/null || true
+      echo "Root pre snapshot (cleanup disabled): ${PRE_ROOT_ID}"
+    else
+      echo "Failed to create root pre snapshot" >&2
+      if [[ -n "${err:-}" ]]; then
+        echo "snapper(root) error: $err" >&2
+      fi
+      echo "snapper root config exists? $(sudo test -f /etc/snapper/configs/root && echo yes || echo no)"
+      echo "Recent root snapshots:"; sudo snapper -c root list | tail -n 5 || true
+    fi
   else
     echo "snapper root config not found; skipping root pre snapshot"
   fi
   if [[ -f /etc/snapper/configs/home ]]; then
-    PRE_HOME_ID=$(sudo snapper -c home create --type pre --cleanup-algorithms "" --print-number --description "Celona install pre (home)" 2>/dev/null || true)
-    echo "Home pre snapshot (cleanup disabled): ${PRE_HOME_ID:-none}"
+    PRE_HOME_ID=$(sudo snapper -c home create --type pre --print-number --description "Celona install pre (home)" 2> >(errh=$(cat); typeset -p errh >/dev/null) ) || true
+    if [[ -n "${PRE_HOME_ID}" ]]; then
+      sudo snapper -c home modify --cleanup-algorithms "" "$PRE_HOME_ID" 2>/dev/null || true
+      echo "Home pre snapshot (cleanup disabled): ${PRE_HOME_ID}"
+    else
+      echo "Failed to create home pre snapshot" >&2
+      if [[ -n "${errh:-}" ]]; then
+        echo "snapper(home) error: $errh" >&2
+      fi
+      echo "snapper home config exists? $(sudo test -f /etc/snapper/configs/home && echo yes || echo no)"
+      echo "Recent home snapshots:"; sudo snapper -c home list | tail -n 5 || true
+    fi
   else
     echo "snapper home config not found; skipping home pre snapshot"
   fi
@@ -357,14 +377,34 @@ snapper_post() {
   if ! command -v snapper >/dev/null 2>&1; then
     echo "snapper not found; skipping post snapshots"; return 0; fi
   if [[ -f /etc/snapper/configs/root && -n "${PRE_ROOT_ID}" ]]; then
-    sudo snapper -c root create --type post --cleanup-algorithms "" --pre-number "$PRE_ROOT_ID" --description "Celona install post (root)" || true
-    echo "Created root post snapshot for pre $PRE_ROOT_ID"
+    local POST_ROOT_ID errp
+    POST_ROOT_ID=$(sudo snapper -c root create --type post --print-number --pre-number "$PRE_ROOT_ID" --description "Celona install post (root)" 2> >(errp=$(cat); typeset -p errp >/dev/null) ) || true
+    if [[ -n "${POST_ROOT_ID}" ]]; then
+      sudo snapper -c root modify --cleanup-algorithms "" "$POST_ROOT_ID" 2>/dev/null || true
+      echo "Created root post snapshot $POST_ROOT_ID for pre $PRE_ROOT_ID (cleanup disabled)"
+    else
+      echo "Failed to create root post snapshot for pre $PRE_ROOT_ID" >&2
+      if [[ -n "${errp:-}" ]]; then
+        echo "snapper(root post) error: $errp" >&2
+      fi
+      echo "Recent root snapshots:"; sudo snapper -c root list | tail -n 5 || true
+    fi
   else
     echo "No root pre snapshot/context; skipping root post snapshot"
   fi
   if [[ -f /etc/snapper/configs/home && -n "${PRE_HOME_ID}" ]]; then
-    sudo snapper -c home create --type post --cleanup-algorithms "" --pre-number "$PRE_HOME_ID" --description "Celona install post (home)" || true
-    echo "Created home post snapshot for pre $PRE_HOME_ID"
+    local POST_HOME_ID errph
+    POST_HOME_ID=$(sudo snapper -c home create --type post --print-number --pre-number "$PRE_HOME_ID" --description "Celona install post (home)" 2> >(errph=$(cat); typeset -p errph >/dev/null) ) || true
+    if [[ -n "${POST_HOME_ID}" ]]; then
+      sudo snapper -c home modify --cleanup-algorithms "" "$POST_HOME_ID" 2>/dev/null || true
+      echo "Created home post snapshot $POST_HOME_ID for pre $PRE_HOME_ID (cleanup disabled)"
+    else
+      echo "Failed to create home post snapshot for pre $PRE_HOME_ID" >&2
+      if [[ -n "${errph:-}" ]]; then
+        echo "snapper(home post) error: $errph" >&2
+      fi
+      echo "Recent home snapshots:"; sudo snapper -c home list | tail -n 5 || true
+    fi
   else
     echo "No home pre snapshot/context; skipping home post snapshot"
   fi
@@ -372,7 +412,7 @@ snapper_post() {
 
 # --- Steps begin ---
 run_step "Ensure snapper home config (@home)" snapper_ensure_home_config
-run_step "Create pre snapshots (snapper)" snapper_pre
+run_step_release "Create pre snapshots (snapper)" snapper_pre
 
 run_step "Update package databases" sudo pacman -Syu --noconfirm --needed
 
@@ -517,7 +557,7 @@ run_step "Deploy Celona configs to ~/.config" bash -c '
   fi
 '
 
-run_step "Create post snapshots (snapper)" snapper_post
+run_step_release "Create post snapshots (snapper)" snapper_post
 
 run_step_release "Summary and post-install notes" bash -c '
   echo
