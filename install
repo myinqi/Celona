@@ -178,7 +178,7 @@ fi
 
 # --- Planned steps ---
 # Keep this in sync with run_step calls
-TOTAL_STEPS=22
+TOTAL_STEPS=26
 STEP=0
 start_time=$(date +%s)
 
@@ -259,15 +259,61 @@ sed_uncomment() { local pattern="$1" file="$2"; sudo sed -i "s/^#\s*\(${pattern}
 replace_json_value() { # naive replacer for micro settings.json theme value
   local file="$1" key="$2" newval="$3"
   if [[ -f "$file" ]]; then
-    sed -i "s/\(\"$key\"\s*:\s*\)\"[^\"]*\"/\1\"$newval\"/" "$file" || true
+    sed -i "s/\("$key"\s*:\s*\)\"[^\"]*\"/\1\"$newval\"/" "$file" || true
   else
     ensure_dir "$(dirname "$file")"
     printf '{\n  "%s": "%s"\n}\n' "$key" "$newval" >"$file"
   fi
 }
 
+# Snapper helpers (persist pre IDs for root and home)
+PRE_ROOT_ID=""; PRE_HOME_ID=""
+snapper_pre() {
+  if ! command -v snapper >/dev/null 2>&1; then
+    echo "snapper not found; skipping pre snapshots"; return 0; fi
+  if [[ -f /etc/snapper/configs/root ]]; then
+    PRE_ROOT_ID=$(sudo snapper -c root create --type pre --print-number --description "Celona install pre (root)" 2>/dev/null || true)
+    echo "Root pre snapshot: ${PRE_ROOT_ID:-none}"
+  else
+    echo "snapper root config not found; skipping root pre snapshot"
+  fi
+  if [[ -f /etc/snapper/configs/home ]]; then
+    PRE_HOME_ID=$(sudo snapper -c home create --type pre --print-number --description "Celona install pre (home)" 2>/dev/null || true)
+    echo "Home pre snapshot: ${PRE_HOME_ID:-none}"
+  else
+    echo "snapper home config not found; skipping home pre snapshot"
+  fi
+}
+
+snapper_post() {
+  if ! command -v snapper >/dev/null 2>&1; then
+    echo "snapper not found; skipping post snapshots"; return 0; fi
+  if [[ -f /etc/snapper/configs/root && -n "${PRE_ROOT_ID}" ]]; then
+    sudo snapper -c root create --type post --pre-number "$PRE_ROOT_ID" --description "Celona install post (root)" || true
+    echo "Created root post snapshot for pre $PRE_ROOT_ID"
+  else
+    echo "No root pre snapshot/context; skipping root post snapshot"
+  fi
+  if [[ -f /etc/snapper/configs/home && -n "${PRE_HOME_ID}" ]]; then
+    sudo snapper -c home create --type post --pre-number "$PRE_HOME_ID" --description "Celona install post (home)" || true
+    echo "Created home post snapshot for pre $PRE_HOME_ID"
+  else
+    echo "No home pre snapshot/context; skipping home post snapshot"
+  fi
+}
+
 # --- Steps begin ---
+run_step "Create pre snapshots (snapper)" snapper_pre
+
 run_step "Update package databases" sudo pacman -Syu --noconfirm --needed
+
+run_step "Refresh mirrors" bash -c '
+  if command -v mirror >/dev/null 2>&1; then
+    mirror
+  else
+    echo "mirror command not found; skipping mirror refresh"
+  fi
+'
 
 run_step "Install base packages" sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
 
@@ -397,28 +443,23 @@ run_step "Deploy Celona configs to ~/.config" bash -c '
   fi
 '
 
+run_step "Create post snapshots (snapper)" snapper_post
+
 run_step "Summary and post-install notes" bash -c '
   echo
   echo "Installation completed. Review the output above for any warnings."
   echo
-  echo $'\033[31mPost-install guide:\033[0m'
+  printf "\033[31mPost-install guide:\033[0m\n"
   echo " 1) Niri configuration"
   echo "    Edit: ~/.config/niri/config.kdl"
   echo "     - Line 16: set your preferred keyboard layouts (e.g. \"us\", \"de\")."
   echo "     - Line 82: set your display mode and refresh rate (e.g. \"1920x1080@60.000\" or \"3440x1440@165.030\")."
   echo "     - Line 128: set your maximum horizontal resolution minus a small margin (e.g. -20 pixels)."
   echo
-  echo " 2) CachyOS settings (optional but recommended)"
-  echo "    - Open the \"Hello\" app (Launcher: Ctrl+Super+Return, type \"Hello\", press Return)."
-  echo "    - Go to Apps/Tweaks and click \"Rank Mirrors\"."
-  echo "    - Optional: Install Gaming packages if you plan to game."
-  echo "    - If you use Btrfs with Limine or GRUB: open the \"Btrfs\" tool (Ctrl+Super+Return, type \"Btrfs\")."
-  echo "      Ensure snapshots are enabled so you can roll back from the bootloader."
-  echo
-  echo " 3) Final touches"
+  echo " 2) Final touches"
   echo "    - Open the Celona session (gear icon) and set your wallpaper."
   echo "    - Optional: Enable the Keybindings module to view important shortcuts."
-  echo $'\033[31m    - Reboot to start SDDM and Niri: sudo reboot\033[0m'
+  printf "\033[31m    - Reboot to start SDDM and Niri: sudo reboot\033[0m\n"
 '
 
 progress_done "$STEP" "$TOTAL_STEPS"
