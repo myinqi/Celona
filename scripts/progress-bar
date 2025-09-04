@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+
+BATCHSIZE=1
+BAR_CHAR='|'
+EMPTY_CHAR=' '
+# Configurable header region and ascii art
+: "${PB_TOP_LINES:=0}"       # number of fixed lines at top (e.g., 8)
+: "${PB_HEADER_FILE:=}"      # path to ascii header to show at top
+# Pacman animation state
+PB_FRAME=0
+
+fatal() {
+	echo '[FATAL]' "$@" >&2
+	exit 1
+}
+
+progress-bar() {
+    local current=$1
+    local len=$2
+
+    local perc_done=$(( len > 0 ? (current * 100 / len) : 0 ))
+
+    # Suffix shows only counters and percent; Pacman animates INSIDE the bar
+    local suffix=" $current/$len (${perc_done}%)"
+
+    local length=$((COLUMNS - ${#suffix} - 2))
+    (( length < 10 )) && length=10
+    local pacman_pos=$(( perc_done * length / 100 ))
+    (( pacman_pos < 0 )) && pacman_pos=0
+    (( pacman_pos > length )) && pacman_pos=$length
+    local full_done=0
+    if (( pacman_pos >= length )); then full_done=1; pacman_pos=$length; fi
+    # Pacman character toggles c/C
+    local pacman; if (( PB_FRAME == 0 )); then pacman='c'; PB_FRAME=1; else pacman='C'; PB_FRAME=0; fi
+    # Remaining space to the right of pacman (only when not full_done)
+    local right_space=0
+    if (( full_done == 0 )); then right_space=$(( length - pacman_pos - 1 )); (( right_space < 0 )) && right_space=0; fi
+    # Tail fills full remaining width with 'o'
+    local tail=""; if (( right_space > 0 )); then tail=$(printf '%*s' "$right_space" '' | tr ' ' 'o'); fi
+
+    local i
+    local s='['
+    # Eaten segment rendered as gray '-'
+    s+=$'\e[90m'
+    for ((i = 0; i < pacman_pos; i++)); do s+='-'; done
+    s+=$'\e[0m'
+    if (( full_done == 0 )); then
+      # Pacman at the frontier
+      s+=$pacman
+      # Remaining tail filled with spaced cyan 'o'
+      s+=$'\e[36m'
+      # Build spaced tail up to right_space columns (pattern: o space o space ...)
+      if (( right_space > 0 )); then
+        local tail_build=""
+        for ((i = 0; i < right_space; i++)); do
+          if (( i % 2 == 0 )); then tail_build+='o'; else tail_build+=' '; fi
+        done
+        s+=$tail_build
+      fi
+      s+=$'\e[0m'
+    fi
+    s+=']'
+    s+=$suffix
+
+    printf '\e7' # save the cursor location
+      printf '\e[%d;%dH' "$LINES" 0 # move cursor to the bottom line
+      printf '\e[0K' # clear the line
+      printf '%s' "$s" # print the progress bar
+    printf '\e8' # restore the cursor location
+}
+
+process-files() {
+	local files=("$@")
+
+	echo "processing batch of ${#files[@]} files"
+
+	local file
+	for file in "${files[@]}"; do
+		echo "-> $file"
+	done
+	sleep .1
+}
+
+init-term() {
+    # Render header (ascii) into the top fixed area, then set scroll region
+    printf '\e7' # save cursor
+      # Reset scroll region to full first
+      printf '\e[%d;%dr' 1 "$LINES"
+      # Draw header if configured (colored cyan)
+      if [[ -n "$PB_HEADER_FILE" && -f "$PB_HEADER_FILE" && $PB_TOP_LINES -gt 0 ]]; then
+        printf '\e[%d;%dH' 1 1
+        printf '\e[36m'
+        # Print up to PB_TOP_LINES-1 lines from header file, ensure a blank line after
+        # Use sed to limit lines safely
+        sed -n "1,$((PB_TOP_LINES-1))p" "$PB_HEADER_FILE"
+        # Fill up to PB_TOP_LINES-1 if header shorter
+        local printed=$(sed -n "1,$((PB_TOP_LINES-1))p" "$PB_HEADER_FILE" | wc -l)
+        local fill=$(( PB_TOP_LINES - 1 - printed ))
+        if (( fill > 0 )); then printf '%*s\n' "$fill" ''; fi
+        printf '\e[0m'
+        # One blank line
+        printf '\n'
+      elif (( PB_TOP_LINES > 0 )); then
+        # Reserve space with blanks
+        printf '\e[%d;%dH' 1 1
+        printf '%*s\n' "$PB_TOP_LINES" ''
+      fi
+      # Set scroll region between top+1 and last-1 line
+      local top=$(( PB_TOP_LINES + 1 ))
+      local bottom=$(( LINES - 1 ))
+      (( top < 1 )) && top=1
+      (( bottom < top )) && bottom=top
+      printf '\e[%d;%dr' "$top" "$bottom"
+    printf '\e8' # restore cursor
+}
+
+deinit-term() {
+    printf '\e7' # save the cursor location
+      printf '\e[%d;%dr' 0 "$LINES" # reset the scrollable region (margin)
+      printf '\e[%d;%dH' "$LINES" 0 # move cursor to the bottom line
+      printf '\e[0K' # clear the line
+    printf '\e8' # reset the cursor location
+}
+
+# --- Library API for safe sourcing ---
+progress_init() {
+    shopt -s checkwinsize
+    (:)
+    trap deinit-term exit
+    trap init-term winch
+    init-term
+}
+
+progress_render() {
+    local current=$1 len=$2 msg=$3
+    # msg is currently ignored by this renderer, but kept for interface parity
+    progress-bar "$current" "$len"
+}
+
+progress_done() {
+    local current=$1 len=$2
+    progress-bar "$len" "$len"
+    deinit-term
+    printf '\n'
+}
+
+main() {
+    local OPTARG OPTIND opt
+    while getopts 'b:c:e:' opt; do
+        case "$opt" in
+            b) BATCHSIZE=$OPTARG;;
+            c) BAR_CHAR=$OPTARG;;
+            e) EMPTY_CHAR=$OPTARG;;
+            *) fatal 'bad option';;
+        esac
+    done
+
+    shopt -s globstar nullglob checkwinsize
+    # this line is to ensure LINES and COLUMNS are set
+    (:)
+
+    trap deinit-term exit
+    trap init-term winch
+    init-term
+
+    echo 'finding files'
+    local files=(./**/*cache)
+    local len=${#files[@]}
+    echo "found $len files"
+
+    local i
+    for ((i = 0; i < len; i += BATCHSIZE)); do
+        progress_render "$((i+1))" "$len" "processing"
+        process-files "${files[@]:i:BATCHSIZE}"
+    done
+    progress_done "$len" "$len"
+}
+
+# Only run main when executed directly, not when sourced
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

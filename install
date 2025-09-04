@@ -1,0 +1,299 @@
+#!/usr/bin/env bash
+# Celona Desktop Environment installer for Arch/CachyOS (Niri-based)
+# This script automates the steps from installation.txt
+# It shows a persistent bottom-line progress bar throughout the run.
+# big thanks to bahamas10 for the awesome progress bar
+
+set -Eeuo pipefail
+
+# Clear the terminal before showing anything
+printf '\033[2J\033[H'
+
+# --- UI helpers: persistent bottom progress bar ---
+# Configure header: 7 lines of ASCII + 1 blank line = 8 top lines reserved
+export PB_TOP_LINES=8
+export PB_HEADER_FILE="scripts/ascii.txt"
+
+# If scripts/progress-bar exists, source it for customization; otherwise use built-in.
+if [[ -f "scripts/progress-bar" ]]; then
+  # shellcheck disable=SC1091
+  source "scripts/progress-bar"
+  # Initialize terminal margins if the sourced script provides an init function
+  if declare -F progress_init >/dev/null 2>&1; then
+    progress_init
+  fi
+else
+  # Built-in minimal progress bar implementation pinned to the last terminal line
+  _pb_cols() { tput cols 2>/dev/null || echo 80; }
+  _pb_lines() { tput lines 2>/dev/null || echo 24; }
+  _pb_lastline() { local l; l=$((_pb_lines - 1)); (( l < 0 )) && l=0; echo "$l"; }
+  _pb_trunc() { # trunc to width
+    local s="$1" w="$2"; (( ${#s} > w )) && s="${s:0:w}"; printf '%s' "$s";
+  }
+  _pb_init() {
+    # Reset scroll region full
+    printf '\0337'
+    printf '\033[1;%dr' "$(_pb_lines)"
+    # Draw header if present (colored cyan)
+    local top=${PB_TOP_LINES:-0}
+    local header=${PB_HEADER_FILE:-}
+    if [[ -n "$header" && -f "$header" && $top -gt 0 ]]; then
+      printf '\033[1;1H'
+      # Print first (top-1) lines, then one blank line
+      printf '\033[36m'
+      sed -n "1,$((top-1))p" "$header"
+      # Ensure exactly (top-1) lines printed (pad if needed)
+      local printed; printed=$(sed -n "1,$((top-1))p" "$header" | wc -l)
+      local fill=$(( top - 1 - printed ))
+      if (( fill > 0 )); then printf '%*s\n' "$fill" ''; fi
+      printf '\033[0m'
+      printf '\n'
+    elif (( top > 0 )); then
+      printf '\033[1;1H'
+      printf '%*s\n' "$top" ''
+    fi
+    # Set scroll region between top+1 and last-1
+    local start=$(( top + 1 ))
+    local end=$(( $(_pb_lines) - 1 ))
+    (( start < 1 )) && start=1
+    (( end < start )) && end=$start
+    printf '\033[%d;%dr' "$start" "$end"
+    printf '\0338'
+  }
+  progress_render() {
+    local current="$1" total="$2" msg="$3"
+    local cols=$(_pb_cols); local last=$(_pb_lastline)
+    local pct=0
+    if (( total > 0 )); then pct=$(( current * 100 / total )); fi
+    local barw=$(( cols - 20 ))
+    (( barw < 10 )) && barw=10
+    local pac_pos=$(( barw * pct / 100 )); (( pac_pos < 0 )) && pac_pos=0; (( pac_pos > barw )) && pac_pos=$barw
+    local full_done=0; if (( pac_pos >= barw )); then full_done=1; fi
+    if [[ -z "${_PB_FRAME:-}" ]]; then _PB_FRAME=0; fi
+    local pacman; if (( _PB_FRAME == 0 )); then pacman='c'; _PB_FRAME=1; else pacman='C'; _PB_FRAME=0; fi
+    local right_space=0; if (( full_done == 0 )); then right_space=$(( barw - pac_pos - 1 )); (( right_space < 0 )) && right_space=0; fi
+    local tail=""; if (( right_space > 0 )); then tail=$(printf '%*s' "$right_space" '' | tr ' ' 'o'); fi
+    # Build bar: eaten '-' (gray), pacman at frontier (unless full), remaining 'o' (cyan, spaced)
+    local bar='['
+    bar+=$'\033[90m'
+    bar+="$(printf '%*s' "$pac_pos" '' | tr ' ' '-')"
+    bar+=$'\033[0m'
+    if (( full_done == 0 )); then
+      bar+=$pacman
+      # build spaced cyan tail to fit right_space columns
+      bar+=$'\033[36m'
+      if (( right_space > 0 )); then
+        local tb=""
+        for ((i = 0; i < right_space; i++)); do
+          if (( i % 2 == 0 )); then tb+='o'; else tb+=' '; fi
+        done
+        bar+=$tb
+      fi
+      bar+=$'\033[0m'
+    fi
+    bar+=']'
+    local left="$bar $(printf '%3d' "$pct")%"
+    local right=" $msg"
+    local line="$left$right"
+    line=$(_pb_trunc "$line" "$cols")
+    # Save cursor position, move to last line col 0, print, clear to end, restore cursor
+    printf '\0337'          # ESC 7 save cursor
+    printf '\033[%d;0H' "$last" # move cursor
+    printf '%s' "$line"
+    printf '\033[K'         # clear to end of line
+    printf '\0338'          # ESC 8 restore cursor
+  }
+  progress_done() {
+    # Leave a final "100% done" line and then print a newline below it
+    progress_render "$1" "$2" "Done"
+    printf '\n'
+  }
+  # Initialize header/scroll region for built-in mode
+  _pb_init
+fi
+
+# --- Confirmation prompt (ASCII + 0% bar already visible) ---
+# Show initial 0% progress and ask user for confirmation before proceeding
+# Move cursor to the first scrollable line (just below header + blank line)
+printf '\033[%d;1H' $(( PB_TOP_LINES + 1 ))
+progress_render 0 100 "Ready to install Celona environment?"
+echo "Ready to install Celona environment? Type 'yes' to proceed or 'no' to quit."
+while true; do
+  read -r -p "> " reply || reply=
+  case "${reply,,}" in
+    y|ye|yes)
+      break;;
+    n|no)
+      echo "Installation cancelled by user."
+      progress_done 0 100
+      exit 0;;
+    *)
+      echo "Please answer 'yes' or 'no'.";;
+  esac
+done
+
+# --- Privilege checks and environment ---
+if ! command -v sudo >/dev/null 2>&1; then
+  echo "This installer requires sudo. Please install and configure sudo first." >&2
+  exit 1
+fi
+
+if ! command -v pacman >/dev/null 2>&1; then
+  echo "This installer targets Arch/CachyOS. pacman not found." >&2
+  exit 1
+fi
+
+# --- Planned steps ---
+# Keep this in sync with run_step calls
+TOTAL_STEPS=22
+STEP=0
+start_time=$(date +%s)
+
+run_step() {
+  local title="$1"; shift
+  STEP=$(( STEP + 1 ))
+  progress_render "$STEP" "$TOTAL_STEPS" "$title"
+  "$@"
+}
+
+# --- Helper functions ---
+ensure_dir() { install -d -m 755 "$1"; }
+write_file() { # write_file path content
+  local path="$1"; shift
+  ensure_dir "$(dirname "$path")"
+  printf '%s' "$*" >"$path"
+}
+append_file() { local path="$1"; shift; ensure_dir "$(dirname "$path")"; printf '%s\n' "$*" >>"$path"; }
+sed_uncomment() { local pattern="$1" file="$2"; sudo sed -i "s/^#\s*\(${pattern}\)/\1/" "$file" || true; }
+replace_json_value() { # naive replacer for micro settings.json theme value
+  local file="$1" key="$2" newval="$3"
+  if [[ -f "$file" ]]; then
+    sed -i "s/\(\"$key\"\s*:\s*\)\"[^\"]*\"/\1\"$newval\"/" "$file" || true
+  else
+    ensure_dir "$(dirname "$file")"
+    printf '{\n  "%s": "%s"\n}\n' "$key" "$newval" >"$file"
+  fi
+}
+
+# --- Steps begin ---
+run_step "Update package databases" sudo pacman -Syu --noconfirm --needed
+
+run_step "Install base packages" \
+  sudo pacman -S --needed --noconfirm base-devel micro fuzzel git zen-browser quickshell nautilus sddm ghostty gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
+
+run_step "Enable udisks2" sudo systemctl enable --now udisks2
+
+run_step "Create user systemd dir" ensure_dir "$HOME/.config/systemd/user"
+
+run_step "Install Polkit user service" bash -c '
+  write_file "$HOME/.config/systemd/user/polkit-agent.service" "[Unit]\nDescription=Polkit authentication agent\nPartOf=niri.service\nAfter=graphical-session.target\n\n[Service]\nExecStart=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1\nRestart=on-failure\n\n[Install]\nWantedBy=niri.service\n"
+'
+
+run_step "Enable Polkit user service" bash -c '
+  systemctl --user daemon-reload
+  systemctl --user enable --now polkit-agent.service
+  systemctl --user add-wants niri.service polkit-agent.service || true
+'
+
+run_step "Enable SDDM" sudo systemctl enable sddm.service
+
+run_step "Configure portals preference" sudo bash -c '
+  write_file "/usr/share/xdg-desktop-portal/niri-portals.conf" "[preferred]\ndefault=gnome;gtk;\norg.freedesktop.impl.portal.Access=gnome-shell;gtk;\norg.freedesktop.impl.portal.Secret=gnome-keyring;\norg.freedesktop.impl.portal.ScreenCast=gnome;\norg.freedesktop.impl.portal.FileChooser=gnome;\norg.freedesktop.impl.portal.Notification=gnome;gtk;\n"
+'
+
+run_step "Restart portal services (user)" bash -c '
+  systemctl --user restart xdg-desktop-portal.service xdg-desktop-portal-gtk.service xdg-desktop-portal-gnome.service || true
+'
+
+run_step "Install paru (AUR helper)" bash -c '
+  tmpd=$(mktemp -d)
+  trap "rm -rf \"$tmpd\"" EXIT
+  git clone https://aur.archlinux.org/paru.git "$tmpd/paru"
+  cd "$tmpd/paru"
+  makepkg -si --noconfirm
+'
+
+run_step "Configure paru BottomUP" sudo bash -c '
+  if [[ -f /etc/paru.conf ]]; then sed_uncomment "BottomUp" "/etc/paru.conf"; fi
+'
+
+run_step "Set micro theme to simple" bash -c '
+  replace_json_value "$HOME/.config/micro/settings.json" "colorscheme" "simple"
+'
+
+run_step "Install AUR packages" bash -c '
+  paru --noconfirm -S sddm-silent-theme bibata-cursor-theme-bin nwg-look kora-icon-theme mpvpaper matugen tmatrix
+'
+
+run_step "Clone Celona config" bash -c '
+  ensure_dir "$HOME/.config/quickshell"
+  if [[ ! -d "$HOME/.config/quickshell/Celona/.git" ]]; then
+    git clone https://github.com/myinqi/Celona.git "$HOME/.config/quickshell/Celona"
+  else
+    git -C "$HOME/.config/quickshell/Celona" pull --ff-only || true
+  fi
+'
+
+run_step "Install hyprgreetr (build)" bash -c '
+  tmpd=$(mktemp -d)
+  trap "rm -rf \"$tmpd\"" EXIT
+  git clone https://github.com/myinqi/hyprgreetr.git "$tmpd/hyprgreetr"
+  cd "$tmpd/hyprgreetr"
+  cargo build --release
+  cargo install --path .
+'
+
+run_step "Add Cargo bin to fish PATH" bash -c '
+  if command -v fish >/dev/null 2>&1; then
+    ensure_dir "$HOME/.config/fish"
+    if ! grep -q "fish_add_path ~/.cargo/bin" "$HOME/.config/fish/config.fish" 2>/dev/null; then
+      append_file "$HOME/.config/fish/config.fish" "fish_add_path ~/.cargo/bin"
+    fi
+  fi
+'
+
+run_step "Set GNOME icon and cursor" bash -c '
+  gsettings set org.gnome.desktop.interface icon-theme "kora-pgrey" || true
+  gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Ice" || true
+  gsettings set org.gnome.desktop.interface cursor-size 28 || true
+'
+
+run_step "Configure SDDM" sudo bash -c '
+  write_file "/etc/sddm.conf" "[General]\nInputMethod=qtvirtualkeyboard\nGreeterEnvironment=QML2_IMPORT_PATH=/usr/share/sddm/themes/silent/components/,QT_IM_MODULE=qtvirtualkeyboard\n\n[Theme]\nCurrent=silent\n"
+'
+
+run_step "Ensure swww is available" bash -c 'command -v swww >/dev/null 2>&1 || echo "swww not found (wallpaper tool)."'
+
+run_step "Ensure xdg-desktop-portal-gnome running" bash -c 'systemctl --user is-active xdg-desktop-portal-gnome.service >/dev/null 2>&1 || true'
+
+run_step "Create Matugen config dir" ensure_dir "$HOME/.config/matugen"
+
+run_step "Summary and post-install notes" bash -c '
+  echo
+  echo "Installation completed. Review the output above for any warnings."
+  echo
+  echo "Post-install guide:"
+  echo " 1) Niri configuration"
+  echo "    Edit: ~/.config/niri/config.kdl"
+  echo "     - Line 16: set your preferred keyboard layouts (e.g. \"us\", \"de\")."
+  echo "     - Line 82: set your display mode and refresh rate (e.g. \"1920x1080@60.000\" or \"3440x1440@165.030\")."
+  echo "     - Line 128: set your maximum horizontal resolution minus a small margin (e.g. -20 pixels)."
+  echo
+  echo " 2) CachyOS settings (optional but recommended)"
+  echo "    - Open the \"Hello\" app (Launcher: Ctrl+Super+Return, type \"Hello\", press Return)."
+  echo "    - Go to Apps/Tweaks and click \"Rank Mirrors\"."
+  echo "    - Optional: Install Gaming packages if you plan to game."
+  echo "    - If you use Btrfs with Limine or GRUB: open the \"Btrfs\" tool (Ctrl+Super+Return, type \"Btrfs\")."
+  echo "      Ensure snapshots are enabled so you can roll back from the bootloader."
+  echo
+  echo " 3) Final touches"
+  echo "    - Open the Celona session (gear icon) and set your wallpaper."
+  echo "    - Optional: Enable the Keybindings module to view important shortcuts."
+  echo "    - Reboot to start SDDM and Niri: sudo reboot"
+'
+
+progress_done "$STEP" "$TOTAL_STEPS"
+
+end_time=$(date +%s)
+elapsed=$(( end_time - start_time ))
+echo "Completed in ${elapsed}s"
