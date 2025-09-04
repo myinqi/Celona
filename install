@@ -183,7 +183,7 @@ run_step "Install base packages" \
 
 run_step "Enable udisks2" sudo systemctl enable --now udisks2
 
-run_step "Create user systemd dir" ensure_dir "$HOME/.config/systemd/user"
+run_step "Create user systemd dir" mkdir -p "$HOME/.config/systemd/user"
 
 run_step "Install Polkit user service" bash -c '
   install -d -m 755 "$HOME/.config/systemd/user"
@@ -245,7 +245,7 @@ run_step "Install AUR packages" bash -c '
 '
 
 run_step "Clone Celona config" bash -c '
-  ensure_dir "$HOME/.config/quickshell"
+  mkdir -p "$HOME/.config/quickshell"
   if [[ ! -d "$HOME/.config/quickshell/Celona/.git" ]]; then
     git clone https://github.com/myinqi/Celona.git "$HOME/.config/quickshell/Celona"
   else
@@ -264,9 +264,9 @@ run_step "Install hyprgreetr (build)" bash -c '
 
 run_step "Add Cargo bin to fish PATH" bash -c '
   if command -v fish >/dev/null 2>&1; then
-    ensure_dir "$HOME/.config/fish"
+    mkdir -p "$HOME/.config/fish"
     if ! grep -q "fish_add_path ~/.cargo/bin" "$HOME/.config/fish/config.fish" 2>/dev/null; then
-      append_file "$HOME/.config/fish/config.fish" "fish_add_path ~/.cargo/bin"
+      printf "%s\n" "fish_add_path ~/.cargo/bin" >> "$HOME/.config/fish/config.fish"
     fi
   fi
 '
@@ -292,7 +292,7 @@ run_step "Ensure swww is available" bash -c 'command -v swww >/dev/null 2>&1 || 
 
 run_step "Ensure xdg-desktop-portal-gnome running" bash -c 'systemctl --user is-active xdg-desktop-portal-gnome.service >/dev/null 2>&1 || true'
 
-run_step "Create Matugen config dir" ensure_dir "$HOME/.config/matugen"
+run_step "Create Matugen config dir" mkdir -p "$HOME/.config/matugen"
 
 run_step "Summary and post-install notes" bash -c '
   echo
