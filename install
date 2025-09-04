@@ -221,6 +221,9 @@ elif [[ -f "$DEP_SH" ]]; then
   # shellcheck disable=SC1090
   source "$DEP_SH"
 fi
+# Ensure arrays are defined to avoid set -u errors when checking lengths
+declare -p PACMAN_PACKAGES >/dev/null 2>&1 || PACMAN_PACKAGES=()
+declare -p AUR_PACKAGES >/dev/null 2>&1 || AUR_PACKAGES=()
 # Fallback defaults if arrays are empty or undefined
 if (( ${#PACMAN_PACKAGES[@]} == 0 )); then
   PACMAN_PACKAGES=(
