@@ -222,14 +222,14 @@ elif [[ -f "$DEP_SH" ]]; then
   source "$DEP_SH"
 fi
 # Fallback defaults if arrays are empty or undefined
-if (( ${#PACMAN_PACKAGES[@]:-0} == 0 )); then
+if (( ${#PACMAN_PACKAGES[@]} == 0 )); then
   PACMAN_PACKAGES=(
     base-devel micro fuzzel git zen-browser quickshell nautilus sddm ghostty gvfs udisks2 polkit polkit-gnome
     cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring
     swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
   )
 fi
-if (( ${#AUR_PACKAGES[@]:-0} == 0 )); then
+if (( ${#AUR_PACKAGES[@]} == 0 )); then
   AUR_PACKAGES=(
     sddm-silent-theme bibata-cursor-theme-bin nwg-look kora-icon-theme mpvpaper matugen tmatrix
   )
