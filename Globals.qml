@@ -10,29 +10,30 @@ Singleton {
   readonly property string themeFile: "~/.config/quickshell/Celona/config.json"
   // Expand tilde for components that don't expand it (e.g., FileView path)
   // Use dynamic HOME instead of hardcoded username; falls back to previous default until resolved.
-  property string homeDir: "/home/khrom"
-  readonly property string themeFileAbs: themeFile.indexOf("~/") === 0 ? (homeDir + themeFile.slice(1)) : themeFile
+  property string homeDir: ""
+  readonly property bool homeReady: homeDir && homeDir.length > 0
+  readonly property string themeFileAbs: themeFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + themeFile.slice(1)) : "") : themeFile
   // Niri config path (for optional color sync)
   readonly property string niriConfigFile: "~/.config/niri/config.kdl"
-  readonly property string niriConfigFileAbs: niriConfigFile.indexOf("~/") === 0 ? (homeDir + niriConfigFile.slice(1)) : niriConfigFile
+  readonly property string niriConfigFileAbs: niriConfigFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + niriConfigFile.slice(1)) : "") : niriConfigFile
   // Ghostty theme path
   readonly property string ghosttyThemeFile: "~/.config/ghostty/themes/matugen_colors.conf"
-  readonly property string ghosttyThemeFileAbs: ghosttyThemeFile.indexOf("~/") === 0 ? (homeDir + ghosttyThemeFile.slice(1)) : ghosttyThemeFile
+  readonly property string ghosttyThemeFileAbs: ghosttyThemeFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + ghosttyThemeFile.slice(1)) : "") : ghosttyThemeFile
   // Fuzzel theme path
   readonly property string fuzzelThemeFile: "~/.config/fuzzel/themes/matugen_colors.ini"
-  readonly property string fuzzelThemeFileAbs: fuzzelThemeFile.indexOf("~/") === 0 ? (homeDir + fuzzelThemeFile.slice(1)) : fuzzelThemeFile
+  readonly property string fuzzelThemeFileAbs: fuzzelThemeFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + fuzzelThemeFile.slice(1)) : "") : fuzzelThemeFile
   // Hyprgreetr config path
   readonly property string hyprgreetrConfigFile: "~/.config/hyprgreetr/config.toml"
-  readonly property string hyprgreetrConfigFileAbs: hyprgreetrConfigFile.indexOf("~/") === 0 ? (homeDir + hyprgreetrConfigFile.slice(1)) : hyprgreetrConfigFile
+  readonly property string hyprgreetrConfigFileAbs: hyprgreetrConfigFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + hyprgreetrConfigFile.slice(1)) : "") : hyprgreetrConfigFile
   // Hyprlock config path
   readonly property string hyprlockConfigFile: "~/.config/hypr/hyprlock.conf"
-  readonly property string hyprlockConfigFileAbs: hyprlockConfigFile.indexOf("~/") === 0 ? (homeDir + hyprlockConfigFile.slice(1)) : hyprlockConfigFile
+  readonly property string hyprlockConfigFileAbs: hyprlockConfigFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + hyprlockConfigFile.slice(1)) : "") : hyprlockConfigFile
   // Cava config path
   readonly property string cavaConfigFile: "~/.config/cava/config"
-  readonly property string cavaConfigFileAbs: cavaConfigFile.indexOf("~/") === 0 ? (homeDir + cavaConfigFile.slice(1)) : cavaConfigFile
+  readonly property string cavaConfigFileAbs: cavaConfigFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + cavaConfigFile.slice(1)) : "") : cavaConfigFile
   // SwayNC Matugen CSS path (new unified theme file)
   readonly property string swayncMatugenCssFile: "~/.config/swaync/matugen_colors.css"
-  readonly property string swayncMatugenCssFileAbs: swayncMatugenCssFile.indexOf("~/") === 0 ? (homeDir + swayncMatugenCssFile.slice(1)) : swayncMatugenCssFile
+  readonly property string swayncMatugenCssFileAbs: swayncMatugenCssFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + swayncMatugenCssFile.slice(1)) : "") : swayncMatugenCssFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
   property string _themeBuf: ""
   // internal flags for async operations
@@ -44,7 +45,8 @@ Singleton {
   Process {
     id: homeProc
     running: false
-    command: ["bash","-lc","printf %s \"$HOME\""]
+    // Prefer getent to robustly resolve the user's home; fallback to $HOME
+    command: ["bash","-lc","getent passwd $(id -u) | cut -d: -f6 || printf %s \"$HOME\""]
     stdout: SplitParser {
       onRead: (data) => {
         const s = String(data).trim()

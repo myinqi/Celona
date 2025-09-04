@@ -503,10 +503,13 @@ run_step "Install hyprgreetr (build)" bash -c '
   cd "$tmpd/hyprgreetr"
   cargo build --release
   cargo install --path .
-  # Seed example images into the user config if available in the repo
-  if [[ -d "$tmpd/hyprgreetr/pngs" ]]; then
+  # Seed example images from repo assets into the user config (overwrite if present)
+  if [[ -d "$tmpd/hyprgreetr/assets" ]]; then
     mkdir -p "$HOME/.config/hyprgreetr/pngs"
-    cp -an "$tmpd/hyprgreetr/pngs"/* "$HOME/.config/hyprgreetr/pngs/" 2>/dev/null || true
+    (
+      shopt -s dotglob nullglob
+      cp -af "$tmpd/hyprgreetr/assets"/* "$HOME/.config/hyprgreetr/pngs/" 2>/dev/null || true
+    )
   fi
 '
 
