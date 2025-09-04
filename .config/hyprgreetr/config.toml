@@ -1,0 +1,117 @@
+show_motd = false
+motd_file = "~/.config/hyprgreetr/motd.toml"
+
+[general]
+show_title = false
+title = "System Information"
+
+[general.separator]
+symbol = "|"
+space_before = 0
+space_after = 1
+align_separator = true
+
+# Color configuration
+[general.colors]
+# Use hex color codes (e.g., #FF0000 for red, #00FF00 for green)
+# Supports both 3-digit (#RGB) and 6-digit (#RRGGBB) formats
+title = "#aac7ff"
+module = "#415e91"
+info = "#e2e2e9"
+separator = "#c4c6d0"
+
+[display]
+show_image = true
+image_path = "~/.config/hyprgreetr/pngs/Cachy_OS.png"
+prefer_kitty_graphics = true    # to see the rendered image, you need a terminal with "terminal graphics protocol" support like kitty, ghostty, iTerm2 etc.
+padding = 1
+show_border = false
+border_top =    "┌──────────────────────────────────────────────────────┐"
+border_bottom = "└──────────────────────────────────────────────────────┘"
+border_color = "#415e91"
+
+[display.image_size]
+width = 30
+height = 14
+cell_width = 17   # Pixel pro Terminal-Zeichen (Breite) - anpassen für perfektes Seitenverhältnis
+cell_height = 24  # Pixel pro Terminal-Zeichen (Höhe) - anpassen für perfektes Seitenverhältnis
+
+[display.block_rendering]                      # use this if kitty_graphics is false
+block_style = "default"                        # Block character style: "default", "ascii", "braille", "custom"
+custom_blocks = ["█", "▓", "▒", "░", " "]      # Custom block characters (used when block_style = "custom")
+brightness_thresholds = [0.8, 0.6, 0.3, 0.1]   # Brightness thresholds for block selection (0.0-1.0)
+color_mode = "truecolor"                       # Color mode: "truecolor", "256color", "16color", "monochrome"
+contrast = 1.0                                 # Contrast adjustment (0.5-2.0)
+brightness_boost = 0.0                         # Brightness boost (-0.5 to +0.5)
+sampling_method = "dominant"                   # Sampling method: "average", "dominant", "weighted"
+enable_dithering = true                        # Enable dithering for better quality
+
+[modules]
+show_versions = true  # Show version information for Shell, Terminal
+# ----------------------------------------------------------------------------------
+# below are the available modules --------------------------------------------------
+user_at_host = true
+os = false
+kernel = false
+linux = true
+uptime = false
+os_age = true
+packages = false
+flatpak_packages = false
+packages_combined = true
+shell = false
+resolution = true
+de = false
+wm = false
+theme = false
+icons = false
+terminal = false
+terminal_shell_combined = true
+font = false
+user = false
+hostname = false
+cpu = true
+cpu_temp = false
+gpu = true
+gpu_temp = false
+temp_combined = true
+gpu_driver = true
+memory = true
+battery = false
+locale = false
+network = true
+public_ip = false
+disk = false
+dysk = true
+
+[modules.display_names]
+# Custom display names for modules
+# If not specified, default names will be used
+# You can add Nerd Font icons if your terminal/font supports them:
+user_at_host = " "                          # Default: "Login"
+os = " "                                        # Default: "OS"
+kernel = ""                                # Default: "Kernel"
+linux = " "                                     # Default: "Linux"
+uptime = "󱫐  "                                # Default: "Uptime"
+os_age = "󱦟"                                # Default: "OS Age"
+packages = "󰏗"                            # Default: "Packages"
+shell = " "                                  # Default: "Shell"
+resolution = "󰍹 "                        # Default: "Resolution"
+terminal = " "                            # Default: "Terminal"
+terminal_shell_combined = " "     # Default: "Terminal & Shell"
+font = "󰛖 "                                    # Default: "Font"
+de = " "                       # Default: "DE"
+wm = "󱗃"                            # Default: "WM"
+theme = "󰔎 "                                  # Default: "Theme"
+icons = " "                                # Default: "Icons"
+cpu = " "                                      # Default: "CPU"
+cpu_temp = ""                            # Default: "CPU Temp"
+gpu = "󰊴 "                                      # Default: "GPU"
+gpu_temp = " "                            # Default: "GPU Temp"
+temp_combined = ""                   # Default: "Temperatures"
+gpu_driver = " "                        # Default: "GPU Driver"
+memory = "  "                                # Default: "Memory"
+network = " "                              # Default: "Network"
+public_ip = "󰲐 "                          # Default: "Public IP"
+disk = "󰋊"                                    # Default: "Disk"
+dysk = "󰋊"                                  # Default: "Drives"

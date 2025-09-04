@@ -600,37 +600,37 @@ run_step "Set fish greeting to hyprgreetr" sudo bash -c '
   tgt="/usr/share/cachyos-fish-config/cachyos-config.fish"
   if [[ -f "$tgt" ]]; then
     tmp=$(mktemp)
-    awk '
+    awk "
       BEGIN{skip=0; inserted=0}
       {
         # Remove any existing fish_greeting function block
-        if ($0 ~ /^\s*function\s+fish_greeting\b/) { skip=1; next }
+        if (\$0 ~ /^\s*function\s+fish_greeting\b/) { skip=1; next }
         if (skip==1) {
-          if ($0 ~ /^\s*end\s*$/) { skip=0; next } else { next }
+          if (\$0 ~ /^\s*end\s*$/) { skip=0; next } else { next }
         }
-        print $0
-        # Insert our function right after the "## Set values" line
-        if (inserted==0 && $0 ~ /^\s*## Set values\s*$/) {
-          print "## Run hyprgreetr as welcome message ##"
-          print "function fish_greeting"
-          print "    hyprgreetr"
-          print "end"
-          print ""
+        print \$0
+        # Insert our function right after the \"## Set values\" line
+        if (inserted==0 && \$0 ~ /^\s*## Set values\s*$/) {
+          print \"## Run hyprgreetr as welcome message ##\"
+          print \"function fish_greeting\"
+          print \"    hyprgreetr\"
+          print \"end\"
+          print \"\"
           inserted=1
         }
       }
       END{
         if (inserted==0) {
-          print ""
-          print "## Set values"
-          print "## Run hyprgreetr as welcome message ##"
-          print "function fish_greeting"
-          print "    hyprgreetr"
-          print "end"
-          print ""
+          print \"\"
+          print \"## Set values\"
+          print \"## Run hyprgreetr as welcome message ##\"
+          print \"function fish_greeting\"
+          print \"    hyprgreetr\"
+          print \"end\"
+          print \"\"
         }
       }
-    ' "$tgt" > "$tmp" && install -m 644 "$tmp" "$tgt" && rm -f "$tmp"
+    " "$tgt" > "$tmp" && install -m 644 "$tmp" "$tgt" && rm -f "$tmp"
   else
     echo "Warning: $tgt not found; skipping fish greeting setup"
   fi
