@@ -233,7 +233,7 @@ fi
 
 # --- Planned steps ---
 # Keep this in sync with run_step calls
-TOTAL_STEPS=27
+TOTAL_STEPS=28
 STEP=0
 start_time=$(date +%s)
 
@@ -560,6 +560,37 @@ run_step "Deploy Celona configs to ~/.config" bash -c '
   fi
 '
 
+run_step "Install wallpapers to Pictures/Celona/3440x1440" bash -c '
+  # Determine localized Pictures directory
+  picdir=""
+  if command -v xdg-user-dir >/dev/null 2>&1; then
+    picdir_tmp=$(xdg-user-dir PICTURES 2>/dev/null || true)
+    if [[ -n "$picdir_tmp" ]]; then picdir="$picdir_tmp"; fi
+  fi
+  # Fallbacks: ~/Pictures then ~/Bilder
+  if [[ -z "$picdir" ]]; then
+    if [[ -d "$HOME/Pictures" || ! -d "$HOME/Bilder" ]]; then
+      picdir="$HOME/Pictures"
+    else
+      picdir="$HOME/Bilder"
+    fi
+  fi
+  # Ensure target dir exists
+  dest="$picdir/Celona/3440x1440"
+  mkdir -p "$dest"
+  # Source repo wallpapers path
+  src_wp="$HOME/.config/quickshell/Celona/wallpapers/3440x1440"
+  if [[ -d "$src_wp" ]]; then
+    (
+      shopt -s dotglob nullglob
+      cp -a "$src_wp"/* "$dest"/ 2>/dev/null || true
+    )
+    echo "Wallpapers installed to: $dest"
+  else
+    echo "No wallpapers found at $src_wp; skipping"
+  fi
+'
+
 run_step_release "Create post snapshots (snapper)" snapper_post
 
 run_step_release "Summary and post-install notes" bash -c '
@@ -575,6 +606,7 @@ run_step_release "Summary and post-install notes" bash -c '
   echo
   echo " 2) Final touches"
   echo "    - Open the Celona session (gear icon) and set your wallpaper."
+  echo "    - Optional: In your home/pictures folder are some animated and static wallpapers to choose from if they fit your screen resolution."  
   echo "    - Optional: Enable the Keybindings module to view important shortcuts."
   echo "    - Optional: Set a custom user Icon for SDDM. run the script ~/.config/quickshell/Celona/scripts/change_avatar.sh $USER /path/to/image.png"
   printf "\033[31m    - Reboot to start SDDM and Niri: sudo reboot\033[0m\n"
