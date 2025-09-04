@@ -131,6 +131,61 @@ ui_refresh() {
   fi
 }
 
+# Temporarily release the bottom progress bar (full scroll region) for TUI tools
+pb_release() {
+  if declare -F progress_release >/dev/null 2>&1; then
+    # External progress-bar shim provided by scripts/progress-bar
+    progress_release
+    return
+  fi
+  if declare -F _pb_lines >/dev/null 2>&1; then
+    # Built-in fallback: set scroll region to full screen again
+    printf '\0337'
+    printf '\033[1;%dr' "$(_pb_lines)"
+    printf '\0338'
+  fi
+}
+
+# Restore the bar (re-initialize scroll region and re-render)
+pb_restore() {
+  if declare -F progress_restore >/dev/null 2>&1; then
+    progress_restore
+  else
+    ui_refresh
+  fi
+}
+
+# Ensure a snapper config for /home exists (common CachyOS fresh install only has root)
+snapper_ensure_home_config() {
+  if ! command -v snapper >/dev/null 2>&1; then
+    echo "snapper not found; skipping home config setup"; return 0; fi
+  if [[ -f /etc/snapper/configs/home ]]; then
+    echo "snapper home config already exists"; return 0; fi
+  if ! findmnt -no FSTYPE /home 2>/dev/null | grep -qi '^btrfs$'; then
+    echo "/home is not on Btrfs; skipping home config"; return 0; fi
+  if [[ ! -d /home ]]; then
+    echo "/home directory not found; skipping home config"; return 0; fi
+  echo "Creating snapper home config for /home (subvolume @home)";
+  sudo snapper -c home create-config /home || {
+    echo "snapper create-config for home failed (may already exist)."; return 0; }
+  # Allow the primary user to access home snapshots
+  local target_user
+  target_user=${SUDO_USER:-$USER}
+  if [[ -n "$target_user" ]]; then
+    sudo sed -i 's/^#\?\s*ALLOW_USERS=.*/ALLOW_USERS=\"'"$target_user"'\"/' /etc/snapper/configs/home || \
+      echo 'ALLOW_USERS="'$target_user'"' | sudo tee -a /etc/snapper/configs/home >/dev/null
+  fi
+  # Ensure /home/.snapshots is accessible for browsing (prefer ACL without changing ownership)
+  if [[ -d /home/.snapshots ]]; then
+    sudo chown root:root /home/.snapshots 2>/dev/null || true
+    sudo chmod 755 /home/.snapshots 2>/dev/null || true
+    if command -v setfacl >/dev/null 2>&1 && [[ -n "$target_user" ]]; then
+      sudo setfacl -m u:"$target_user":rx /home/.snapshots 2>/dev/null || true
+    fi
+  fi
+  echo "snapper home config created."
+}
+
 # --- Confirmation prompt with animated 0% bar ---
 # Move cursor to the first scrollable line (just below header + blank line)
 printf '\033[%d;1H' $(( PB_TOP_LINES + 1 ))
@@ -178,7 +233,7 @@ fi
 
 # --- Planned steps ---
 # Keep this in sync with run_step calls
-TOTAL_STEPS=26
+TOTAL_STEPS=27
 STEP=0
 start_time=$(date +%s)
 
@@ -247,6 +302,19 @@ run_step() {
   "$@"
 }
 
+# Variant that releases the bar before running the command (for TUIs like paru)
+run_step_release() {
+  local title="$1"; shift
+  ui_refresh
+  STEP=$(( STEP + 1 ))
+  progress_render "$STEP" "$TOTAL_STEPS" "$title"
+  pb_release
+  "$@"
+  local rc=$?
+  pb_restore
+  return $rc
+}
+
 # --- Helper functions ---
 ensure_dir() { install -d -m 755 "$1"; }
 write_file() { # write_file path content
@@ -272,14 +340,14 @@ snapper_pre() {
   if ! command -v snapper >/dev/null 2>&1; then
     echo "snapper not found; skipping pre snapshots"; return 0; fi
   if [[ -f /etc/snapper/configs/root ]]; then
-    PRE_ROOT_ID=$(sudo snapper -c root create --type pre --print-number --description "Celona install pre (root)" 2>/dev/null || true)
-    echo "Root pre snapshot: ${PRE_ROOT_ID:-none}"
+    PRE_ROOT_ID=$(sudo snapper -c root create --type pre --cleanup-algorithms "" --print-number --description "Celona install pre (root)" 2>/dev/null || true)
+    echo "Root pre snapshot (cleanup disabled): ${PRE_ROOT_ID:-none}"
   else
     echo "snapper root config not found; skipping root pre snapshot"
   fi
   if [[ -f /etc/snapper/configs/home ]]; then
-    PRE_HOME_ID=$(sudo snapper -c home create --type pre --print-number --description "Celona install pre (home)" 2>/dev/null || true)
-    echo "Home pre snapshot: ${PRE_HOME_ID:-none}"
+    PRE_HOME_ID=$(sudo snapper -c home create --type pre --cleanup-algorithms "" --print-number --description "Celona install pre (home)" 2>/dev/null || true)
+    echo "Home pre snapshot (cleanup disabled): ${PRE_HOME_ID:-none}"
   else
     echo "snapper home config not found; skipping home pre snapshot"
   fi
@@ -289,13 +357,13 @@ snapper_post() {
   if ! command -v snapper >/dev/null 2>&1; then
     echo "snapper not found; skipping post snapshots"; return 0; fi
   if [[ -f /etc/snapper/configs/root && -n "${PRE_ROOT_ID}" ]]; then
-    sudo snapper -c root create --type post --pre-number "$PRE_ROOT_ID" --description "Celona install post (root)" || true
+    sudo snapper -c root create --type post --cleanup-algorithms "" --pre-number "$PRE_ROOT_ID" --description "Celona install post (root)" || true
     echo "Created root post snapshot for pre $PRE_ROOT_ID"
   else
     echo "No root pre snapshot/context; skipping root post snapshot"
   fi
   if [[ -f /etc/snapper/configs/home && -n "${PRE_HOME_ID}" ]]; then
-    sudo snapper -c home create --type post --pre-number "$PRE_HOME_ID" --description "Celona install post (home)" || true
+    sudo snapper -c home create --type post --cleanup-algorithms "" --pre-number "$PRE_HOME_ID" --description "Celona install post (home)" || true
     echo "Created home post snapshot for pre $PRE_HOME_ID"
   else
     echo "No home pre snapshot/context; skipping home post snapshot"
@@ -303,6 +371,7 @@ snapper_post() {
 }
 
 # --- Steps begin ---
+run_step "Ensure snapper home config (@home)" snapper_ensure_home_config
 run_step "Create pre snapshots (snapper)" snapper_pre
 
 run_step "Update package databases" sudo pacman -Syu --noconfirm --needed
@@ -362,7 +431,7 @@ run_step "Restart portal services (user)" bash -c '
   systemctl --user restart xdg-desktop-portal.service xdg-desktop-portal-gtk.service xdg-desktop-portal-gnome.service || true
 '
 
-run_step "Install paru (AUR helper)" bash -c '
+run_step_release "Install paru (AUR helper)" bash -c '
   tmpd=$(mktemp -d)
   trap "rm -rf \"$tmpd\"" EXIT
   git clone https://aur.archlinux.org/paru.git "$tmpd/paru"
@@ -376,7 +445,7 @@ run_step "Configure paru BottomUP" sudo bash -c '
 
 run_step "Set micro theme to simple" replace_json_value "$HOME/.config/micro/settings.json" "colorscheme" "simple"
 
-run_step "Install AUR packages" paru --noconfirm -S "${AUR_PACKAGES[@]}"
+run_step_release "Install AUR packages" paru --noconfirm -S "${AUR_PACKAGES[@]}"
 
 run_step "Clone Celona config" bash -c '
   mkdir -p "$HOME/.config/quickshell"
@@ -394,6 +463,11 @@ run_step "Install hyprgreetr (build)" bash -c '
   cd "$tmpd/hyprgreetr"
   cargo build --release
   cargo install --path .
+  # Seed example images into the user config if available in the repo
+  if [[ -d "$tmpd/hyprgreetr/pngs" ]]; then
+    mkdir -p "$HOME/.config/hyprgreetr/pngs"
+    cp -an "$tmpd/hyprgreetr/pngs"/* "$HOME/.config/hyprgreetr/pngs/" 2>/dev/null || true
+  fi
 '
 
 run_step "Add Cargo bin to fish PATH" bash -c '
@@ -445,7 +519,7 @@ run_step "Deploy Celona configs to ~/.config" bash -c '
 
 run_step "Create post snapshots (snapper)" snapper_post
 
-run_step "Summary and post-install notes" bash -c '
+run_step_release "Summary and post-install notes" bash -c '
   echo
   echo "Installation completed. Review the output above for any warnings."
   echo
@@ -463,6 +537,10 @@ run_step "Summary and post-install notes" bash -c '
 '
 
 progress_done "$STEP" "$TOTAL_STEPS"
+# Reset scroll region to full screen so the last output stays visible
+if declare -F _pb_lines >/dev/null 2>&1; then
+  printf '\033[1;%dr' "$(_pb_lines)"
+fi
 
 end_time=$(date +%s)
 elapsed=$(( end_time - start_time ))
