@@ -202,7 +202,7 @@ printf '\033[36mCelona Desktop Environment - Installer.\033[0m\n'
 # Security notice (plain)
 echo "Security notice: Never run third‑party install scripts blindly. Always review the code and understand the changes it will make to your system before executing it."
 echo
-echo "Ready to install now? Type 'yes' to proceed or 'no' to quit."
+echo "Ready to install now? Type 'yes' to proceed, 'no' to quit, or 'update' to fetch and pull latest from the Celona repository."
 # Start a lightweight background animator to keep the 0% bar blinking
 (
   while true; do
@@ -223,8 +223,34 @@ while true; do
       echo "Installation cancelled by user."
       progress_done 0 100
       exit 0;;
+    u|up|update)
+      kill "$CONFIRM_PID" 2>/dev/null || true; wait "$CONFIRM_PID" 2>/dev/null || true
+      repo_dir="$HOME/.config/quickshell/Celona"
+      if [[ ! -d "$repo_dir" ]]; then
+        echo "Celona is not installed yet. Please choose 'yes' to perform a fresh install."
+        progress_done 0 100
+        exit 1
+      fi
+      if [[ ! -d "$repo_dir/.git" ]]; then
+        echo "Existing directory $repo_dir is not a git repository; cannot update automatically."
+        progress_done 0 100
+        exit 1
+      fi
+      echo "Updating Celona in $repo_dir ..."
+      if git -C "$repo_dir" fetch --all --prune && \
+         git -C "$repo_dir" pull --ff-only && \
+         git -C "$repo_dir" submodule update --init --recursive --remote; then
+        echo "Update completed successfully."
+        progress_done 0 100
+        exit 0
+      else
+        echo "Update failed. Please resolve any git issues and try again."
+        progress_done 0 100
+        exit 1
+      fi
+      ;;
     *)
-      echo "Please answer 'yes' or 'no'.";;
+      echo "Please answer 'yes', 'no', or 'update'.";;
   esac
 done
 
