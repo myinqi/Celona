@@ -186,7 +186,20 @@ run_step "Enable udisks2" sudo systemctl enable --now udisks2
 run_step "Create user systemd dir" ensure_dir "$HOME/.config/systemd/user"
 
 run_step "Install Polkit user service" bash -c '
-  write_file "$HOME/.config/systemd/user/polkit-agent.service" "[Unit]\nDescription=Polkit authentication agent\nPartOf=niri.service\nAfter=graphical-session.target\n\n[Service]\nExecStart=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1\nRestart=on-failure\n\n[Install]\nWantedBy=niri.service\n"
+  install -d -m 755 "$HOME/.config/systemd/user"
+  cat > "$HOME/.config/systemd/user/polkit-agent.service" <<'EOF'
+[Unit]
+Description=Polkit authentication agent
+PartOf=niri.service
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+Restart=on-failure
+
+[Install]
+WantedBy=niri.service
+EOF
 '
 
 run_step "Enable Polkit user service" bash -c '
@@ -198,7 +211,15 @@ run_step "Enable Polkit user service" bash -c '
 run_step "Enable SDDM" sudo systemctl enable sddm.service
 
 run_step "Configure portals preference" sudo bash -c '
-  write_file "/usr/share/xdg-desktop-portal/niri-portals.conf" "[preferred]\ndefault=gnome;gtk;\norg.freedesktop.impl.portal.Access=gnome-shell;gtk;\norg.freedesktop.impl.portal.Secret=gnome-keyring;\norg.freedesktop.impl.portal.ScreenCast=gnome;\norg.freedesktop.impl.portal.FileChooser=gnome;\norg.freedesktop.impl.portal.Notification=gnome;gtk;\n"
+  cat > "/usr/share/xdg-desktop-portal/niri-portals.conf" <<'EOF'
+[preferred]
+default=gnome;gtk;
+org.freedesktop.impl.portal.Access=gnome-shell;gtk;
+org.freedesktop.impl.portal.Secret=gnome-keyring;
+org.freedesktop.impl.portal.ScreenCast=gnome;
+org.freedesktop.impl.portal.FileChooser=gnome;
+org.freedesktop.impl.portal.Notification=gnome;gtk;
+EOF
 '
 
 run_step "Restart portal services (user)" bash -c '
@@ -214,12 +235,10 @@ run_step "Install paru (AUR helper)" bash -c '
 '
 
 run_step "Configure paru BottomUP" sudo bash -c '
-  if [[ -f /etc/paru.conf ]]; then sed_uncomment "BottomUp" "/etc/paru.conf"; fi
+  if [[ -f /etc/paru.conf ]]; then sed -i "s/^#\s*BottomUp/BottomUp/" /etc/paru.conf; fi
 '
 
-run_step "Set micro theme to simple" bash -c '
-  replace_json_value "$HOME/.config/micro/settings.json" "colorscheme" "simple"
-'
+run_step "Set micro theme to simple" replace_json_value "$HOME/.config/micro/settings.json" "colorscheme" "simple"
 
 run_step "Install AUR packages" bash -c '
   paru --noconfirm -S sddm-silent-theme bibata-cursor-theme-bin nwg-look kora-icon-theme mpvpaper matugen tmatrix
@@ -259,7 +278,14 @@ run_step "Set GNOME icon and cursor" bash -c '
 '
 
 run_step "Configure SDDM" sudo bash -c '
-  write_file "/etc/sddm.conf" "[General]\nInputMethod=qtvirtualkeyboard\nGreeterEnvironment=QML2_IMPORT_PATH=/usr/share/sddm/themes/silent/components/,QT_IM_MODULE=qtvirtualkeyboard\n\n[Theme]\nCurrent=silent\n"
+  cat > "/etc/sddm.conf" <<'EOF'
+[General]
+InputMethod=qtvirtualkeyboard
+GreeterEnvironment=QML2_IMPORT_PATH=/usr/share/sddm/themes/silent/components/,QT_IM_MODULE=qtvirtualkeyboard
+
+[Theme]
+Current=silent
+EOF
 '
 
 run_step "Ensure swww is available" bash -c 'command -v swww >/dev/null 2>&1 || echo "swww not found (wallpaper tool)."'
