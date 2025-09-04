@@ -14,10 +14,13 @@ Ctrl+Q
 
 ### Preperations ###
 sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm ghostty gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
+
 sudo systemctl enable --now udisks2
 
+
+### Polkit Agent with systemd ###
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 & disown
-### Start Polkit Agent with systemd ###
+
 mkdir -p ~/.config/systemd/user
 
 micro ~/.config/systemd/user/polkit-agent.service
@@ -179,11 +182,8 @@ Ctrl+SUPER+Return
 #Type "Btrfs" then RETURN
 #Check if the snapshots are activated, with this option you can return to oder system states right from the bootmanager, damn cool!
 
-ToDo:
-config of SDDM Theme
-put the .config Folder in the repo
-theme the hyprlock with matugen
 
-add sample Wallpapers?
+### ToDo:
+config of SDDM Theme
 maybe create install script
 
