@@ -112,6 +112,15 @@ else
   _pb_init
 fi
 
+# Small helper to refresh UI after commands that may reset TTY
+ui_refresh() {
+  if declare -F progress_refresh >/dev/null 2>&1; then
+    progress_refresh
+  elif declare -F _pb_init >/dev/null 2>&1; then
+    _pb_init
+  fi
+}
+
 # --- Confirmation prompt (ASCII + 0% bar already visible) ---
 # Show initial 0% progress and ask user for confirmation before proceeding
 # Move cursor to the first scrollable line (just below header + blank line)
@@ -151,6 +160,8 @@ start_time=$(date +%s)
 
 run_step() {
   local title="$1"; shift
+  # Re-apply UI in case prior step reset terminal or scroll region
+  ui_refresh
   STEP=$(( STEP + 1 ))
   progress_render "$STEP" "$TOTAL_STEPS" "$title"
   "$@"
@@ -293,6 +304,21 @@ run_step "Ensure swww is available" bash -c 'command -v swww >/dev/null 2>&1 || 
 run_step "Ensure xdg-desktop-portal-gnome running" bash -c 'systemctl --user is-active xdg-desktop-portal-gnome.service >/dev/null 2>&1 || true'
 
 run_step "Create Matugen config dir" mkdir -p "$HOME/.config/matugen"
+
+run_step "Deploy Celona configs to ~/.config" bash -c '
+  src="$HOME/.config/quickshell/Celona/.config"
+  dst="$HOME/.config"
+  if [[ -d "$src" ]]; then
+    mkdir -p "$dst"
+    (
+      shopt -s dotglob nullglob
+      # copy content of src into dst, overwrite existing, preserve attrs
+      cp -a "$src"/* "$dst"/
+    )
+  else
+    echo "No Celona .config directory found at $src, skipping copy"
+  fi
+'
 
 run_step "Summary and post-install notes" bash -c '
   echo

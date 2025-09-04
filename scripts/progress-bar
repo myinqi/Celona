@@ -131,6 +131,11 @@ progress_init() {
     init-term
 }
 
+# Re-apply header and scroll region on demand (e.g., after tools that reset TTY)
+progress_refresh() {
+    init-term
+}
+
 progress_render() {
     local current=$1 len=$2 msg=$3
     # msg is currently ignored by this renderer, but kept for interface parity
