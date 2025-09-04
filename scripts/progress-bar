@@ -30,8 +30,11 @@ progress-bar() {
     (( pacman_pos > length )) && pacman_pos=$length
     local full_done=0
     if (( pacman_pos >= length )); then full_done=1; pacman_pos=$length; fi
-    # Pacman character toggles c/C
-    local pacman; if (( PB_FRAME == 0 )); then pacman='c'; PB_FRAME=1; else pacman='C'; PB_FRAME=0; fi
+    # Pacman character toggles c/C once per second based on wall-clock time
+    local now
+    now=$(date +%s 2>/dev/null || printf '0')
+    local pacman
+    if (( now % 2 == 0 )); then pacman='c'; else pacman='C'; fi
     # Remaining space to the right of pacman (only when not full_done)
     local right_space=0
     if (( full_done == 0 )); then right_space=$(( length - pacman_pos - 1 )); (( right_space < 0 )) && right_space=0; fi
@@ -45,8 +48,12 @@ progress-bar() {
     for ((i = 0; i < pacman_pos; i++)); do s+='-'; done
     s+=$'\e[0m'
     if (( full_done == 0 )); then
-      # Pacman at the frontier
-      s+=$pacman
+      # Pacman at the frontier (color uppercase C in red)
+      if [[ $pacman == 'C' ]]; then
+        s+=$'\e[31mC\e[0m'
+      else
+        s+=$pacman
+      fi
       # Remaining tail filled with spaced cyan 'o'
       s+=$'\e[36m'
       # Build spaced tail up to right_space columns (pattern: o space o space ...)

@@ -69,8 +69,9 @@ else
     (( barw < 10 )) && barw=10
     local pac_pos=$(( barw * pct / 100 )); (( pac_pos < 0 )) && pac_pos=0; (( pac_pos > barw )) && pac_pos=$barw
     local full_done=0; if (( pac_pos >= barw )); then full_done=1; fi
-    if [[ -z "${_PB_FRAME:-}" ]]; then _PB_FRAME=0; fi
-    local pacman; if (( _PB_FRAME == 0 )); then pacman='c'; _PB_FRAME=1; else pacman='C'; _PB_FRAME=0; fi
+    # Pacman character toggles c/C once per second based on wall-clock time
+    local _now; _now=$(date +%s 2>/dev/null || printf '0')
+    local pacman; if (( _now % 2 == 0 )); then pacman='c'; else pacman='C'; fi
     local right_space=0; if (( full_done == 0 )); then right_space=$(( barw - pac_pos - 1 )); (( right_space < 0 )) && right_space=0; fi
     local tail=""; if (( right_space > 0 )); then tail=$(printf '%*s' "$right_space" '' | tr ' ' 'o'); fi
     # Build bar: eaten '-' (gray), pacman at frontier (unless full), remaining 'o' (cyan, spaced)
@@ -79,7 +80,12 @@ else
     bar+="$(printf '%*s' "$pac_pos" '' | tr ' ' '-')"
     bar+=$'\033[0m'
     if (( full_done == 0 )); then
-      bar+=$pacman
+      # Pacman at the frontier (color uppercase C in red)
+      if [[ $pacman == 'C' ]]; then
+        bar+=$'\033[31mC\033[0m'
+      else
+        bar+=$pacman
+      fi
       # build spaced cyan tail to fit right_space columns
       bar+=$'\033[36m'
       if (( right_space > 0 )); then
@@ -121,18 +127,27 @@ ui_refresh() {
   fi
 }
 
-# --- Confirmation prompt (ASCII + 0% bar already visible) ---
-# Show initial 0% progress and ask user for confirmation before proceeding
+# --- Confirmation prompt with animated 0% bar ---
 # Move cursor to the first scrollable line (just below header + blank line)
 printf '\033[%d;1H' $(( PB_TOP_LINES + 1 ))
-progress_render 0 100 "Ready to install Celona environment?"
 echo "Ready to install Celona environment? Type 'yes' to proceed or 'no' to quit."
+# Start a lightweight background animator to keep the 0% bar blinking
+(
+  while true; do
+    ui_refresh
+    progress_render 0 100 "Ready to install Celona environment?"
+    sleep 1
+  done
+) &
+CONFIRM_PID=$!
 while true; do
   read -r -p "> " reply || reply=
   case "${reply,,}" in
     y|ye|yes)
+      kill "$CONFIRM_PID" 2>/dev/null || true; wait "$CONFIRM_PID" 2>/dev/null || true
       break;;
     n|no)
+      kill "$CONFIRM_PID" 2>/dev/null || true; wait "$CONFIRM_PID" 2>/dev/null || true
       echo "Installation cancelled by user."
       progress_done 0 100
       exit 0;;
@@ -157,6 +172,59 @@ fi
 TOTAL_STEPS=22
 STEP=0
 start_time=$(date +%s)
+
+# --- Dependencies (data-driven: YAML > shell > built-in) ---
+# YAML file format: install-dependencies.yaml
+# packages:
+#   pacman:
+#     - pkg1
+#   aur:
+#     - pkgA
+
+_parse_yaml_list() {
+  # Usage: _parse_yaml_list <file> <listname>   where listname in {pacman, aur}
+  local file="$1" listname="$2"
+  awk -v list="^\\s*"listname":" '
+    BEGIN{in_packages=0; in_list=0}
+    /^packages:/ {in_packages=1; next}
+    in_packages && /^[^[:space:]]/ {exit}
+    in_packages && $0 ~ list {in_list=1; next}
+    in_packages && /^[[:space:]]*[A-Za-z0-9_.-]+:/ {in_list=0}
+    in_list && /^[[:space:]]*-[[:space:]]*/ {
+      s=$0
+      sub(/^[[:space:]]*-[[:space:]]*/, "", s)
+      gsub(/^"|"$/, "", s)
+      gsub(/^'\''|'\''$/, "", s)
+      if (length(s) > 0) print s
+    }
+  ' "$file" 2>/dev/null || true
+}
+
+DEP_YAML="./install-dependencies.yaml"
+DEP_SH="./install-dependencies.sh"
+
+if [[ -f "$DEP_YAML" ]]; then
+  mapfile -t _pac < <(_parse_yaml_list "$DEP_YAML" pacman) || true
+  mapfile -t _aur < <(_parse_yaml_list "$DEP_YAML" aur) || true
+  if (( ${#_pac[@]} > 0 )); then PACMAN_PACKAGES=("${_pac[@]}"); fi
+  if (( ${#_aur[@]} > 0 )); then AUR_PACKAGES=("${_aur[@]}"); fi
+elif [[ -f "$DEP_SH" ]]; then
+  # shellcheck disable=SC1090
+  source "$DEP_SH"
+fi
+# Fallback defaults if arrays are empty or undefined
+if (( ${#PACMAN_PACKAGES[@]:-0} == 0 )); then
+  PACMAN_PACKAGES=(
+    base-devel micro fuzzel git zen-browser quickshell nautilus sddm ghostty gvfs udisks2 polkit polkit-gnome
+    cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring
+    swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
+  )
+fi
+if (( ${#AUR_PACKAGES[@]:-0} == 0 )); then
+  AUR_PACKAGES=(
+    sddm-silent-theme bibata-cursor-theme-bin nwg-look kora-icon-theme mpvpaper matugen tmatrix
+  )
+fi
 
 run_step() {
   local title="$1"; shift
@@ -189,8 +257,7 @@ replace_json_value() { # naive replacer for micro settings.json theme value
 # --- Steps begin ---
 run_step "Update package databases" sudo pacman -Syu --noconfirm --needed
 
-run_step "Install base packages" \
-  sudo pacman -S --needed --noconfirm base-devel micro fuzzel git zen-browser quickshell nautilus sddm ghostty gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
+run_step "Install base packages" sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
 
 run_step "Enable udisks2" sudo systemctl enable --now udisks2
 
@@ -251,9 +318,7 @@ run_step "Configure paru BottomUP" sudo bash -c '
 
 run_step "Set micro theme to simple" replace_json_value "$HOME/.config/micro/settings.json" "colorscheme" "simple"
 
-run_step "Install AUR packages" bash -c '
-  paru --noconfirm -S sddm-silent-theme bibata-cursor-theme-bin nwg-look kora-icon-theme mpvpaper matugen tmatrix
-'
+run_step "Install AUR packages" paru --noconfirm -S "${AUR_PACKAGES[@]}"
 
 run_step "Clone Celona config" bash -c '
   mkdir -p "$HOME/.config/quickshell"
@@ -324,7 +389,7 @@ run_step "Summary and post-install notes" bash -c '
   echo
   echo "Installation completed. Review the output above for any warnings."
   echo
-  echo "Post-install guide:"
+  echo $'\033[31mPost-install guide:\033[0m'
   echo " 1) Niri configuration"
   echo "    Edit: ~/.config/niri/config.kdl"
   echo "     - Line 16: set your preferred keyboard layouts (e.g. \"us\", \"de\")."
@@ -341,7 +406,7 @@ run_step "Summary and post-install notes" bash -c '
   echo " 3) Final touches"
   echo "    - Open the Celona session (gear icon) and set your wallpaper."
   echo "    - Optional: Enable the Keybindings module to view important shortcuts."
-  echo "    - Reboot to start SDDM and Niri: sudo reboot"
+  echo $'\033[31m    - Reboot to start SDDM and Niri: sudo reboot\033[0m'
 '
 
 progress_done "$STEP" "$TOTAL_STEPS"
