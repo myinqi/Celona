@@ -6,6 +6,14 @@
 
 set -Eeuo pipefail
 
+# Make TUIs less invasive: disable pagers and keep colors sane
+export PAGER=cat
+export PARU_PAGER=cat
+export SYSTEMD_PAGER=cat
+export MANPAGER=cat
+export GIT_PAGER=cat
+export LESS=-R
+
 # Clear the terminal before showing anything
 printf '\033[2J\033[H'
 
@@ -233,7 +241,7 @@ fi
 
 # --- Planned steps ---
 # Keep this in sync with run_step calls
-TOTAL_STEPS=28
+TOTAL_STEPS=29
 STEP=0
 start_time=$(date +%s)
 
@@ -312,6 +320,9 @@ run_step_release() {
   "$@"
   local rc=$?
   pb_restore
+  # Extra safety: re-draw the bar after tools that may alter the screen/scroll region
+  ui_refresh
+  progress_render "$STEP" "$TOTAL_STEPS" "$title"
   return $rc
 }
 
@@ -447,6 +458,55 @@ WantedBy=niri.service
 EOF
 '
 
+run_step "Customize SDDM Silent theme (Celona)" bash -c '
+  src_base="$HOME/.config/quickshell/Celona/.sddm_conf"
+  theme_root="/usr/share/sddm/themes/silent"
+  cfg_dir="$theme_root/configs"
+  bg_dir="$theme_root/backgrounds"
+
+  # Ensure target dirs exist (sudo)
+  sudo install -d -m 755 "$cfg_dir" "$bg_dir"
+
+  # Copy celona.conf into configs
+  if [[ -f "$src_base/celona.conf" ]]; then
+    sudo cp -f "$src_base/celona.conf" "$cfg_dir/"
+    echo "Installed celona.conf to $cfg_dir"
+  else
+    echo "Warning: $src_base/celona.conf not found"
+  fi
+
+  # Prefer replacing metadata.desktop if provided; otherwise append ConfigFile line
+  if [[ -f "$src_base/metadata.desktop" ]]; then
+    sudo cp -f "$src_base/metadata.desktop" "$theme_root/metadata.desktop"
+    echo "Replaced metadata.desktop with repo version"
+  else
+    if [[ -f "$theme_root/metadata.desktop" ]]; then
+      if ! grep -Eq '^\s*ConfigFile\s*=\s*configs/celona.conf\s*$' "$theme_root/metadata.desktop"; then
+        echo "Appending ConfigFile entry to metadata.desktop"
+        printf '\nConfigFile=configs/celona.conf\n' | sudo tee -a "$theme_root/metadata.desktop" >/dev/null
+      fi
+    else
+      echo "Warning: $theme_root/metadata.desktop not found and no repo override provided"
+    fi
+  fi
+
+  # Copy sample wallpapers (flat) from repo to system theme backgrounds
+  src_bg="$src_base/backgrounds"
+  if [[ -d "$src_bg" ]]; then
+    shopt -s nullglob dotglob
+    copied=0
+    for f in "$src_bg"/*; do
+      if [[ -f "$f" ]]; then
+        sudo cp -f "$f" "$bg_dir/"
+        copied=$(( copied + 1 ))
+      fi
+    done
+    echo "Copied $copied background files to $bg_dir"
+  else
+    echo "No backgrounds directory at $src_bg; skipping"
+  fi
+'
+
 run_step "Enable Polkit user service" bash -c '
   systemctl --user daemon-reload
   systemctl --user enable --now polkit-agent.service
@@ -485,7 +545,7 @@ run_step "Configure paru BottomUP" sudo bash -c '
 
 run_step "Set micro theme to simple" replace_json_value "$HOME/.config/micro/settings.json" "colorscheme" "simple"
 
-run_step_release "Install AUR packages" paru --noconfirm -S "${AUR_PACKAGES[@]}"
+run_step_release "Install AUR packages" env PAGER=cat PARU_PAGER=cat paru --noconfirm -S "${AUR_PACKAGES[@]}"
 
 run_step "Clone Celona config" bash -c '
   mkdir -p "$HOME/.config/quickshell"
