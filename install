@@ -601,26 +601,48 @@ run_step "Set fish greeting to hyprgreetr" sudo bash -c '
   if [[ -f "$tgt" ]]; then
     tmp=$(mktemp)
     awk "
-      BEGIN{skip=0; inserted=0}
+      BEGIN{ inblock=0; inserted=0; have_hg=0; block=\"\" }
+      function print_comment_block(str,    n,i,a){
+        n=split(str, a, \"\\n\");
+        for(i=1;i<=n;i++){ if (a[i] != \"\") print \"# \" a[i]; else print \"#\" }
+      }
       {
-        # Remove any existing fish_greeting function block
-        if (\$0 ~ /^\s*function\s+fish_greeting\b/) { skip=1; next }
-        if (skip==1) {
-          if (\$0 ~ /^\s*end\s*$/) { skip=0; next } else { next }
-        }
-        print \$0
-        # Insert our function right after the \"## Set values\" line
-        if (inserted==0 && \$0 ~ /^\s*## Set values\s*$/) {
-          print \"## Run hyprgreetr as welcome message ##\"
-          print \"function fish_greeting\"
-          print \"    hyprgreetr\"
-          print \"end\"
-          print \"\"
-          inserted=1
+        if (inblock==0) {
+          if (\$0 ~ /^[[:space:]]*function[[:space:]]+fish_greeting\b/) {
+            inblock=1; block=\$0 \"\\n\"; next
+          } else {
+            print \$0
+            # Insert our function right after the \"## Set values\" line
+            if (inserted==0 && \$0 ~ /^[[:space:]]*## Set values[[:space:]]*$/ && have_hg==0) {
+              print \"## Run hyprgreetr as welcome message ##\"
+              print \"function fish_greeting\"
+              print \"    hyprgreetr\"
+              print \"end\"
+              print \"\"
+              inserted=1
+            }
+          }
+        } else {
+          block = block \$0 \"\\n\"
+          if (\$0 ~ /^[[:space:]]*end[[:space:]]*$/) {
+            inblock=0
+            if (block ~ /hyprgreetr/) {
+              have_hg=1; printf \"%s\", block
+            } else if (block ~ /fastfetch/) {
+              print_comment_block(block)
+            } else {
+              printf \"%s\", block
+            }
+            block=\"\"
+          }
         }
       }
       END{
-        if (inserted==0) {
+        if (inblock==1) {
+          # Edge case: unterminated block; just print it as-is
+          printf \"%s\", block
+        }
+        if (inserted==0 && have_hg==0) {
           print \"\"
           print \"## Set values\"
           print \"## Run hyprgreetr as welcome message ##\"
