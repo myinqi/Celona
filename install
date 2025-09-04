@@ -241,7 +241,7 @@ fi
 
 # --- Planned steps ---
 # Keep this in sync with run_step calls
-TOTAL_STEPS=29
+TOTAL_STEPS=30
 STEP=0
 start_time=$(date +%s)
 
@@ -308,6 +308,13 @@ run_step() {
   STEP=$(( STEP + 1 ))
   progress_render "$STEP" "$TOTAL_STEPS" "$title"
   "$@"
+  local rc=$?
+  if (( rc == 0 )); then
+    printf "\033[32m[OK]\033[0m %s\n" "$title"
+  else
+    printf "\033[31m[FAIL]\033[0m %s (rc=%d)\n" "$title" "$rc"
+  fi
+  return $rc
 }
 
 # Variant that releases the bar before running the command (for TUIs like paru)
@@ -323,6 +330,11 @@ run_step_release() {
   # Extra safety: re-draw the bar after tools that may alter the screen/scroll region
   ui_refresh
   progress_render "$STEP" "$TOTAL_STEPS" "$title"
+  if (( rc == 0 )); then
+    echo "[OK] $title"
+  else
+    echo "[FAIL] $title (rc=$rc)"
+  fi
   return $rc
 }
 
@@ -457,7 +469,6 @@ Restart=on-failure
 WantedBy=niri.service
 EOF
 '
-
 run_step "Customize SDDM Silent theme (Celona)" bash -c '
   src_base="$HOME/.config/quickshell/Celona/.sddm_conf"
   theme_root="/usr/share/sddm/themes/silent"
@@ -491,19 +502,19 @@ run_step "Customize SDDM Silent theme (Celona)" bash -c '
   fi
 
   # Copy sample wallpapers (flat) from repo to system theme backgrounds
-  src_bg="$src_base/backgrounds"
-  if [[ -d "$src_bg" ]]; then
-    shopt -s nullglob dotglob
+  shopt -s nullglob dotglob
+  src_wp_sys="$HOME/.config/quickshell/Celona/wallpapers/3440x1440"
+  if [[ -d "$src_wp_sys" ]]; then
     copied=0
-    for f in "$src_bg"/*; do
+    for f in "$src_wp_sys"/*; do
       if [[ -f "$f" ]]; then
         sudo cp -f "$f" "$bg_dir/"
         copied=$(( copied + 1 ))
       fi
     done
-    echo "Copied $copied background files to $bg_dir"
+    echo "Copied $copied background files to $bg_dir from $src_wp_sys"
   else
-    echo "No backgrounds directory at $src_bg; skipping"
+    echo "No wallpapers found at $src_wp_sys; skipping"
   fi
 '
 
@@ -570,6 +581,9 @@ run_step "Install hyprgreetr (build)" bash -c '
       shopt -s dotglob nullglob
       cp -af "$tmpd/hyprgreetr/assets"/* "$HOME/.config/hyprgreetr/pngs/" 2>/dev/null || true
     )
+    echo "Copied example images to $HOME/.config/hyprgreetr/pngs"
+  else
+    echo "No wallpapers found at $tmpd/hyprgreetr/assets; skipping"
   fi
 '
 
@@ -579,6 +593,46 @@ run_step "Add Cargo bin to fish PATH" bash -c '
     if ! grep -q "fish_add_path ~/.cargo/bin" "$HOME/.config/fish/config.fish" 2>/dev/null; then
       printf "%s\n" "fish_add_path ~/.cargo/bin" >> "$HOME/.config/fish/config.fish"
     fi
+  fi
+'
+
+run_step "Set fish greeting to hyprgreetr" sudo bash -c '
+  tgt="/usr/share/cachyos-fish-config/cachyos-config.fish"
+  if [[ -f "$tgt" ]]; then
+    tmp=$(mktemp)
+    awk '
+      BEGIN{skip=0; inserted=0}
+      {
+        # Remove any existing fish_greeting function block
+        if ($0 ~ /^\s*function\s+fish_greeting\b/) { skip=1; next }
+        if (skip==1) {
+          if ($0 ~ /^\s*end\s*$/) { skip=0; next } else { next }
+        }
+        print $0
+        # Insert our function right after the "## Set values" line
+        if (inserted==0 && $0 ~ /^\s*## Set values\s*$/) {
+          print "## Run hyprgreetr as welcome message ##"
+          print "function fish_greeting"
+          print "    hyprgreetr"
+          print "end"
+          print ""
+          inserted=1
+        }
+      }
+      END{
+        if (inserted==0) {
+          print ""
+          print "## Set values"
+          print "## Run hyprgreetr as welcome message ##"
+          print "function fish_greeting"
+          print "    hyprgreetr"
+          print "end"
+          print ""
+        }
+      }
+    ' "$tgt" > "$tmp" && install -m 644 "$tmp" "$tgt" && rm -f "$tmp"
+  else
+    echo "Warning: $tgt not found; skipping fish greeting setup"
   fi
 '
 
