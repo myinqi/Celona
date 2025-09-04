@@ -52,12 +52,16 @@ else
       printf '\033[1;1H'
       printf '%*s\n' "$top" ''
     fi
-    # Set scroll region between top+1 and last-1
+    # Set scroll region between top+1 and last-2 to keep a fixed blank separator above the bar
     local start=$(( top + 1 ))
-    local end=$(( $(_pb_lines) - 1 ))
+    local end=$(( $(_pb_lines) - 2 ))
     (( start < 1 )) && start=1
     (( end < start )) && end=$start
     printf '\033[%d;%dr' "$start" "$end"
+    # Ensure the separator line (just above the bottom bar) is blank
+    local sep=$(( $(_pb_lines) - 1 ))
+    (( sep < 1 )) && sep=1
+    printf '\033[%d;1H\033[K' "$sep"
     printf '\0338'
   }
   progress_render() {
@@ -80,11 +84,11 @@ else
     bar+="$(printf '%*s' "$pac_pos" '' | tr ' ' '-')"
     bar+=$'\033[0m'
     if (( full_done == 0 )); then
-      # Pacman at the frontier (color uppercase C in red)
+      # Pacman at the frontier (color uppercase C in red, lowercase c in yellow)
       if [[ $pacman == 'C' ]]; then
         bar+=$'\033[31mC\033[0m'
       else
-        bar+=$pacman
+        bar+=$'\033[33mc\033[0m'
       fi
       # build spaced cyan tail to fit right_space columns
       bar+=$'\033[36m'
@@ -130,12 +134,17 @@ ui_refresh() {
 # --- Confirmation prompt with animated 0% bar ---
 # Move cursor to the first scrollable line (just below header + blank line)
 printf '\033[%d;1H' $(( PB_TOP_LINES + 1 ))
-echo "Ready to install Celona environment? Type 'yes' to proceed or 'no' to quit."
+# Title (cyan)
+printf '\033[36mCelona Desktop Environment - Installer.\033[0m\n'
+# Security notice (plain)
+echo "Security notice: Never run third‑party install scripts blindly. Always review the code and understand the changes it will make to your system before executing it."
+echo
+echo "Ready to install now? Type 'yes' to proceed or 'no' to quit."
 # Start a lightweight background animator to keep the 0% bar blinking
 (
   while true; do
     ui_refresh
-    progress_render 0 100 "Ready to install Celona environment?"
+    progress_render 0 100 "Ready to install now?"
     sleep 1
   done
 ) &

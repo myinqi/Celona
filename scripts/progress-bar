@@ -48,11 +48,11 @@ progress-bar() {
     for ((i = 0; i < pacman_pos; i++)); do s+='-'; done
     s+=$'\e[0m'
     if (( full_done == 0 )); then
-      # Pacman at the frontier (color uppercase C in red)
+      # Pacman at the frontier (color uppercase C in red, lowercase c in yellow)
       if [[ $pacman == 'C' ]]; then
         s+=$'\e[31mC\e[0m'
       else
-        s+=$pacman
+        s+=$'\e[33mc\e[0m'
       fi
       # Remaining tail filled with spaced cyan 'o'
       s+=$'\e[36m'
@@ -112,12 +112,16 @@ init-term() {
         printf '\e[%d;%dH' 1 1
         printf '%*s\n' "$PB_TOP_LINES" ''
       fi
-      # Set scroll region between top+1 and last-1 line
+      # Set scroll region between top+1 and last-2 line to keep a fixed blank separator above the bar
       local top=$(( PB_TOP_LINES + 1 ))
-      local bottom=$(( LINES - 1 ))
+      local bottom=$(( LINES - 2 ))
       (( top < 1 )) && top=1
       (( bottom < top )) && bottom=top
       printf '\e[%d;%dr' "$top" "$bottom"
+      # Ensure the separator line (just above the bottom bar) is blank
+      local sep=$(( LINES - 1 ))
+      (( sep < 1 )) && sep=1
+      printf '\e[%d;%dH\e[0K' "$sep" 1
     printf '\e8' # restore cursor
 }
 
