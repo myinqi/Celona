@@ -291,6 +291,12 @@ Singleton {
 
       let text = ''
       try { text = String(hyprlockView.text() || '') } catch (e) { text = '' }
+      // Safety: if file content is not available yet or path unresolved, do NOT overwrite with a template.
+      // We only update when existing content is loaded to preserve unrelated settings.
+      if (!hyprlockConfigFileAbs || !hyprlockConfigFileAbs.length || !text || !text.length) {
+        console.log('[Hyprlock] skip write: config not loaded yet or path unresolved; preserving file')
+        return
+      }
 
       function ensureInputFieldBlock(src) {
         if (/(^|\n)\s*input-field\s*\{[\s\S]*?\n\s*\}/.test(src)) return src

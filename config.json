@@ -72,7 +72,7 @@
   "weatherLocation": "90587, Obermichelbach, DE",
   "weatherUnit": "C",
   "keybindsPath": "~/.config/niri/config.kdl",
-  "wallpaperAnimatedEnabled": true,
+  "wallpaperAnimatedEnabled": false,
   "wallpaperAnimatedPath": "/home/khrom/Bilder/Celona/3440x1440/draeonor.mp4",
   "wallpaperStaticPath": "/home/khrom/Bilder/Celona/3440x1440/draeonor.png",
   "wallpaperOutputs": [
@@ -82,7 +82,7 @@
   "wallpaperTool": "swww",
   "useNewSetupUI": true,
   "showBarvisualizer": true,
-  "ShowDock": true,
+  "ShowDock": false,
   "DockPositionHorizontal": "right",
   "DockPositionVertical": "top",
   "DockIconBorderPx": 2,
