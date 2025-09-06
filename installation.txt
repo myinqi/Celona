@@ -1,3 +1,11 @@
+ ░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░      ░▒▓██████▓▒░░▒▓███████▓▒░ ░▒▓██████▓▒░  
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+░▒▓█▓▒░      ░▒▓██████▓▒░ ░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░ 
+░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+ ░▒▓██████▓▒░░▒▓████████▓▒░▒▓████████▓▒░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
+
 ## Install a fresh CachyOS without Desktop Environment, then follow the steps. ##
 ## I suggest choosing "grub" or "limine" bootloader and "Btrfs" as filesystem.
 ## Reason: so you can profit from snapper integration to load snapshots of the
@@ -5,28 +13,51 @@
 ## I prefer fish shell over zsh, so if you wish you can deselect the CachyOS zsh config.
 ## Unselect the Firefox configuration because we use zen-browser with Celona.
 
-++ install cachyos without Desktop environment
-++ log into your system
+## install cachyos WITHOUT Desktop environment # we want a minimal system
+## log into your system
+
+# important, only if you chosse Btrfs filesystem perform next lines! Else, skip and continue at line 42
+sudo snapper -c home create-config /home
+
+# check if the snapper configuration files for root and home are created:
+sudo snapper list-configs   # it should show up home and root lines.
+sudo snapper -c root set-config ALLOW_USERS="$USER" SYNC_ACL=yes
+sudo snapper -c home set-config ALLOW_USERS="$USER" SYNC_ACL=yes
+sudo micro /etc/updatedb.conf  #add .snapshots to prunenames -> PRUNENAMES = ".git .hg .svn .snapshots" then save and quit Ctrl+s Ctrl+q
+
+#if you selected grub bootloader check: sudo micro /etc/mkinitcpio.conf    #at HOOKS= add -> grub-btrfs-overlayfs then save and quit Ctrl+s Ctrl+q
+#if you selected grub bootloader type: sudo mkinitcpio -P
+#if you selected grub bootloader type: sudo systemctl enable --now grub-btrfsd.service
+#if you selected grub bootloader check if btrfsd service is running: sudo systemctl status grub-btrfsd.service
+
+# now we disable automatic timeline snapshots for the installation, we will turn it on again after finished installation!
+sudo systemctl disable --now snapper-timeline.timer snapper-cleanup.timer
+
+# create pre snapshot before Celona installation, the state where you can go back if you dont like Celona
+snapper -c root create -t pre -c number -d 'pre Celona installation'
+snapper -c home create -t pre -c number -d 'pre Celona installation'
+
+# you can check the snapshots with "snapper ls" for root snapshots and "snapper -c home ls" for home snapshots #
 
 ### Install the Celona Bar ###
+### continue here ############
 mkdir ~/.config/quickshell
 cd ~/.config/quickshell
 git clone https://github.com/myinqi/Celona.git
 cd 
-++ sudo pacman -S niri   (chosse option 3: xdg-desktop-portal-gnome)
-++ sudo pacman -S ghostty cliphist
-++ micro ~/.config/niri/config.kdl
-++ Line 16 uncomment and set your keyboard layout (de, us, ru .... what ever you want)
-++ Line 365 change to: alacritty to ghostty in the spawn -> { spawn "ghostty"; }
-++ change complete line 271 to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
+sudo pacman -S niri   (chosse option 3: xdg-desktop-portal-gnome)
+sudo pacman -S ghostty cliphist
 
-++ Ctrl+S
-++ Ctrl+Q
+micro ~/.config/niri/config.kdl
+# Line 16 uncomment and set your keyboard layout (de, us, ru .... what ever you want)
+# Line 365 change to: alacritty to ghostty in the spawn -> { spawn "ghostty"; }
+# change complete line 271 to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"  #save and quit Ctrl+s Ctrl+q
 
-++ run niri-session
-++ open two terminals (SUPER+T)
-++ in one of the terminals: micro ~/.config/quickshell/Celona/installation.txt
-++ in the secound terminal past the next commands ...
+
+run niri-session
+# open two terminals (SUPER+T)
+# in one of the terminals: micro ~/.config/quickshell/Celona/installation.txt
+# in the secound terminal past the next commands ...
 
 ### Preperations ###
 sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
@@ -61,7 +92,7 @@ cd paru
 makepkg -si
 
 cd ..
-#remove Folder, not longer needed
+
 sudo rm -r paru
 sudo rsync -a ~/.config/quickshell/Celona/.paru/paru.conf /etc/paru.conf
 
@@ -77,7 +108,6 @@ cargo build --release
 cargo install --path .
 
 
-
 # add PATH 
 fish_add_path ~/.cargo/bin
 
@@ -87,8 +117,6 @@ cd ..
 sudo rm -r hyprgreetr
 sudo rsync -a ~/.config/quickshell/Celona/.fish/config.fish ~/.config/fish/config.fish
 sudo rsync -a ~/.config/quickshell/Celona/.fish/cachyos-config.fish /usr/share/cachyos-fish-config/cachyos-config.fish
-
-# if you cant to customize edit the hyprgreetr config -> micro ~/.config/hyprgreetr/config.toml
 
 
 ### Theme settings in terminal ###
@@ -108,11 +136,11 @@ sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/metadata.desktop /usr/share
 sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/celona.conf /usr/share/sddm/themes/silent/configs/
 sudo rsync -a ~/.config/quickshell/Celona/wallpapers/3440x1440/ /usr/share/sddm/themes/silent/backgrounds/
 
-
+#reboot your system
 reboot
-#log into the system, klick the gear icon on the lift side of the bar. Make your changes. Don't forget to set your Wallpaper.
-#for the frist days its a good choice to enable the Keybindis Module, so you can access the important Keybindings from
-#the Bar.
+
+#log into the system, klick the gear icon on the lift side of the bar. Make your changes. Don't forget to set your Wallpaper. Switch theme from dark to light and back to trigger matugen.
+#for the frist days its a good choice to enable the Keybindis Module, so you can access the important Keybindings from the Bar.
 
 #final setep (your keyboard and display settings):
 micro ~/.config/niri/config.kdl
@@ -120,18 +148,40 @@ micro ~/.config/niri/config.kdl
 # on line 16 set your prefered keyboard layout again "us" "de" ...
 # on line 82 set your resolution and refresh rate. In my case mode "3440x1440@165.030" but yours is maybe "1920x1080@60.030"
 # on line 128 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
+# save and exit Ctrl+S Ctrl+Q
+# if you cant to customize edit the hyprgreetr config -> micro ~/.config/hyprgreetr/config.toml
+
+# Optional if you created a pre snapshot before installation: create post snapshot after Celona installation
+snapper ls
+snapper -c root create -t post --pre-number <the number of your pre celona snapshot> -c number -d 'post Celona installation'
+clear
+snapper -c home ls
+snapper -c home create -t post --pre-number <the number of your pre celona snapshot> -c number -d 'post Celona installation'
 
 
-##CachyOS Settings
-#Open the Hello App
-Ctrl+SUPER+Return
-#Type "Hello" then RETURN
-#open Apps/Tweaks
-#Click on "Rank Mirrors"
-#Optional if you want to game: click on Install Gaming packages
+##CachyOS Tuning, open Terminal SUPER+Return
+mirror
+
+#optional if you plan to play some games:
+sudo pacman -S cachyos-gaming-meta
+
+#read the CachyOS Wiki -> https://wiki.cachyos.org/
+
+#END - ejoy your CachyOS Celona Environment :-)
+#enable timeline shapshots again:
+sudo snapper -c home set-config TIMELINE_CREATE=no   #this disables timeline snapshots for home directory only root snaphots, if you don't want this, skipt this line
+sudo systemctl enable --now snapper-timeline.timer
+sudo systemctl enable --now snapper-cleanup.timer
 
 
 
-todo: 
-create config for home for snapper
-create post snapshot for installed Celona
+
+#Uninstall Celona:
+#Want to undo all installations and get rid of Celona?
+#Sure???? ok:
+snapper ls
+sudo snapper -c root undochange <number of your pre snapshot>..<number of your post snapshot>
+clear
+snapper -c home ls
+sudo snapper -c home undochange <number of your pre snapshot>..<number of your post snapshot>
+reboot
