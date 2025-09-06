@@ -51,7 +51,7 @@ sudo pacman -S ghostty cliphist
 micro ~/.config/niri/config.kdl
 # Line 16 uncomment and set your keyboard layout (de, us, ru .... what ever you want)
 # Line 365 change to: alacritty to ghostty in the spawn -> { spawn "ghostty"; }
-# change complete line 271 to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"  #save and quit Ctrl+s Ctrl+q
+# change complete line 271 (the waybar spawn) to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"  #save and quit Ctrl+s Ctrl+q
 
 
 run niri-session
