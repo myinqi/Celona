@@ -1,7 +1,0 @@
-Screensaver with tmatrix:
-tmatrix --background=default --title=Celona -l 10,40 -r 10,25 -s 12 -f 0.2,1.5 -G 10,50 -g 0,55 --fade --color=cyan
---color like actual matugen color best matching to
-white, gray, black,red, green, yellow, blue, magenta, cyan
-
-Global Niri configuration via the SystemPage.qml
-Big fancy Desktop Clock Overlay

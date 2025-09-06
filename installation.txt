@@ -1,19 +1,35 @@
-## Install a fresh CachyOS Niri DE to start this Rice, then follow the steps. ##
-## I suggest choosing "limine" or "grub" bootloader and "Btrfs" as filesystem.
+## Install a fresh CachyOS without Desktop Environment, then follow the steps. ##
+## I suggest choosing "grub" or "limine" bootloader and "Btrfs" as filesystem.
 ## Reason: so you can profit from snapper integration to load snapshots of the
 ## system if something breaks.
-## I prefer fish shell over zsh, so if you wish you can deselect the CachyOS zsh config. 
+## I prefer fish shell over zsh, so if you wish you can deselect the CachyOS zsh config.
+## Unselect the Firefox configuration
 
+++ install cachyos without Desktop environment
+++ log into your system
 
-# after installation log into your system
-# hit SUPER+RETURN to open the Terminal
-micro /home/khrom/.config/niri/config.kdl
-# change in line 10 the keyboard layout to your prefered country settings, default is us, in my case I change it to de
-Ctrl+S
-Ctrl+Q
+### Install the Celona Bar ###
+mkdir ~/.config/quickshell
+cd ~/.config/quickshell
+git clone https://github.com/myinqi/Celona.git
+cd 
+++ sudo pacman -S niri   (chosse option 3: xdg-desktop-portal-gnome)
+++ sudo pacman -S ghostty cliphist
+++ micro ~/.config/niri/config.kdl
+++ Line 16 uncomment and set your keyboard layout (de, us, ru .... what ever you want)
+++ Line 365 change to: alacritty to ghostty in the spawn -> { spawn "ghostty"; }
+++ change complete line 271 to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
+
+++ Ctrl+S
+++ Ctrl+Q
+
+++ run niri-session
+++ open two terminals (SUPER+T)
+++ in one of the terminals: micro ~/.config/quickshell/Celona/installation.txt
+++ in the secound terminal past the next commands ...
 
 ### Preperations ###
-sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm ghostty gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
+sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
 
 sudo systemctl enable --now udisks2
 
@@ -88,21 +104,8 @@ replace "catppuccin-macchiato" with "simple"
 Ctrl+S
 Ctrl+Q
 
-# next always choose option 1
-paru sddm-silent-theme 
-paru bibata-cursor-theme-bin
-paru nwg-look
-paru kora-icon-theme
-paru mpvpaper
-paru matugen
-paru tmatrix
-
-
-### Install the Celona Bar ###
-mkdir ~/.config/quickshell
-cd ~/.config/quickshell
-git clone https://github.com/myinqi/Celona.git
-cd 
+# next we install some packages from the AUR
+paru -S --noconfirm --needed --skipreview --removemake --cleanafter sddm-silent-theme bibata-cursor-theme-bin nwg-look kora-icon-theme mpvpaper matugen
 
 
 ### Install Hyprgreetr
@@ -111,8 +114,15 @@ cd hyprgreetr
 cargo build --release
 cargo install --path .
 
+
+
 # add PATH 
 fish_add_path ~/.cargo/bin
+
+hyprgreetr
+rsync -a ~/hyprgreetr/assets/ ~/.config/hyprgreetr/pngs/
+cd ..
+sudo rm -r hyprgreetr
 
 # preload config for hyprgreetr, simply type "hyprgreetr" and then RETURN
 hyprgreetr
@@ -128,6 +138,11 @@ micro ~/.config/fish/config.fish
 		hyprgreetr
 	end
 
+Ctrl+S
+Ctrl+Q
+
+micro /usr/share/cachyos-fish-config/cachyos-config.fish
+# add #<- before line 7-9 (we comment out because the greeter is set in your local users fish config in the step before)
 Ctrl+S
 Ctrl+Q
 
@@ -148,8 +163,13 @@ Current=silent
 
 ##end
 
-### Edit the niri configuration ###
+### Set the Celona configuration ###
 #Copy the .config Folder from the Celona Repo into your local .config Folder und override existing files there.
+rsync -a ~/.config/quickshell/Celona/.config/ ~/.config/
+sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/metadata.desktop /usr/share/sddm/themes/silent/metadata.desktop
+sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/celona.conf /usr/share/sddm/themes/silent/configs/
+sudo rsync -a ~/.config/quickshell/Celona/wallpapers/3440x1440/ /usr/share/sddm/themes/silent/backgrounds/
+
 
 reboot
 #log into the system, klick the gear icon on the lift side of the bar. Make your changes. Don't forget to set your Wallpaper.
@@ -164,11 +184,7 @@ micro ~/.config/niri/config.kdl
 # on line 128 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
 
 
-## Optional!!!: only needed if not in the AUR. install matugen ## Only do this if its not in the AUR, but we should have it 
-## already installed in the paru-block
-#cargo install matugen
-#mkdir ~/.config/matugen
-#touch ~/.config/matugen/config.toml
+
 
 ##CachyOS Settings
 #Open the Hello App
@@ -183,7 +199,6 @@ Ctrl+SUPER+Return
 #Check if the snapshots are activated, with this option you can return to oder system states right from the bootmanager, damn cool!
 
 
-### ToDo:
-config of SDDM Theme
-maybe create install script
-
+todo: 
+create config for home for snapper
+create post snapshot for installed Celona
