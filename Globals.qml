@@ -868,7 +868,11 @@ Singleton {
       })
       if (out !== text) {
         const b64 = Qt.btoa(out)
-        niriSaveProc.command = ["bash","-lc","printf '%s' '" + b64 + "' | base64 -d > " + niriConfigFile]
+        console.log('[Niri] writing updated active/inactive colors to', niriConfigFileAbs)
+        niriSaveProc.command = [
+          "bash","-lc",
+          "mkdir -p ~/.config/niri && printf '%s' '" + b64 + "' | base64 -d > '" + niriConfigFileAbs + "'"
+        ]
         niriSaveProc.running = true
       }
     } catch (e) { /* ignore */ }
