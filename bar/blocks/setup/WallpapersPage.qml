@@ -153,6 +153,8 @@ Item {
               wpSwitch.checked = false  // Update UI switch
               Globals.stopAnimatedAndSetStatic()
               Globals.saveTheme()
+              // Ensure Niri focus ring colors are applied immediately (independent of Matugen flow)
+              if (Globals.updateNiriColorsFromTheme) Globals.updateNiriColorsFromTheme()
               // Regenerate Matugen colors without changing final mode: run toggle twice
               const togglePath = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
               matugenProc._pendingSecond = true
@@ -199,6 +201,8 @@ Item {
                 Globals.startAnimatedWallpaper()
               }
               Globals.saveTheme()
+              // Also update Niri focus ring colors right away
+              if (Globals.updateNiriColorsFromTheme) Globals.updateNiriColorsFromTheme()
               // Regenerate Matugen colors without changing final mode: run toggle twice
               const togglePath2 = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
               matugenProc._pendingSecond = true
