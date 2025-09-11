@@ -472,12 +472,21 @@ BarBlock {
         color: "transparent"
         implicitWidth: Math.min(800, sheetContent.implicitWidth + 20)
         implicitHeight: Math.min(600, sheetContent.implicitHeight + 20)
-        onVisibleChanged: if (visible) {
-            // If data not ready yet, read again
-            const hasData = keybinds && keybinds.children && keybinds.children.length > 0 && keybinds.children[0].children && keybinds.children[0].children.length > 0
-            if (!hasData && !bindsProc.running) {
-                bindsBuf = ""
-                bindsProc.running = true
+        onVisibleChanged: {
+            if (visible) {
+                // If data not ready yet, read again
+                const hasData = keybinds && keybinds.children && keybinds.children.length > 0 && keybinds.children[0].children && keybinds.children[0].children.length > 0
+                if (!hasData && !bindsProc.running) {
+                    bindsBuf = ""
+                    bindsProc.running = true
+                }
+                // Register in global popup context and close any other open popup
+                if (Globals.popupContext && Globals.popupContext.popup && Globals.popupContext.popup !== sheetWindow) {
+                    if (Globals.popupContext.popup.visible !== undefined) Globals.popupContext.popup.visible = false
+                }
+                if (Globals.popupContext) Globals.popupContext.popup = sheetWindow
+            } else {
+                if (Globals.popupContext && Globals.popupContext.popup === sheetWindow) Globals.popupContext.popup = null
             }
         }
 

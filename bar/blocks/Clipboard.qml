@@ -405,6 +405,31 @@ BarBlock {
 
         // Search field removed for now to avoid focus issues
 
+        // Header: make it obvious which popup this is
+        RowLayout {
+          id: headerRow
+          spacing: 10
+          Layout.fillWidth: true
+          Text {
+            id: headerText
+            text: "Clipboard history"
+            font.pixelSize: 12
+            font.bold: true
+            color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
+            Layout.alignment: Qt.AlignVCenter
+          }
+          Item { Layout.fillWidth: true }
+          // Small live badge mirroring the bar count
+          Text {
+            id: headerCount
+            text: `(${root.entryCount})`
+            font.pixelSize: 12
+            color: Globals.popupText !== "" ? Globals.popupText : "#bbb"
+            opacity: 0.8
+            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+          }
+        }
+
         ListView {
           id: listView
           Layout.fillWidth: true
