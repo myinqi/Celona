@@ -151,7 +151,10 @@ BarBlock {
                 const m = chunk.match(/\bcomment\s+(["'][^"']+["'])/)
                 return m ? unquote(m[1]) : (command || action)
             })()
-            current.keybinds.push({ mods, key, comment })
+            // Filter: require at least a key or some modifiers to avoid stray entries
+            if ((mods && mods.length) || (key && String(key).length)) {
+                current.keybinds.push({ mods, key, comment })
+            }
         }
         // Extract brace-delimited binding blocks (multi- or single-line)
         const reBlock = /\b(bind|binding)\b[^\{]*\{([\s\S]*?)\}/g
@@ -228,7 +231,10 @@ BarBlock {
                         }
                     }
                 }
-                current.keybinds.push({ mods, key, comment })
+                // Filter: require non-empty key (chord must define a key)
+                if (key && String(key).length) {
+                    current.keybinds.push({ mods, key, comment })
+                }
                 k = t
             }
         }
