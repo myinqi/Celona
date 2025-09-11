@@ -62,7 +62,7 @@ run niri-session
 # in the secound terminal past the next commands ...
 
 ### Preperations ###
-sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor
+sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct
 
 sudo systemctl enable --now udisks2
 
@@ -196,7 +196,10 @@ sudo pacman -S qt6ct
 micro /etc/environment
 
 ## add
+micro /etc/environment
+#insert
 QT_QPA_PLATFORMTHEME=qt6ct
-## save and exit Ctrl+s Ctrl+q
 
 ## parse niri msg outputs and implement settings for display 
+
+
