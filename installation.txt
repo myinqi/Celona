@@ -47,11 +47,13 @@ git clone https://github.com/myinqi/Celona.git
 cd 
 sudo pacman -S niri   (chosse option 3: xdg-desktop-portal-gnome)
 sudo pacman -S ghostty cliphist
+# start niri once to create config file
+niri-session  # exit it with SHIFT+SUPER+E
 
 micro ~/.config/niri/config.kdl
 # Line 16 uncomment and set your keyboard layout (de, us, ru .... what ever you want)
 # Line 365 change to: alacritty to ghostty in the spawn -> { spawn "ghostty"; }
-# change complete line 271 (the waybar spawn) to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"  #save and quit Ctrl+s Ctrl+q
+# change complete line 272 (the waybar spawn) to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"  #save and quit Ctrl+s Ctrl+q
 
 
 run niri-session
@@ -100,6 +102,7 @@ sudo rsync -a ~/.config/quickshell/Celona/.paru/paru.conf /etc/paru.conf
 # next we install some packages from the AUR
 paru -S --noconfirm --needed --skipreview --removemake --cleanafter sddm-silent-theme bibata-cursor-theme-bin nwg-look kora-icon-theme mpvpaper matugen
 
+paru -Syu
 
 ### Install Hyprgreetr
 git clone https://github.com/myinqi/hyprgreetr.git

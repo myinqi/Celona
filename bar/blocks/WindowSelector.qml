@@ -15,6 +15,9 @@ BarBlock {
 
   // Internal model of windows
   property var windows: [] // [{ id, title, app, workspace }]
+  // Map: workspace internal id -> displayed index (per-output)
+  property var _niriWsIndexById: ({})
+  property string _niriWsBuf: ""
 
   // Map common app classes to Nerd Font glyphs for a small icon in the list
   function iconForApp(appName) {
@@ -263,7 +266,7 @@ BarBlock {
     }
   }
 
-  // Query windows on Niri; best-effort parsing and graceful fallback
+  // Query windows on Niri; robust mapping of workspace IDs using JSON workspaces
   function refreshWindows() {
     if (isHyprland) {
       winQueryBuf = ""
@@ -273,17 +276,29 @@ BarBlock {
     }
     if (isNiri) {
       winQueryBuf = ""
+      // First gather windows; then we will fetch JSON workspaces to build a mapping
       niriListProc.command = ["bash", "-lc", "niri msg -j windows 2>/dev/null || niri msg -j tree 2>/dev/null || true"]
       niriListProc.running = true
     }
   }
 
+  // Pending Niri windows until we build the workspace map
+  property var _pendingNiriWindows: []
+
   function setWindows(arr) {
     windows = arr || []
     contentModel.clear()
+    // Helper: normalize Niri workspace numbers using a mapping from `niri msg -j workspaces`
+    function mapNiriWs(ws) {
+      const n = Number(ws)
+      if (!root.isNiri || isNaN(n)) return ws
+      if (_niriWsIndexById && _niriWsIndexById[n] !== undefined) return _niriWsIndexById[n]
+      return ws
+    }
     for (let i = 0; i < windows.length; i++) {
       const w = windows[i]
-      contentModel.append({ id: w.id, title: w.title, app: w.app, workspace: w.workspace })
+      const wsFinal = (w.workspace !== undefined && w.workspace !== null) ? mapNiriWs(w.workspace) : w.workspace
+      contentModel.append({ id: w.id, title: w.title, app: w.app, workspace: wsFinal })
     }
   }
 
@@ -361,9 +376,40 @@ BarBlock {
             list.push({ id: null, title: s, app: "", workspace: null })
           }
         }
-        root.setWindows(list)
+        // For Niri: fetch workspace mapping before filling model
+        if (root.isNiri) {
+          root._pendingNiriWindows = list
+          root._niriWsBuf = ""
+          niriWsJsonProc.command = ["bash", "-lc", "niri msg -j workspaces 2>/dev/null || true"]
+          niriWsJsonProc.running = true
+        } else {
+          root.setWindows(list)
+        }
       } catch (e) {
         root.setWindows([])
+      }
+    }
+  }
+
+  Process {
+    id: niriWsJsonProc
+    running: false
+    stdout: SplitParser { onRead: data => { root._niriWsBuf += String(data) } }
+    onRunningChanged: if (!running) {
+      try {
+        const txt = String(root._niriWsBuf || "").trim()
+        if (txt && txt[0] === '[') {
+          const arr = JSON.parse(txt)
+          const map = {}
+          for (let i = 0; i < arr.length; i++) {
+            const ws = arr[i] || {}
+            map[ws.id] = ws.index
+          }
+          root._niriWsIndexById = map
+          root.setWindows(root._pendingNiriWindows)
+        }
+      } catch (e) {
+        root.setWindows(root._pendingNiriWindows)
       }
     }
   }
