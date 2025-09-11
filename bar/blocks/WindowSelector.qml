@@ -18,6 +18,13 @@ BarBlock {
   // Map: workspace internal id -> displayed index (per-output)
   property var _niriWsIndexById: ({})
   property string _niriWsBuf: ""
+  // Map: window-id -> workspace index (derived from tree)
+  property var _winIdToWsIndex: ({})
+  property string _niriTreeBuf: ""
+  // Map: window-id -> workspace id (derived from tree)
+  property var _winIdToWsId: ({})
+  // Map: workspace id -> 1-based order index (built from workspaces JSON, sorted by number/index)
+  property var _wsIdToOrderIndex: ({})
 
   // Map common app classes to Nerd Font glyphs for a small icon in the list
   function iconForApp(appName) {
@@ -266,7 +273,7 @@ BarBlock {
     }
   }
 
-  // Query windows on Niri; robust mapping of workspace IDs using JSON workspaces
+  // Query windows on Niri; robust mapping of workspace using tree (preferred) or workspaces (fallback)
   function refreshWindows() {
     if (isHyprland) {
       winQueryBuf = ""
@@ -275,29 +282,37 @@ BarBlock {
       return
     }
     if (isNiri) {
+      // Reset caches to avoid stale mappings across rapid layout changes
+      _niriWsIndexById = ({})
+      _wsIdToOrderIndex = ({})
+      _niriWsBuf = ""
       winQueryBuf = ""
-      // First gather windows; then we will fetch JSON workspaces to build a mapping
-      niriListProc.command = ["bash", "-lc", "niri msg -j windows 2>/dev/null || niri msg -j tree 2>/dev/null || true"]
+      // List windows in JSON (array) and map their workspace ids -> display idx using workspaces JSON
+      niriListProc.command = ["bash", "-lc", "niri msg -j windows 2>/dev/null || true"]
       niriListProc.running = true
     }
   }
 
-  // Pending Niri windows until we build the workspace map
+  // Pending Niri windows until we build the mapping
   property var _pendingNiriWindows: []
 
   function setWindows(arr) {
     windows = arr || []
     contentModel.clear()
-    // Helper: normalize Niri workspace numbers using a mapping from `niri msg -j workspaces`
-    function mapNiriWs(ws) {
-      const n = Number(ws)
-      if (!root.isNiri || isNaN(n)) return ws
-      if (_niriWsIndexById && _niriWsIndexById[n] !== undefined) return _niriWsIndexById[n]
-      return ws
+    // Helper: derive workspace display index for a Niri window using workspaces JSON
+    function mapNiriWsFromWorkspaceId(wsId) {
+      if (!root.isNiri) return wsId
+      if (wsId === undefined || wsId === null) return wsId
+      const idNum = Number(wsId)
+      if (!isNaN(idNum) && _wsIdToOrderIndex && _wsIdToOrderIndex[idNum] !== undefined)
+        return _wsIdToOrderIndex[idNum]
+      if (!isNaN(idNum) && _niriWsIndexById && _niriWsIndexById[idNum] !== undefined)
+        return _niriWsIndexById[idNum]
+      return wsId
     }
     for (let i = 0; i < windows.length; i++) {
       const w = windows[i]
-      const wsFinal = (w.workspace !== undefined && w.workspace !== null) ? mapNiriWs(w.workspace) : w.workspace
+      const wsFinal = mapNiriWsFromWorkspaceId(w.workspace)
       contentModel.append({ id: w.id, title: w.title, app: w.app, workspace: wsFinal })
     }
   }
@@ -344,29 +359,12 @@ BarBlock {
         const txt = String(root.winQueryBuf || "").trim()
         let list = []
         if (txt && txt[0] === '[') {
-          // Expecting array of windows
+          // Fallback: windows array (will need a separate mapping for workspace numbers)
           const arr = JSON.parse(txt)
           for (let i = 0; i < arr.length; i++) {
             const w = arr[i] || {}
             list.push({ id: w.id ?? w.window_id ?? w.handle ?? null, title: w.title || w.name || "", app: w.app_id || w.class || "", workspace: w.workspace ?? w.workspace_id ?? w.ws ?? null })
           }
-        } else if (txt && txt[0] === '{') {
-          // Tree object; attempt to traverse generically
-          const obj = JSON.parse(txt)
-          function walk(node, ws) {
-            if (!node) return
-            const kind = node.kind || node.type || ""
-            const title = node.title || node.name || ""
-            const app = node.app_id || node.class || ""
-            const id = node.id || node.window_id || node.handle || null
-            const wsId = node.workspace || node.workspace_id || ws || null
-            if (kind.toLowerCase().indexOf("window") !== -1 && (title || app)) {
-              list.push({ id: id, title: title, app: app, workspace: wsId })
-            }
-            const ch = node.children || node.nodes || []
-            for (let i = 0; i < ch.length; i++) walk(ch[i], wsId)
-          }
-          walk(obj, null)
         } else {
           // Plain text fallback: one window per line
           const lines = txt.split(/\r?\n/)
@@ -376,7 +374,7 @@ BarBlock {
             list.push({ id: null, title: s, app: "", workspace: null })
           }
         }
-        // For Niri: fetch workspace mapping before filling model
+        // Build mapping via workspaces JSON then set windows
         if (root.isNiri) {
           root._pendingNiriWindows = list
           root._niriWsBuf = ""
@@ -391,6 +389,7 @@ BarBlock {
     }
   }
 
+  // Parse `niri msg -j workspaces` to build id->index fallback
   Process {
     id: niriWsJsonProc
     running: false
@@ -401,23 +400,51 @@ BarBlock {
         if (txt && txt[0] === '[') {
           const arr = JSON.parse(txt)
           const map = {}
+          const order = []
           for (let i = 0; i < arr.length; i++) {
             const ws = arr[i] || {}
-            map[ws.id] = ws.index
+            const wsId = (ws.id !== undefined) ? ws.id : ws.workspace_id
+            // Prefer 'idx' (observed schema). Fallbacks: 'number' (1-based) or 'index' (0-based => +1)
+            let idx = undefined
+            if (ws.idx !== undefined) idx = Number(ws.idx)
+            else if (ws.number !== undefined) idx = Number(ws.number)
+            else if (ws.index !== undefined) idx = Number(ws.index) + 1
+            if (wsId !== undefined && idx !== undefined) {
+              const idNum = Number(wsId)
+              map[idNum] = idx
+              order.push({ id: idNum, idx })
+            }
           }
           root._niriWsIndexById = map
-          root.setWindows(root._pendingNiriWindows)
+          // Build stable order map (sorted by idx ascending) => 1-based positions
+          order.sort((a,b) => a.idx - b.idx)
+          const idToOrder = {}
+          for (let i = 0; i < order.length; i++) idToOrder[order[i].id] = i + 1
+          root._wsIdToOrderIndex = idToOrder
         }
       } catch (e) {
-        root.setWindows(root._pendingNiriWindows)
+        // ignore; keep mapping empty
       }
+      root.setWindows(root._pendingNiriWindows)
+      root._pendingNiriWindows = []
     }
   }
+
+  // (Removed tree mapping: not supported on this Niri version)
 
   Process { id: niriActionProc; running: false }
   Process { id: niriActionProc2; running: false }
   Process { id: hyprWsProc; running: false }
   Process { id: hyprFocusProc; running: false }
+
+  // Periodic refresh while the popup is visible to track rapid changes (e.g., renumbering)
+  Timer {
+    id: menuRefresh
+    interval: 700
+    repeat: true
+    running: menuWindow.visible && isNiri
+    onTriggered: refreshWindows()
+  }
 
   // Keep in sync with compositor events (reuse CompositorUtils event stream)
   Connections {
