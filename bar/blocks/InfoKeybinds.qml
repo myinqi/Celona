@@ -29,6 +29,7 @@ BarBlock {
     property var keyBlacklist: ["Super_L"]
     property var keySubstitutions: ({
         "Super": "󰖳",
+        "Mod": "󰖳",
         "mouse_up": "Scroll ↓",    
         "mouse_down": "Scroll ↑",  
         "mouse:272": "LMB",
@@ -93,14 +94,13 @@ BarBlock {
     }
 
     function parseNiriKdlBinds(text) {
-        // Robust KDL parser for common Niri binding styles.
-        // Supports:
-        //   bindings { binding { modifiers ["Super"] key "Return" action "spawn" command "alacritty" } }
-        //   binding { ... } on a single line
-        //   Optional brace-less forms: bind modifiers [..] key ".." action ".." command ".."
+        // Robust KDL parser for Niri binding styles.
+        // Focus on binds { ... } with chord entries like:
+        //   Mod+Return hotkey-overlay-title="..." { spawn "ghostty"; }
+        // Also supports binding { ... } blocks and inline bind/binding forms.
         const src = String(text || "")
         const sections = []
-        let current = { name: "General", keybinds: [] }
+        let current = { name: "Niri", keybinds: [] }
         const pushSection = () => { if (current.keybinds.length) sections.push(current) }
 
         const unquote = (s) => {
@@ -153,59 +153,87 @@ BarBlock {
             })()
             current.keybinds.push({ mods, key, comment })
         }
-
-        // 1) Group by preceding line comments for sectioning
-        const lines = src.split(/\r?\n/)
-        for (let i = 0; i < lines.length; i++) {
-            const raw = lines[i]
-            const line = raw.trim()
-            if (!line) continue
-            if (line.startsWith("//") || line.startsWith("#")) {
-                const body = line.replace(/^\/{2,}|#+\s*/, "").trim()
-                if (body.length) {
-                    pushSection()
-                    current = { name: body, keybinds: [] }
-                }
-            }
-        }
-
-        // 2) Extract brace-delimited binding blocks (multi- or single-line)
+        // Extract brace-delimited binding blocks (multi- or single-line)
         const reBlock = /\b(bind|binding)\b[^\{]*\{([\s\S]*?)\}/g
         let m
         while ((m = reBlock.exec(src)) !== null) {
             addBindFromChunk(m[2])
         }
 
-        // 2b) Extract and parse `binds { ... }` blocks with bare entries
-        const reBindsBlock = /\bbinds\b[^\{]*\{([\s\S]*?)\}/g
-        let bm
-        while ((bm = reBindsBlock.exec(src)) !== null) {
-            const body = bm[1]
-            // First, capture any nested binding { ... } blocks if present
+        // Extract and parse `binds { ... }` blocks with balanced-brace scanning
+        const bodies = []
+        ;(function collectBindsBodies() {
+            let i = 0
+            while (i < src.length) {
+                const m = src.slice(i).match(/\bbinds\b/)
+                if (!m) break
+                const start = i + m.index
+                // find first '{' after 'binds'
+                const ob = src.indexOf('{', start)
+                if (ob < 0) break
+                let depth = 0, j = ob
+                for (; j < src.length; j++) {
+                    const ch = src[j]
+                    if (ch === '{') depth++
+                    else if (ch === '}') {
+                        depth--
+                        if (depth === 0) { j++; break }
+                    }
+                }
+                if (depth === 0) bodies.push(src.slice(ob + 1, j - 1))
+                i = j
+            }
+        })()
+        // For each binds body, parse chord entries and nested binding {...}
+        for (let bi = 0; bi < bodies.length; bi++) {
+            const body = bodies[bi]
+            // nested binding { ... }
             let nm
             const nested = /\b(bind|binding)\b[^\{]*\{([\s\S]*?)\}/g
             while ((nm = nested.exec(body)) !== null) addBindFromChunk(nm[2])
-            // Then, parse chord-style entries: Chord [props...] { inner; }
-            // Example: Mod+Return hotkey-overlay-title="..." { spawn "ghostty"; }
-            let em
-            // Capture: chord, props (before '{'), and inner block
-            const entryRe = /(^|\n)\s*([A-Za-z0-9+_:.-]+)([^\{]*)\{([^}]*)\}/g
-            while ((em = entryRe.exec(body)) !== null) {
-                const chord = em[2]
-                const props = em[3] || ""
-                const inner = em[4]
+            // chord entries: find each "... {" and take balanced block
+            let k = 0
+            while (k < body.length) {
+                const lm = body.slice(k).match(/(^|\n)\s*([A-Za-z0-9+_:.-]+)([^\{\n]*)\{/) // up to opening brace
+                if (!lm) break
+                const lmStart = k + lm.index
+                const chord = lm[2]
+                const props = lm[3] || ""
+                // find matching closing brace from the brace we just matched
+                let ob2 = lmStart + lm[0].lastIndexOf('{')
+                let depth2 = 0, t = ob2
+                for (; t < body.length; t++) {
+                    const ch = body[t]
+                    if (ch === '{') depth2++
+                    else if (ch === '}') {
+                        depth2--
+                        if (depth2 === 0) { t++; break }
+                    }
+                }
+                const inner = body.slice(ob2 + 1, t - 1)
                 const parts = chord.split('+')
                 const key = parts.pop()
                 const mods = parts
-                // Prefer curated Niri overlay titles; if absent, skip to keep list tidy
+                // Comment selection
                 let titleMatch = props.match(/hotkey-overlay-title\s*=\s*(\"[^\"]+\"|'[^']+'|[^\s\{]+)/)
-                if (!titleMatch) continue
-                const comment = unquote(titleMatch[1])
+                let comment = titleMatch ? unquote(titleMatch[1]) : ""
+                if (!comment) {
+                    const innerTrim = String(inner || "").trim()
+                    if (innerTrim.length) {
+                        const spawnM = innerTrim.match(/\b(spawn|exec|command)\s+([^;\n\r]+)/)
+                        if (spawnM) comment = unquote(spawnM[2]).trim()
+                        else {
+                            const verbM = innerTrim.match(/^([a-zA-Z0-9_\-]+)\b/)
+                            if (verbM) comment = verbM[1]
+                        }
+                    }
+                }
                 current.keybinds.push({ mods, key, comment })
+                k = t
             }
         }
 
-        // 3) Fallback: inline, brace-less forms per line
+        // Fallback: inline, brace-less forms per line
         if (current.keybinds.length === 0) {
             const reInline = /\b(bind|binding)\b[^\n\{]*/g
             let mm
@@ -220,7 +248,8 @@ BarBlock {
 
     function parseKeybindsAuto(text, pathHint) {
         const t = String(text || "")
-        // Only Hyprland parsing is supported for the popup
+        const p = String(pathHint || "")
+        if (p.toLowerCase().endsWith('.kdl')) return parseNiriKdlBinds(t)
         return parseHyprBinds(t)
     }
 
@@ -250,14 +279,6 @@ BarBlock {
         const p = String(Globals.keybindsPath || "").trim()
         if (p.length === 0) {
             // Stop watchers and clear data
-            if (bindsProc.running) bindsProc.running = false
-            if (mtimeProc.running) mtimeProc.running = false
-            bindsBuf = ""
-            keybinds = { children: [ { children: [] } ] }
-            return
-        }
-        // Under Niri (.kdl), do not read or parse; we show native overlay only
-        if (p.toLowerCase().endsWith('.kdl')) {
             if (bindsProc.running) bindsProc.running = false
             if (mtimeProc.running) mtimeProc.running = false
             bindsBuf = ""
@@ -296,8 +317,9 @@ BarBlock {
                         root.bindsBuf = ""
                         return
                     }
-                    // Popup supports Hyprland only
-                    root._parserName = "Hyprland"
+                    // Select parser by extension
+                    const isKdl = String(Globals.keybindsPath || "").toLowerCase().endsWith('.kdl')
+                    root._parserName = isKdl ? "Niri" : "Hyprland"
                     root.keybinds = parseKeybindsAuto(text, Globals.keybindsPath)
                     // Debug counts
                     try {
@@ -657,13 +679,11 @@ BarBlock {
         onExited: tipWindow.visible = false
         onClicked: (mouse) => {
             if (mouse.button === Qt.LeftButton) {
-                const isNiri = String(Globals.keybindsPath || "").toLowerCase().endsWith(".kdl")
                 tipWindow.visible = false
-                if (isNiri) {
-                    if (!niriOverlayProc.running) niriOverlayProc.running = true
-                    if (sheetWindow.visible) sheetWindow.visible = false
-                    return
-                }
+                // Force a fresh read so changes in parser or file are reflected immediately
+                try { if (bindsProc.running) bindsProc.running = false } catch (e) {}
+                bindsBuf = ""
+                Qt.callLater(() => bindsProc.running = true)
                 sheetWindow.visible = !sheetWindow.visible
             }
         }

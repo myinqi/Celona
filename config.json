@@ -27,7 +27,7 @@
   "windowTitleColor": "#ffe5e1e9",
   "visualizerBarColor": "#ff5f5791",
   "reorderMode": false,
-  "swapTitleAndWorkspaces": true,
+  "swapTitleAndWorkspaces": false,
   "rightModulesOrder": [
     "SystemTray",
     "WindowSelector",
@@ -63,7 +63,7 @@
   "showNotifications": true,
   "showWindowSelector": true,
   "showSound": true,
-  "showKeybinds": false,
+  "showKeybinds": true,
   "showBattery": false,
   "showDate": true,
   "showTime": true,
