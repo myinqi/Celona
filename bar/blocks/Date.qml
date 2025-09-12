@@ -208,7 +208,7 @@ BarBlock {
           }
           Item { Layout.fillWidth: true; height: 1 }
           Button {
-            text: "Today"
+            text: "Now"
             onClicked: calendar.toToday()
             contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
             background: Rectangle { radius: 4; color: Globals.hoverHighlightColor !== "" ? Globals.hoverHighlightColor : "#6c7086" }
