@@ -139,6 +139,15 @@ else
   echo -e "${GREEN}GTK theme set to:${RESET} default (light)"
 fi
 
+# Toggle Qt (Kvantum) theme to match, if helper script is present
+KV_HELPER="${REPO_DIR}/scripts/qt-kvantum-mode.sh"
+if [[ -x "$KV_HELPER" ]]; then
+  echo -e "${CYAN}Syncing Qt (Kvantum) theme...${RESET}"
+  "$KV_HELPER" "$MODE" || echo -e "${YELLOW}Warning:${RESET} Kvantum helper returned non-zero; continuing."
+else
+  echo -e "${YELLOW}Kvantum helper not found:${RESET} $KV_HELPER (skipping Qt theme sync)"
+fi
+
 # Persist new mode for next toggle (canonical)
 echo "$MODE" > "$STATE_FILE"
 echo -e "${CYAN}Next toggle will switch to:${RESET} $( [[ "$MODE" == "dark" ]] && echo light || echo dark )"
