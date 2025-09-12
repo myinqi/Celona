@@ -27,7 +27,7 @@
   "windowTitleColor": "#ffe5e1e9",
   "visualizerBarColor": "#ff5f5791",
   "reorderMode": false,
-  "swapTitleAndWorkspaces": false,
+  "swapTitleAndWorkspaces": true,
   "rightModulesOrder": [
     "SystemTray",
     "WindowSelector",

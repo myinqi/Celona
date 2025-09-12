@@ -30,7 +30,7 @@ Item {
       spacing: 8
       Label {
         text: "Module position:"
-        Layout.leftMargin: 400
+        Layout.leftMargin: 300
         color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
         font.bold: true
         font.italic: true
@@ -96,11 +96,10 @@ Item {
             RowLayout { Layout.fillWidth: true; Label { text: "CPU"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" } Item { width: 0 } Switch { checked: Globals.showCPU; onToggled: { Globals.showCPU = checked; Globals.saveTheme() } } }
             RowLayout { Layout.fillWidth: true; Label { text: "GPU"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" } Item { width: 0 } Switch { checked: Globals.showGPU; onToggled: { Globals.showGPU = checked; Globals.saveTheme() } } }
             RowLayout { Layout.fillWidth: true; Label { text: "Memory"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" } Item { width: 0 } Switch { checked: Globals.showMemory; onToggled: { Globals.showMemory = checked; Globals.saveTheme() } } }
-            RowLayout { Layout.fillWidth: true; Label { text: "Power Profiles"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" } Item { width: 0 } Switch { checked: Globals.showPowerProfiles; onToggled: { Globals.showPowerProfiles = checked; Globals.saveTheme() } } }
-            
+
           }
 
-          // Column 2: from Keybinds onward
+          // Column 2: from clipboard onward
           ColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
@@ -115,6 +114,8 @@ Item {
             RowLayout { Layout.fillWidth: true; Label { text: "Date"; Layout.preferredWidth: 110; color: Globals.popupText } Item { width: 0 } Switch { checked: Globals.showDate; onToggled: { Globals.showDate = checked; Globals.saveTheme() } } }
             RowLayout { Layout.fillWidth: true; Label { text: "Time"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" } Item { width: 0 } Switch { checked: Globals.showTime; onToggled: { Globals.showTime = checked; Globals.saveTheme() } } }
             RowLayout { Layout.fillWidth: true; Label { text: "Power"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" } Item { width: 0 } Switch { checked: Globals.showPower; onToggled: { Globals.showPower = checked; Globals.saveTheme() } } }
+            RowLayout { Layout.fillWidth: true; Label { text: "Power Profiles"; Layout.preferredWidth: 110; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" } Item { width: 0 } Switch { checked: Globals.showPowerProfiles; onToggled: { Globals.showPowerProfiles = checked; Globals.saveTheme() } } }
+            
           }
         }
       }

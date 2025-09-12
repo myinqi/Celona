@@ -138,6 +138,7 @@ rsync -a ~/.config/quickshell/Celona/.config/ ~/.config/
 sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/metadata.desktop /usr/share/sddm/themes/silent/metadata.desktop
 sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/celona.conf /usr/share/sddm/themes/silent/configs/
 sudo rsync -a ~/.config/quickshell/Celona/wallpapers/3440x1440/ /usr/share/sddm/themes/silent/backgrounds/
+sudo rsync -a ~/.config/quickshell/Celona/.environment/environment /etc/environment
 
 #reboot your system
 reboot
@@ -191,15 +192,6 @@ reboot
 
 
 ToDo:
-maybe add kvantum for QT Theming? (don't forget environment variables)
-sudo pacman -S qt6ct 
-micro /etc/environment
-
-## add
-micro /etc/environment
-#insert
-QT_QPA_PLATFORMTHEME=qt6ct
-
 ## parse niri msg outputs and implement settings for display 
 
 
