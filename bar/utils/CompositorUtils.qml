@@ -53,7 +53,21 @@ Singleton {
     target: Utils.HyprlandUtils
     enabled: comp.isHyprland
     function onWorkspacesChanged() {
-      comp.workspaces = (Utils.HyprlandUtils.workspaces || []).map(ws => ({ id: ws.id, active: ws.active }))
+      const aw = Number((Utils.HyprlandUtils && Utils.HyprlandUtils.activeWorkspaceId) || (Utils.HyprlandUtils && Utils.HyprlandUtils.activeWorkspace && Utils.HyprlandUtils.activeWorkspace.id) || 0)
+      comp.workspaces = (Utils.HyprlandUtils.workspaces || []).map(ws => {
+        const idNum = Number(ws && ws.id)
+        const active = aw ? (idNum === aw) : (!!ws && !!ws.active)
+        return { id: ws.id, active }
+      })
+    }
+    function onActiveWorkspaceIdChanged() {
+      // Recompute active flags based on the new active workspace id
+      const aw = Number((Utils.HyprlandUtils && Utils.HyprlandUtils.activeWorkspaceId) || (Utils.HyprlandUtils && Utils.HyprlandUtils.activeWorkspace && Utils.HyprlandUtils.activeWorkspace.id) || 0)
+      comp.workspaces = (Utils.HyprlandUtils.workspaces || []).map(ws => {
+        const idNum = Number(ws && ws.id)
+        const active = aw ? (idNum === aw) : (!!ws && !!ws.active)
+        return { id: ws.id, active }
+      })
     }
     function onActiveTitleChanged() {
       comp.activeTitle = Utils.HyprlandUtils.activeTitle || "Desktop"
@@ -66,7 +80,12 @@ Singleton {
     running: comp.isHyprland
     repeat: false
     onTriggered: {
-      comp.workspaces = (Utils.HyprlandUtils.workspaces || []).map(ws => ({ id: ws.id, active: ws.active }))
+      const aw = Number((Utils.HyprlandUtils && Utils.HyprlandUtils.activeWorkspaceId) || (Utils.HyprlandUtils && Utils.HyprlandUtils.activeWorkspace && Utils.HyprlandUtils.activeWorkspace.id) || 0)
+      comp.workspaces = (Utils.HyprlandUtils.workspaces || []).map(ws => {
+        const idNum = Number(ws && ws.id)
+        const active = aw ? (idNum === aw) : (!!ws && !!ws.active)
+        return { id: ws.id, active }
+      })
       comp.activeTitle = Utils.HyprlandUtils.activeTitle || "Desktop"
     }
   }

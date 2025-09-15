@@ -24,6 +24,40 @@ Singleton {
     property int maxWorkspace: findMaxId()
     // Active window title (defaults to "Desktop")
     property string activeTitle: (isAvailable && Hyprland.activeToplevel) ? (Hyprland.activeToplevel.title || "Desktop") : "Desktop"
+    // Active workspace id (updates via Hyprland.activeWorkspace and raw events)
+    property int activeWorkspaceId: 1
+    // Buffer for hyprctl JSON
+    property string _activeWsJson: ""
+
+    function _updateActiveWorkspace() {
+        try {
+            if (isAvailable && Hyprland.activeWorkspace && typeof Hyprland.activeWorkspace.id === 'number') {
+                activeWorkspaceId = Hyprland.activeWorkspace.id
+                return
+            }
+        } catch (e) { /* noop */ }
+        // Fallback: if list exists, pick the one marked active or default to 1
+        try {
+            const ws = (hyprland.workspaces || [])
+            const found = ws.find(w => w && w.active)
+            if (found && typeof found.id === 'number') {
+                activeWorkspaceId = found.id
+                return
+            }
+        } catch (e2) { activeWorkspaceId = 1 }
+        // As a final resort, ask hyprctl for the active workspace (Hyprland must be present)
+        if (hyprland.isAvailable) {
+            hyprland._queryActiveWorkspace()
+        }
+    }
+
+    function _queryActiveWorkspace() {
+        try {
+            hyprland._activeWsJson = ""
+            hyprActiveWsProc.command = ["bash","-lc","command -v hyprctl >/dev/null 2>&1 && hyprctl -j activeworkspace || true"]
+            hyprActiveWsProc.running = true
+        } catch (e) { /* noop */ }
+    }
 
     function sortWorkspaces(ws) {
         return [...ws].sort((a, b) => a?.id - b?.id)
@@ -57,6 +91,35 @@ Singleton {
                     hyprland.maxWorkspace = findMaxId()
                 }
             }
+            // Keep active workspace id in sync for all events
+            hyprland._updateActiveWorkspace()
+        }
+        function onActiveWorkspaceChanged() { hyprland._updateActiveWorkspace() }
+    }
+
+    // Initialize active workspace shortly after start
+    Timer {
+        interval: 200
+        running: hyprland.isAvailable
+        repeat: false
+        onTriggered: hyprland._updateActiveWorkspace()
+    }
+
+    // Process to query hyprctl -j activeworkspace as a fallback
+    Process {
+        id: hyprActiveWsProc
+        running: false
+        stdout: SplitParser { onRead: (data) => { hyprland._activeWsJson += String(data) } }
+        onRunningChanged: if (!running) {
+            try {
+                const t = (hyprland._activeWsJson || '').trim()
+                if (t && t[0] === '{') {
+                    const obj = JSON.parse(t)
+                    if (obj && typeof obj.id === 'number') {
+                        hyprland.activeWorkspaceId = obj.id
+                    }
+                }
+            } catch (e) { /* noop */ }
         }
     }
 }
