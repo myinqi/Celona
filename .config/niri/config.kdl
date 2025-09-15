@@ -64,6 +64,8 @@ layout {
     // Set gaps around windows in logical pixels.
     gaps 12
     center-focused-column "never"
+    always-center-single-column
+    background-color "transparent"
 
     // customize the widths that "switch-preset-column-width" (Mod+R) toggles between.
     preset-column-widths {
@@ -130,11 +132,6 @@ layout {
 	spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"
 	spawn-at-startup "qs" "-c" "Celona"
 	spawn-at-startup "swaync"
-
-// Support for xwayland via satellite
-	/- xwayland-satellite {
-	    // optional: path "/usr/bin/xwayland-satellite"
-	}
 
 
 	// Skip at Startup
@@ -207,23 +204,25 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"^org\.wezfurlong\.wezterm$"#
-    default-column-width {}
-}
-
-window-rule {
     match app-id=r#"ghostty"#  
     draw-border-with-background false
 }
 
-
-
-// Open the Firefox picture-in-picture player as floating by default.
 window-rule {
-    // This app-id regular expression will work for both:
-    // - host Firefox (app-id is "firefox")
-    // - Flatpak Firefox (app-id is "org.mozilla.firefox")
-    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    match app-id=r#"Nautilus"#  
+    draw-border-with-background false
+    opacity 0.93
+}
+
+window-rule {
+    match app-id=r#"zen"#  
+    draw-border-with-background false
+    opacity 0.93
+}
+
+// Open the Zen-Browser picture-in-picture player as floating by default.
+window-rule {
+    match app-id=r#"zen$"# title="^Picture-in-Picture$"
     open-floating true
 }
 
@@ -241,27 +240,17 @@ window-rule {
 
 
 binds {
-    // Keys consist of modifiers separated by + signs, followed by an XKB key name
-    // in the end. To find an XKB name for a particular key, you may use a program
-    // like wev.
-    // "Mod" is a special modifier equal to Super when running on a TTY, and to Alt
-    // when running as a winit window.
-    // Most actions that you can bind here can also be invoked programmatically with
-    // `niri msg action do-something`.
-    // Mod-Shift-/, which is usually the same as Mod-?,
-    // shows a list of important hotkeys.
+    // Most actions that you can bind here can also be invoked programmatically with `niri msg action do-something`.
+
     Mod+Ctrl+Alt+Space { show-hotkey-overlay; }
+	Mod+G hotkey-overlay-title="activate Game Mode" { spawn "sh" "-lc" "~/.config/quickshell/Celona/scripts/toggle-game-mode.sh"; }
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
     Mod+Return hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
     Mod+Ctrl+Return hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     Mod+B hotkey-overlay-title="Open Browser: zen" { spawn "zen-browser"; }
     Mod+E hotkey-overlay-title="Open Explorer: nautilus" { spawn "nautilus"; }
-    //Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
-
-    // You can also use a shell. Do this if you need pipes, multiple commands, etc.
-    // Note: the entire command goes as a single argument in the end.
-    // Mod+T { spawn "bash" "-c" "notify-send hello && exec alacritty"; }
+    Super+Alt+L hotkey-overlay-title="Lock the Screen: hyprlock" { spawn "hyprlock"; }
 
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.

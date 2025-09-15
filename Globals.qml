@@ -62,11 +62,65 @@ Singleton {
   onBarBorderColorChanged: {
     if (useMatugenColors && hyprlandColorsDebounce) hyprlandColorsDebounce.restart()
   }
+  // React to Game Mode (barHidden) to manage animated wallpaper lifecycle
+  onBarHiddenChanged: {
+    try {
+      if (barHidden) {
+        // Entering Game Mode: capture current animated state once and disable animation
+        if (!_wpGameModeActive) {
+          _wpGameModeActive = true
+          _wpHadAnimatedBeforeGameMode = wallpaperAnimatedEnabled
+        }
+        if (wallpaperAnimatedEnabled) {
+          // Temporarily turn off animated wallpaper without persisting theme
+          wallpaperAnimatedEnabled = false
+          stopAnimatedAndSetStatic()
+        }
+      } else {
+        // Leaving Game Mode: restore animated wallpaper only if it was previously on
+        if (_wpGameModeActive) {
+          if (_wpHadAnimatedBeforeGameMode) {
+            wallpaperAnimatedEnabled = true
+            startAnimatedWallpaper()
+          }
+          _wpGameModeActive = false
+        }
+      }
+    } catch (e) { /* no-op */ }
+  }
   onHoverHighlightColorChanged: {
     if (useMatugenColors && hyprlandColorsDebounce) hyprlandColorsDebounce.restart()
   }
   onPopupBgChanged: {
     if (useMatugenColors && hyprlandColorsDebounce) hyprlandColorsDebounce.restart()
+  }
+
+  // Fallback watcher: poll for a toggle file and flip barHidden when present
+  Timer {
+    id: gameModeWatch
+    interval: 800
+    repeat: true
+    running: true
+    onTriggered: {
+      if (!Globals._gameModeToggleFile || Globals._gameModeToggleFile.length === 0) return
+      if (!gameModeProc.running) gameModeProc.running = true
+    }
+  }
+  Process {
+    id: gameModeProc
+    running: false
+    command: ["bash","-lc",
+      "f=\"" + _gameModeToggleFile + "\"; mkdir -p \"$(dirname \"$f\")\"; if [ -f \"$f\" ]; then rm -f \"$f\"; echo TOGGLE; else echo NO; fi"
+    ]
+    stdout: SplitParser {
+      onRead: (data) => {
+        const s = String(data).trim()
+        if (s === 'TOGGLE') {
+          Globals.barHidden = !Globals.barHidden
+          Globals.saveTheme()
+        }
+      }
+    }
   }
 
   // Update Hyprland colors (~/.config/hypr/hyprland_colors.conf) from current theme
@@ -282,6 +336,15 @@ Singleton {
   property bool useNewSetupUI: false
   // Show bar visualizer module
   property bool showBarvisualizer: false
+
+  // --- Game Mode hotkey fallback via file trigger ---
+  // Touching this file toggles Game Mode without IPC
+  readonly property string _gameModeToggleFile: (homeReady ? (homeDir + "/.config/quickshell/Celona/tmp/game_mode_toggle") : "")
+
+  // Remember animated wallpaper state across Game Mode (barHidden)
+  // These are transient (not persisted) and only used to restore on exit from Game Mode
+  property bool _wpGameModeActive: false
+  property bool _wpHadAnimatedBeforeGameMode: false
 
   // Dock settings
   // Vertical dock position on screen edge: "left" or "right"

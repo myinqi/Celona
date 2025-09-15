@@ -17,6 +17,11 @@ Scope {
         barInstances[i].visible = !barInstances[i].visible;
       }
     }
+    // Toggle Game Mode (hide/show bar and mini gear) from external IPC
+    function toggleGameMode(): void {
+      Globals.barHidden = !Globals.barHidden
+      Globals.saveTheme()
+    }
   }
   property var barInstances: []
 
@@ -193,7 +198,7 @@ Scope {
                 // resolve if this module should be shown in static mode
                 property bool shown: staticRight.isShown(modelData)
                 visible: shown
-                active: shown
+                active: shown && !Globals.barHidden
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredWidth: shown && item ? (
                   (item.Layout && item.Layout.preferredWidth && item.Layout.preferredWidth > 0) ? item.Layout.preferredWidth :
@@ -412,7 +417,7 @@ Scope {
                   id: loader
                   z: 1
                   visible: modWrap.shown
-                  active: true
+                  active: modWrap.shown && !Globals.barHidden
                   Layout.alignment: Qt.AlignVCenter
                   Layout.preferredWidth: item ? (
                     (item.Layout && item.Layout.preferredWidth && item.Layout.preferredWidth > 0) ? item.Layout.preferredWidth :

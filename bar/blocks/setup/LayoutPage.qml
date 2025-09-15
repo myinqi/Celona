@@ -199,7 +199,9 @@ Item {
         ToolTip {
           id: hideTip
           visible: hideBarChk.hovered
-          text: hideBarChk.checked ? "Bar hidden, only gear icon" : "Bar visible"
+          text: hideBarChk.checked
+                ? "Game mode: Bar hidden (only gear icon). Modules are unloaded to save CPU and memory."
+                : "Bar visible"
           contentItem: Text {
             text: hideTip.text
             color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
