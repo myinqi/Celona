@@ -62,7 +62,7 @@ run niri-session
 # in the secound terminal past the next commands ...
 
 ### Preperations ###
-sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct
+sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker
 
 sudo systemctl enable --now udisks2
 
@@ -139,6 +139,7 @@ sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/metadata.desktop /usr/share
 sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/celona.conf /usr/share/sddm/themes/silent/configs/
 sudo rsync -a ~/.config/quickshell/Celona/wallpapers/3440x1440/ /usr/share/sddm/themes/silent/backgrounds/
 sudo rsync -a ~/.config/quickshell/Celona/.environment/environment /etc/environment
+bash ~/.config/fuzzel/install-pickers.sh
 
 #reboot your system
 reboot
