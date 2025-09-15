@@ -148,7 +148,7 @@ Item {
       Text { id: sideMarginValue; text: String(Globals.barSideMargin !== undefined ? Globals.barSideMargin : 0) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
       Slider {
         id: sideMarginSlider
-        from: 0; to: 200; stepSize: 1; wheelEnabled: true
+        from: 0; to: 400; stepSize: 1; wheelEnabled: true
         Layout.preferredWidth: 180
         value: Globals.barSideMargin !== undefined ? Globals.barSideMargin : 0
         onMoved: {
