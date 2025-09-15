@@ -54,16 +54,8 @@ BarBlock {
 
     onClicked: (mouse) => {
       tipWindow.visible = false
-      if (Utils.CompositorUtils.isHyprland) {
-        if (mouse.button === Qt.LeftButton) {
-          sidebarProc.running = true
-        } else if (mouse.button === Qt.RightButton) {
-          rofiProc.running = true
-        }
-      } else { // Niri
-        // Both left and right click start fuzzel
-        fuzzelProc.running = true
-      }
+      // Unified behavior: on both Hyprland and Niri start fuzzel for left/right click
+      fuzzelProc.running = true
     }
   }
 
@@ -103,7 +95,7 @@ BarBlock {
         id: tipLabel
         anchors.fill: parent
         anchors.margins: 10
-        text: Utils.CompositorUtils.isHyprland ? "Left: Settings APP\nRight: Applauncher" : "Left: Fuzzel\nRight: Fuzzel"
+        text: "Left: Fuzzel\nRight: Fuzzel"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap

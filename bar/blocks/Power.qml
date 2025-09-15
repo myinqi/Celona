@@ -41,11 +41,8 @@ BarBlock {
     onClicked: (mouse) => {
       tipWindow.visible = false
       if (mouse.button === Qt.LeftButton) {
-        if (Utils.CompositorUtils.isHyprland) {
-          hyprWlogoutProc.running = true
-        } else {
-          toggleMenu()
-        }
+        // Unified: always show internal power popup on left click
+        toggleMenu()
       } else if (mouse.button === Qt.RightButton) {
         lockProc.running = true
       }
@@ -254,7 +251,17 @@ BarBlock {
   Process {
     id: logoutProc
     running: false
-    command: ["bash","-lc","niri msg action quit --skip-confirmation || true"]
+    command: [
+      "bash","-lc",
+      // Hyprland: use hyprctl; else try Niri; else no-op
+      "if [ -n \"$HYPRLAND_INSTANCE_SIGNATURE\" ] && command -v hyprctl >/dev/null 2>&1; then " +
+      "  hyprctl dispatch exit; " +
+      "elif command -v niri >/dev/null 2>&1; then " +
+      "  niri msg action quit --skip-confirmation; " +
+      "else " +
+      "  true; " +
+      "fi"
+    ]
     stdout: SplitParser { onRead: data => console.log(`[Power] LOGOUT OUT: ${String(data)}`) }
     stderr: SplitParser { onRead: data => console.log(`[Power] LOGOUT ERR: ${String(data)}`) }
   }
