@@ -155,6 +155,8 @@ BarBlock {
   property int entryCount: 0
   // Latest entry ID from cliphist
   property int entryLastId: 0
+  // Latest entry ID currently displayed in the popup list (for change detection while open)
+  property int shownLastId: 0
 
   function refreshCount() {
     if (countProc.running) countProc.running = false
@@ -206,6 +208,11 @@ BarBlock {
         root.updateFiltered()
         // Restore scroll position (should be 0 on first load, but keeps user position if they scrolled while loading)
         Qt.callLater(() => listView.contentY = prevY)
+        // Update the last shown ID to the newest available in the refreshed list
+        if (root.entries && root.entries.length) {
+          const newestId = parseInt(root.entries[0]?.id)
+          if (!isNaN(newestId)) root.shownLastId = newestId
+        }
       }
     }
     stderr: SplitParser { onRead: data => console.log(`[Clipboard] STDERR: ${String(data)}`) }
@@ -298,6 +305,28 @@ BarBlock {
 
   // Initialize indicators at startup
   Component.onCompleted: { refreshCount(); refreshLastId() }
+
+  // While popup is open, periodically check for new entries and refresh if a newer one exists
+  Timer {
+    id: openRefreshTimer
+    interval: 2000
+    repeat: true
+    running: menuWindow.visible
+    onTriggered: {
+      // Update entryLastId; the change handler below will decide whether to refresh
+      refreshLastId()
+      // Keep the header count in sync while open
+      refreshCount()
+    }
+  }
+
+  // Refresh the list if a newer entry appears while popup is open
+  onEntryLastIdChanged: {
+    if (menuWindow.visible && entryLastId > (shownLastId || 0)) {
+      // Preserve scroll; handled in listProc.onRunningChanged
+      refreshList()
+    }
+  }
 
   // Popup UI as a separate window (like Sound), anchored unter dem Block
   MouseArea {
@@ -445,6 +474,59 @@ BarBlock {
             height: 34
             // Hover background
             property bool hovered: false
+            // Extract color from entry text
+            // Supports:
+            //  - rgba(rrrrggbbAA) with hex digits (example: rgba(5f5791ff))
+            //  - rgba(r, g, b, a) with decimal components (a in 0..1 or 0..255)
+            //  - rgb(r, g, b) with decimal components (0..255)
+            //  - #RGB, #RRGGBB, #AARRGGBB hex
+            property string colorValue: {
+              const t = (modelData && modelData.text) ? String(modelData.text).trim() : ""
+              // 1) rgba(XXXXXXXX) where X are hex digits (RRGGBBAA)
+              const mRgba = t.match(/rgba\(\s*([0-9a-fA-F]{8})\s*\)/i)
+              if (mRgba) {
+                const hex = mRgba[1]
+                const r = hex.slice(0, 2)
+                const g = hex.slice(2, 4)
+                const b = hex.slice(4, 6)
+                const a = hex.slice(6, 8)
+                // Qt expects #AARRGGBB when alpha present
+                return `#${a}${r}${g}${b}`
+              }
+              // 2) rgba(r, g, b, a) decimals, allow spaces
+              // r,g,b: 0..255 integers; a: 0..1 float or 0..255
+              const mRgbaDec = t.match(/rgba\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]*\.?[0-9]+)\s*\)/i)
+              if (mRgbaDec) {
+                let r = Math.max(0, Math.min(255, parseInt(mRgbaDec[1])))
+                let g = Math.max(0, Math.min(255, parseInt(mRgbaDec[2])))
+                let b = Math.max(0, Math.min(255, parseInt(mRgbaDec[3])))
+                let aRaw = parseFloat(mRgbaDec[4])
+                // If alpha > 1, assume 0..255; else 0..1
+                let a255 = aRaw > 1 ? Math.max(0, Math.min(255, aRaw)) : Math.round(Math.max(0, Math.min(1, aRaw)) * 255)
+                const toHex = (n) => n.toString(16).padStart(2, '0')
+                return `#${toHex(a255)}${toHex(r)}${toHex(g)}${toHex(b)}`
+              }
+              // 3) rgb(r, g, b) decimals
+              const mRgbDec = t.match(/rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)/i)
+              if (mRgbDec) {
+                let r = Math.max(0, Math.min(255, parseInt(mRgbDec[1])))
+                let g = Math.max(0, Math.min(255, parseInt(mRgbDec[2])))
+                let b = Math.max(0, Math.min(255, parseInt(mRgbDec[3])))
+                const toHex = (n) => n.toString(16).padStart(2, '0')
+                return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+              }
+              // 2) #RGB, #RRGGBB or #AARRGGBB
+              const mHex = t.match(/(#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8}))(?![0-9a-fA-F])/)
+              if (mHex) {
+                const h = mHex[1]
+                if (h.length === 4) { // #RGB -> #RRGGBB
+                  const r = h[1], g = h[2], b = h[3]
+                  return `#${r}${r}${g}${g}${b}${b}`
+                }
+                return h // #RRGGBB or #AARRGGBB
+              }
+              return ""
+            }
             Rectangle {
               anchors.fill: parent
               color: hovered ? Globals.hoverHighlightColor : "transparent"
@@ -467,6 +549,18 @@ BarBlock {
                 opacity: 0.7
                 horizontalAlignment: Text.AlignRight
                 Layout.preferredWidth: 10
+              }
+              // Optional color swatch if entry contains a recognized color
+              Rectangle {
+                visible: colorValue !== ""
+                width: 14
+                height: 14
+                radius: 2
+                color: visible ? colorValue : "transparent"
+                border.width: 1
+                border.color: Qt.rgba(0, 0, 0, 0.35)
+                Layout.leftMargin: 4
+                Layout.rightMargin: 4
               }
               Label {
                 text: modelData && modelData.text ? modelData.text : ""
