@@ -28,6 +28,9 @@ Singleton {
   // Hyprlock config path
   readonly property string hyprlockConfigFile: "~/.config/hypr/hyprlock.conf"
   readonly property string hyprlockConfigFileAbs: hyprlockConfigFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + hyprlockConfigFile.slice(1)) : "") : hyprlockConfigFile
+  // Hyprland colors path
+  readonly property string hyprlandColorsFile: "~/.config/hypr/hyprland_colors.conf"
+  readonly property string hyprlandColorsFileAbs: hyprlandColorsFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + hyprlandColorsFile.slice(1)) : "") : hyprlandColorsFile
   // Cava config path
   readonly property string cavaConfigFile: "~/.config/cava/config"
   readonly property string cavaConfigFileAbs: cavaConfigFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + cavaConfigFile.slice(1)) : "") : cavaConfigFile
@@ -53,6 +56,96 @@ Singleton {
         if (s && s !== homeDir) homeDir = s
       }
     }
+  }
+
+  // Re-apply Hyprland colors whenever the core theme properties change
+  onBarBorderColorChanged: {
+    if (useMatugenColors && hyprlandColorsDebounce) hyprlandColorsDebounce.restart()
+  }
+  onHoverHighlightColorChanged: {
+    if (useMatugenColors && hyprlandColorsDebounce) hyprlandColorsDebounce.restart()
+  }
+  onPopupBgChanged: {
+    if (useMatugenColors && hyprlandColorsDebounce) hyprlandColorsDebounce.restart()
+  }
+
+  // Update Hyprland colors (~/.config/hypr/hyprland_colors.conf) from current theme
+  // Only adjust the rgba(...) hex values for the known keys, preserve all other content
+  function updateHyprlandColorsFromMap(map) {
+    try {
+      // Helpers to rgba(rrggbbaa) (lowercase as preferred by Hyprland samples)
+      function RGBA8(x, a /* 0-255 or undefined */) {
+        const rrggbbaa = toRgba8(x, (typeof a === 'number') ? a : undefined)
+        return 'rgba(' + String(rrggbbaa).toLowerCase() + ')'
+      }
+
+      // Use the same theme properties we use to write Niri to ensure parity
+      const activeHex = Globals.barBorderColor || '#00bee7'
+      const inactiveHex = Globals.hoverHighlightColor || '#595959'
+      console.log('[HyprlandColors] using theme props active=', activeHex, 'inactive=', inactiveHex)
+
+      // Background from popupBg (theme background)
+      const backgroundHex = Globals.popupBg || '#111318'
+
+      const active_border = RGBA8(activeHex, 0xEE)
+      const inactive_border = RGBA8(inactiveHex, 0xAA)
+      const background_color = RGBA8(backgroundHex, 0xFF)
+      // Windowrule border colors: active with AA, inactive with 77
+      const wl_border_a = RGBA8(activeHex, 0xAA)
+      const wl_border_b = RGBA8(inactiveHex, 0x77)
+
+      let text = ''
+      try { text = String(hyprlandColorsView.text() || '') } catch (e) { text = '' }
+      if (!hyprlandColorsFileAbs || !hyprlandColorsFileAbs.length || !text || !text.length) {
+        console.log('[HyprlandColors] skip write: config not loaded yet or path unresolved; preserving file (will retry if scheduled). path=', hyprlandColorsFileAbs, ' loadedLen=', (text||'').length)
+        return
+      }
+
+      function replKV(src, key, value) {
+        const re = new RegExp('(^|\\n)([\\t ]*)' + key.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&') + '\\s*=\\s*rgba\\([0-9a-fA-F]{8}\\)')
+        return src.replace(re, function(m, pre, indent) { return pre + indent + key + ' = ' + value })
+      }
+
+      let out = text
+      out = replKV(out, 'col.active_border', active_border)
+      out = replKV(out, 'col.inactive_border', inactive_border)
+      out = replKV(out, 'background_color', background_color)
+      // windowrulev2 bordercolor rgba(XXXXXXXX) rgba(YYYYYYYY), keep trailing selectors
+      out = out.replace(/(^|\n)([\t ]*)windowrulev2\s*=\s*bordercolor\s*rgba\([0-9a-fA-F]{8}\)\s*rgba\([0-9a-fA-F]{8}\)([^\n]*)/,
+        function(m, pre, indent, tail) { return pre + indent + 'windowrulev2 = bordercolor ' + wl_border_a + ' ' + wl_border_b + tail })
+
+      if (out !== text) {
+        const b64 = Qt.btoa(out)
+        console.log('[HyprlandColors] writing updated colors to', hyprlandColorsFileAbs)
+        console.log('[HyprlandColors] computed:', { active_border, inactive_border, background_color, wl_border_a, wl_border_b })
+        hyprlandColorsSaveProc.command = [
+          'bash','-lc',
+          "mkdir -p ~/.config/hypr && printf '%s' '" + b64 + "' | base64 -d > '" + hyprlandColorsFileAbs + "' " +
+          "&& if command -v hyprctl >/dev/null 2>&1; then " +
+          "  hyprctl keyword general:col.active_border '" + active_border + "' >/dev/null 2>&1; " +
+          "  hyprctl keyword general:col.inactive_border '" + inactive_border + "' >/dev/null 2>&1; " +
+          "  hyprctl keyword misc:background_color '" + background_color + "' >/dev/null 2>&1; " +
+          "  hyprctl keyword windowrulev2 \"bordercolor " + wl_border_a + " " + wl_border_b + ",pinned:1\" >/dev/null 2>&1; " +
+          "  hyprctl reload >/dev/null 2>&1; " +
+          "fi || true"
+        ]
+        hyprlandColorsSaveProc.running = true
+      } else {
+        console.log('[HyprlandColors] no changes detected (keys may already match or patterns not found)')
+        // Still push live keywords so Hyprland applies the colors even if file already matches
+        hyprlandColorsSaveProc.command = [
+          'bash','-lc',
+          "if command -v hyprctl >/dev/null 2>&1; then " +
+          "  hyprctl keyword general:col.active_border " + active_border + " >/dev/null 2>&1; " +
+          "  hyprctl keyword general:col.inactive_border " + inactive_border + " >/dev/null 2>&1; " +
+          "  hyprctl keyword misc:background_color " + background_color + " >/dev/null 2>&1; " +
+          "  hyprctl keyword windowrulev2 \"bordercolor " + wl_border_a + " " + wl_border_b + ",pinned:1\" >/dev/null 2>&1; " +
+          "  hyprctl reload >/dev/null 2>&1; " +
+          "fi || true"
+        ]
+        hyprlandColorsSaveProc.running = true
+      }
+    } catch (e) { /* ignore */ }
   }
   Component.onCompleted: { homeProc.running = true }
 
@@ -248,9 +341,17 @@ Singleton {
         if (typeof alphaOverride === 'number') a = clamp(alphaOverride, 0, 255)
         return '#' + hx(a) + hx(r) + hx(g) + hx(b)
       }
-      if (s.startsWith('#') && s.length === 7) {
-        const a = (typeof alphaOverride === 'number') ? alphaOverride : 255
-        return '#' + hx(a) + s.slice(1)
+      if (s.startsWith('#')) {
+        let body = s.slice(1)
+        if (body.length === 6) {
+          const a = (typeof alphaOverride === 'number') ? alphaOverride : 255
+          return '#' + hx(a) + body
+        }
+        if (body.length === 8) { // AARRGGBB
+          const aa = (typeof alphaOverride === 'number') ? hx(alphaOverride) : body.slice(0,2)
+          const rrggbb = body.slice(2)
+          return '#' + aa + rrggbb
+        }
       }
       return '#ff000000'
     } catch (e) { return '#ff000000' }
@@ -813,7 +914,7 @@ Singleton {
     dockIconLabelColor = toArgb(onSurf)       // readable text color
     // Also sync external configs if requested
     if (useMatugenColors) {
-      console.log('[Matugen] applying external theme integrations (Niri, Ghostty, Fuzzel, Hyprgreetr, Cava, SwayNC, Hyprlock)')
+      console.log('[Matugen] applying external theme integrations (Niri, Ghostty, Fuzzel, Hyprgreetr, Cava, SwayNC, Hyprlock, HyprlandColors)')
       updateNiriColorsFromTheme()
       updateGhosttyThemeFromMap(map)
       updateFuzzelThemeFromMap(map)
@@ -821,6 +922,10 @@ Singleton {
       updateCavaThemeFromMap(map)
       updateSwayncMatugenCssFromMap(map)
       updateHyprlockThemeFromMap(map)
+      if (hyprlandColorsView) hyprlandColorsView.reload()
+      updateHyprlandColorsFromMap(map)
+      // Also schedule a short delayed retry to cover late file loads
+      if (hyprlandColorsDebounce) hyprlandColorsDebounce.restart()
     }
     // Bump epoch so listeners (e.g., Barvisualizer) can restart/refresh even if values are identical
     themeEpoch = themeEpoch + 1
@@ -1326,6 +1431,29 @@ Singleton {
     }
     onLoadFailed: (error) => { /* ignore (Hyprlock may not be installed) */ }
   }
+  // Lightweight reader for Hyprland colors file
+  FileView {
+    id: hyprlandColorsView
+    path: hyprlandColorsFileAbs
+    onLoaded: {
+      if (Globals.useMatugenColors && Globals._lastMatugenMap) {
+        updateHyprlandColorsFromMap(Globals._lastMatugenMap)
+      }
+    }
+    onLoadFailed: (error) => { /* ignore (Hyprland may not be installed) */ }
+  }
+  // Retry shortly after Matugen apply in case file load lags
+  Timer {
+    id: hyprlandColorsDebounce
+    interval: 350
+    repeat: false
+    onTriggered: {
+      if (hyprlandColorsView) hyprlandColorsView.reload()
+      if (Globals.useMatugenColors && Globals._lastMatugenMap) {
+        updateHyprlandColorsFromMap(Globals._lastMatugenMap)
+      }
+    }
+  }
   // Lightweight reader for Cava config file
   FileView {
     id: cavaView
@@ -1345,6 +1473,8 @@ Singleton {
   Process { id: hyprgreetrSaveProc; running: false }
   // Writer for Hyprlock updates
   Process { id: hyprlockSaveProc; running: false }
+  // Writer for Hyprland colors updates
+  Process { id: hyprlandColorsSaveProc; running: false }
   // Writer for Cava updates
   Process { id: cavaSaveProc; running: false }
   // Writer for SwayNC style updates

@@ -28,6 +28,14 @@ Key paths in this repository:
 - `colors.css` – Matugen-generated palette (auto-generated)
 - `Globals.qml` – project-wide state, theme handling, and integrations
 
+
+## Installation
+
+1) Niri: follow the detailed steps in the installation.txt file (this file describes the installation on a fresh CachyOS system)
+
+2) Hyprland: also follow the detailed steps in the installation.txt file (just add hyprland to line 65, you can have both niri and hyprland if you wish to switch between them)
+
+
 ## Requirements
 
 - Arch based Linux I tested it on CachyOS
@@ -52,13 +60,6 @@ Key paths in this repository:
 
 Most optional dependencies are used only if present and configured.
 
-## Installation
-
-1) Niri (recommended): follow the detailed steps in the installation.txt file (this file describes the installation on a fresh CachyOS system)
-
-2) Hyprland: its also possible to use Celona with a existing Hyprland installation but only if you use MyLinux4Work Dotfiles (future plan is to update Celona to a standalone version for hyprland)
--   for this way install quickshell, cd into ~/.config/quickshell and clone this repository
--   replace the waybar spawn in your hyprland config with "quickshell --config ~/.config/quickshell/Celona" and toogle off waybar in the ml4w settings app.
 
 ## Configuration
 

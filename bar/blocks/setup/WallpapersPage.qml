@@ -155,6 +155,9 @@ Item {
               Globals.saveTheme()
               // Ensure Niri focus ring colors are applied immediately (independent of Matugen flow)
               if (Globals.updateNiriColorsFromTheme) Globals.updateNiriColorsFromTheme()
+              // Ensure Hyprland colors are also updated immediately if Matugen is active
+              if (Globals.updateHyprlandColorsFromMap && Globals.useMatugenColors && Globals._lastMatugenMap)
+                Globals.updateHyprlandColorsFromMap(Globals._lastMatugenMap)
               // Regenerate Matugen colors without changing final mode: run toggle twice
               const togglePath = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
               matugenProc._pendingSecond = true
@@ -203,6 +206,9 @@ Item {
               Globals.saveTheme()
               // Also update Niri focus ring colors right away
               if (Globals.updateNiriColorsFromTheme) Globals.updateNiriColorsFromTheme()
+              // Also update Hyprland colors right away if Matugen is active
+              if (Globals.updateHyprlandColorsFromMap && Globals.useMatugenColors && Globals._lastMatugenMap)
+                Globals.updateHyprlandColorsFromMap(Globals._lastMatugenMap)
               // Regenerate Matugen colors without changing final mode: run toggle twice
               const togglePath2 = String(Qt.resolvedUrl("root:/scripts/matugen-toggle.sh")).replace(/^file:\/\//, "")
               matugenProc._pendingSecond = true
