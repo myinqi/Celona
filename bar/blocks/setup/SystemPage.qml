@@ -189,9 +189,6 @@ Item {
             }
           }
 
-          
-
-
           // Spacer to keep some breathing room at bottom
           Item { Layout.fillWidth: true; Layout.preferredHeight: 4 }
         }

@@ -194,6 +194,16 @@ Item {
             const c = (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
             if (hideBarChk.contentItem && hideBarChk.contentItem.color !== undefined) hideBarChk.contentItem.color = c
           }
+          function onMainFontFamilyChanged() {
+            if (hideBarChk.contentItem && hideBarChk.contentItem.font) {
+              hideBarChk.contentItem.font.family = Globals.mainFontFamily
+            }
+          }
+          function onMainFontSizeChanged() {
+            if (hideBarChk.contentItem && hideBarChk.contentItem.font) {
+              hideBarChk.contentItem.font.pixelSize = Globals.mainFontSize
+            }
+          }
         }
         ToolTip {
           id: hideTip
