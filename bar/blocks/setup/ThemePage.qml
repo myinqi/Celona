@@ -288,27 +288,43 @@ Item {
             }
 
             Item {
-              Layout.preferredWidth: 95
-              Layout.minimumWidth: 95
-              Layout.maximumWidth: 95
-              width: 95; height: 24
+              Layout.preferredWidth: 160
+              Layout.minimumWidth: 140
+              Layout.maximumWidth: 220
+              width: 160; height: 40
               Rectangle {
                 anchors.fill: parent
                 radius: 4
-                color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+                color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.base
                 border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
               }
-              Label {
+              TextField {
                 anchors.fill: parent
                 anchors.margins: 6
                 text: editor.getColor(modelData.key)
-                color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                color: Globals.popupText !== "" ? Globals.popupText : (palette.active.text || "#FFFFFF")
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 font.family: "monospace"
-                elide: Text.ElideRight
-                Accessible.role: Accessible.StaticText
-                focusPolicy: Qt.NoFocus
+                font.pixelSize: 13
+                selectByMouse: true
+                enabled: !Globals.useMatugenColors
+                placeholderText: "#RRGGBB[AA]"
+                selectionColor: Globals.hoverHighlightColor || palette.active.highlight
+                background: Rectangle {
+                  radius: 4
+                  color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.base
+                  border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.mid
+                  border.width: 1
+                }
+                onAccepted: {
+                  const v = String(text || '').trim()
+                  if (v && v.length > 0) { Globals[modelData.key] = v; Globals.saveTheme() }
+                }
+                onEditingFinished: {
+                  const v = String(text || '').trim()
+                  if (v && v.length > 0) { Globals[modelData.key] = v; Globals.saveTheme() }
+                }
               }
             }
 
