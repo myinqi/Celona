@@ -1,0 +1,7 @@
+version: "1.0 (Luna)"
+release_notes: |-
+  Initial stable release of Celona.
+  - New Setup window as a regular WM-managed window (better input & WM rule integration)
+  - Theme editor: editable color fields with theme-aware styling
+  - Game Mode: toggle via script with file-trigger fallback; optional IPC hook
+  - Assorted fixes and UX improvements

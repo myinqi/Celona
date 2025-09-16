@@ -38,6 +38,11 @@ Singleton {
   readonly property string swayncMatugenCssFile: "~/.config/swaync/matugen_colors.css"
   readonly property string swayncMatugenCssFileAbs: swayncMatugenCssFile.indexOf("~/") === 0 ? (homeReady ? (homeDir + swayncMatugenCssFile.slice(1)) : "") : swayncMatugenCssFile
   readonly property string defaultsFile: Qt.resolvedUrl("root:/defaults")
+  // Celona version metadata
+  readonly property string versionFile: Qt.resolvedUrl("root:/VERSION.yaml")
+  // Exposed version info
+  property string celonaVersion: "dev"
+  property string celonaReleaseNotes: ""
   property string _themeBuf: ""
   // internal flags for async operations
   property bool _resetFromDefaultsRequested: false
@@ -57,6 +62,43 @@ Singleton {
       }
     }
   }
+
+  // Load and parse VERSION.yaml (very lightweight YAML reader for two keys: version, release_notes)
+  FileView {
+    id: versionView
+    path: versionFile
+    onLoaded: {
+      try {
+        const t = String(versionView.text()||"")
+        let v = celonaVersion
+        let notes = celonaReleaseNotes
+        // version: 1.0 (Luna)
+        const m = t.match(/^[ \t]*version:[ \t]*\"?([^\n\"]+)\"?/m)
+        if (m && m[1]) v = m[1].trim()
+        // release_notes: |- or |
+        let r = t.match(/^[ \t]*release_notes[ \t]*:[ \t]*\|\-?[ \t]*\n([\s\S]*)/m)
+        if (r && r[1]) {
+          // Stop at first non-indented line
+          const lines = r[1].split(/\n/)
+          let out = []
+          for (let i = 0; i < lines.length; i++) {
+            const ln = lines[i]
+            if (ln.length && !/^\s/.test(ln)) break
+            out.push(ln.replace(/^\s{2}/, ''))
+          }
+          notes = out.join("\n").replace(/\n+$/,'')
+        } else {
+          // Or plain scalar: release_notes: "..."
+          const r2 = t.match(/^[ \t]*release_notes:[ \t]*\"([\s\S]*?)\"[ \t]*$/m)
+          if (r2 && r2[1]) notes = r2[1]
+        }
+        if (v && v.length) celonaVersion = v
+        celonaReleaseNotes = notes || ""
+      } catch (e) { /* ignore */ }
+    }
+    onLoadFailed: (error) => { /* optional */ }
+  }
+  
 
   // Re-apply Hyprland colors whenever the core theme properties change
   onBarBorderColorChanged: {
