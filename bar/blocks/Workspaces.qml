@@ -39,9 +39,9 @@ Item {
           text: modelData.id
           anchors.centerIn: parent
           color: modelData.active ? root.activeText : root.inactiveText
-          font.pixelSize: 14
+          font.pixelSize: Globals.mainFontSize
           font.bold: modelData.active
-          font.family: "JetBrains Mono Nerd Font, sans-serif"
+          font.family: Globals.mainFontFamily
         }
       }
     }
@@ -50,8 +50,8 @@ Item {
       visible: (Utils.CompositorUtils.workspaces.length || 0) === 0
       text: "No workspaces"
       color: Globals.workspaceTextColor
-      font.pixelSize: 12
-      font.family: "JetBrains Mono Nerd Font, sans-serif"
+      font.pixelSize: Globals.mainFontSize
+      font.family: Globals.mainFontFamily
     }
   }
 }

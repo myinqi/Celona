@@ -417,7 +417,8 @@ BarBlock {
                 anchors.centerIn: parent
                 text: parent.label
                 color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
-                font.pixelSize: 12
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
             }
         }
     }
@@ -459,6 +460,8 @@ BarBlock {
                 anchors.margins: 10
                 text: "Keybinds"
                 color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.NoWrap
             }
@@ -536,7 +539,8 @@ BarBlock {
                             id: headerText
                             text: "Keybinds parsed from " + _baseName(root._resolvedPath || Globals.keybindsPath) + (root._parserName ? ("  (" + root._parserName + ")") : "")
                             color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
-                            font.pixelSize: 12
+                            font.family: Globals.mainFontFamily
+                            font.pixelSize: Globals.mainFontSize
                             Layout.alignment: Qt.AlignVCenter
                         }
                         // Niri helper: open built-in hotkey overlay
@@ -552,7 +556,8 @@ BarBlock {
                                 id: overlayText
                                 anchors.centerIn: parent
                                 text: "Open Niri overlay"
-                                font.pixelSize: 11
+                                font.family: Globals.mainFontFamily
+                                font.pixelSize: Globals.mainFontSize
                                 color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
                             }
                             MouseArea {
@@ -570,14 +575,14 @@ BarBlock {
                         visible: String(Globals.keybindsPath || "").trim().length === 0
                         implicitWidth: noPathText.implicitWidth
                         implicitHeight: noPathText.implicitHeight
-                        Text { id: noPathText; text: "No keybinds file configured. Set 'keybindsPath' in config.json to display the cheatsheet."; color: Globals.popupText !== "" ? Globals.popupText : "#bbb"; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; width: sheetContent.width }
+                        Text { id: noPathText; text: "No keybinds file configured. Set 'keybindsPath' in config.json to display the cheatsheet."; color: Globals.popupText !== "" ? Globals.popupText : "#bbb"; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; width: sheetContent.width; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
                     }
                     // Loading placeholder when path set but no data yet
                     Item {
                         visible: String(Globals.keybindsPath || "").trim().length > 0 && !(keybinds && keybinds.children && keybinds.children[0] && keybinds.children[0].children && keybinds.children[0].children.length > 0)
                         implicitWidth: loadingText.implicitWidth
                         implicitHeight: loadingText.implicitHeight
-                        Text { id: loadingText; text: "Loading keybinds..."; color: Globals.popupText !== "" ? Globals.popupText : "#bbb" }
+                        Text { id: loadingText; text: "Loading keybinds..."; color: Globals.popupText !== "" ? Globals.popupText : "#bbb"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
                     }
 
                     RowLayout { // Keybind columns
@@ -606,6 +611,8 @@ BarBlock {
                                                  font.italic: true
                                                  color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
                                                  text: modelData.name
+                                                 font.family: Globals.mainFontFamily
+                                                 font.pixelSize: Globals.mainFontSize
                                              }
                                             GridLayout {
                                                 id: keybindGrid
@@ -647,6 +654,8 @@ BarBlock {
                                                                     Layout.alignment: Qt.AlignVCenter
                                                                     text: "+"
                                                                     color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
+                                                                    font.family: Globals.mainFontFamily
+                                                                    font.pixelSize: Globals.mainFontSize
                                                                 }
                                                                 Loader {
                                                                     id: keybindKey
@@ -665,7 +674,8 @@ BarBlock {
                                                                 Text {
                                                                     id: commentText
                                                                     anchors.centerIn: parent
-                                                                    font.pixelSize: 12
+                                                                    font.family: Globals.mainFontFamily
+                                                                    font.pixelSize: Globals.mainFontSize
                                                                     text: modelData.comment
                                                                     color: Globals.popupText !== "" ? Globals.popupText : "#bbb"
                                                                 }

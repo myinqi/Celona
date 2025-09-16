@@ -9,9 +9,11 @@ Item {
 
   property color color: Globals.windowTitleColor
   property bool bold: true
-  property int pixelSize: 14
-  property string family: "JetBrains Mono Nerd Font, sans-serif"
-  property int maxWidth: 600
+  property int pixelSize: Globals.mainFontSize
+  property string family: String(Globals.mainFontFamily || "JetBrains Mono Nerd Font, sans-serif")
+  // Dynamische maximale Breite: standardmäßig 35% der Elternbreite, Fallback 600px
+  property real maxWidthRatio: 0.35
+  property int maxWidth: parent ? Math.floor(parent.width * maxWidthRatio) : 600
 
   Text {
     id: title

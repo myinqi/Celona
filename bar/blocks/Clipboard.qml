@@ -60,6 +60,7 @@ BarBlock {
         text: "Left: Clipboard history\nRight: Delete history"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         font.family: Globals.mainFontFamily
+        font.pixelSize: Globals.mainFontSize
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap
       }
@@ -441,7 +442,8 @@ BarBlock {
           Text {
             id: headerText
             text: "Clipboard history"
-            font.pixelSize: 12
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
             font.bold: true
             color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
             Layout.alignment: Qt.AlignVCenter
@@ -451,7 +453,8 @@ BarBlock {
           Text {
             id: headerCount
             text: `(${root.entryCount})`
-            font.pixelSize: 12
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
             color: Globals.popupText !== "" ? Globals.popupText : "#bbb"
             opacity: 0.8
             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
@@ -548,6 +551,8 @@ BarBlock {
                 opacity: 0.7
                 horizontalAlignment: Text.AlignRight
                 Layout.preferredWidth: 10
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
               }
               // Optional color swatch if entry contains a recognized color
               Rectangle {
@@ -570,6 +575,8 @@ BarBlock {
                 rightPadding: 0
                 Layout.rightMargin: 0
                 Layout.fillWidth: true
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
               }
             }
           }
@@ -590,6 +597,8 @@ BarBlock {
             opacity: 0.7
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
           }
         }
 

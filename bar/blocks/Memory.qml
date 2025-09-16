@@ -145,6 +145,8 @@ BarBlock {
                 + " / " + (totalKB / 1048576).toFixed(1) + " GB ("
                 + Math.floor(percentUsed) + "%)"
           color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+          font.family: Globals.mainFontFamily
+          font.pixelSize: Globals.mainFontSize
         }
         // Mini bar: Used | Cache | Free (avail-cached)
         Rectangle {
@@ -162,36 +164,40 @@ BarBlock {
           columns: 2
           columnSpacing: 8
           rowSpacing: 2
-          Label { text: "Used:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-          Label { text: ((Math.max(totalKB - availKB, 0)) / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-          Label { text: "Cache:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-          Label { text: (cachedKB / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-          Label { text: "Free:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-          Label { text: (Math.max(availKB - cachedKB, 0) / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-          Label { text: "Available:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-          Label { text: (availKB / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-          Label { text: "Total:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-          Label { text: (totalKB / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+          Label { text: "Used:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Label { text: ((Math.max(totalKB - availKB, 0)) / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Label { text: "Cache:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Label { text: (cachedKB / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Label { text: "Free:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Label { text: (Math.max(availKB - cachedKB, 0) / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Label { text: "Available:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Label { text: (availKB / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Label { text: "Total:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Label { text: (totalKB / 1048576).toFixed(1) + " GB"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
         }
         // Swap status
         RowLayout {
           spacing: 6
-          Label { text: "Swap:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+          Label { text: "Swap:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           Label {
             color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
             text: (swapUsedKB / 1048576).toFixed(1) + " / " + (swapTotalKB / 1048576).toFixed(1) + " GB ("
                   + (swapTotalKB > 0 ? Math.round(swapUsedKB * 100 / swapTotalKB) : 0) + "%)"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
           }
         }
         // ZRAM status (if present)
         RowLayout {
           visible: (zOrigKB + zCompKB + zMemKB) > 0
           spacing: 6
-          Label { text: "ZRAM:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+          Label { text: "ZRAM:"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           Label {
             color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
             text: (zCompKB / 1048576).toFixed(1) + " / " + (zOrigKB / 1048576).toFixed(1) + " GB (x"
                   + (zCompKB > 0 ? (zOrigKB / zCompKB).toFixed(2) : "0.00") + ")"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
           }
         }
       }

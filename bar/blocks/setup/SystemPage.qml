@@ -126,7 +126,7 @@ Item {
             }
             Button {
               id: applyFontBtn
-              text: "Apply"
+              text: "apply"
               enabled: mainFontField.text && mainFontField.text.trim().length > 0
               onClicked: {
                 Globals.mainFontFamily = mainFontField.text.trim()
@@ -137,7 +137,7 @@ Item {
             }
             Button {
               id: resetFontBtn
-              text: "Reset"
+              text: "reset"
               onClicked: {
                 mainFontField.text = "JetBrains Mono Nerd Font"
                 Globals.mainFontFamily = "JetBrains Mono Nerd Font"
@@ -148,21 +148,54 @@ Item {
             }
           }
 
-          // Live preview for main font
+          // (moved) Live preview for main font appears below the size slider
+
+          // Tooltip font size configuration
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
             Label {
-              text: "Preview:"
+              text: "Main Font Size:"
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
             }
             Item { Layout.fillWidth: true }
+            // Slider gives immediate visual feedback; range clamped to 11–17
+            Slider {
+              id: mainFontSizeSlider
+              from: 11; to: 17; stepSize: 1
+              value: Math.max(10, Math.min(17, Number(Globals.mainFontSize || 12)))
+              Layout.preferredWidth: 220
+              onValueChanged: Globals.mainFontSize = Math.round(value)
+              onPressedChanged: if (!pressed) Globals.saveTheme()
+            }
+            // Current value indicator
             Text {
-              text: "The quick brown fox jumps over the lazy dog 0123456789"
+              text: String(Math.round(mainFontSizeSlider.value))
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-              font.family: String(Globals.mainFontFamily || "JetBrains Mono Nerd Font")
+              horizontalAlignment: Text.AlignHCenter
+              verticalAlignment: Text.AlignVCenter
+              Layout.preferredWidth: 28
+              // Keep this label size fixed so it doesn't jump while sliding
+              font.pixelSize: 12
             }
           }
+
+          // Preview label on its own line
+          Label {
+            text: "Preview:"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.italic: true
+          }
+
+          // Preview text on its own line
+          Text {
+            text: "Lorem ipsum dolor sit amet, elitr sed diam. 0123456789"
+            color: Globals.popupBorder
+            font.family: String(Globals.mainFontFamily || "JetBrains Mono Nerd Font")
+            font.pixelSize: Number(Globals.mainFontSize || 12)
+            wrapMode: Text.Wrap
+          }
+
 
           // Spacer to keep some breathing room at bottom
           Item { Layout.fillWidth: true; Layout.preferredHeight: 4 }

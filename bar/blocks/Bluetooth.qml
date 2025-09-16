@@ -89,6 +89,8 @@ BarBlock {
         anchors.margins: 10
         text: "Bluetooth Manager"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#ffffff"
+        font.family: Globals.mainFontFamily
+        font.pixelSize: Globals.mainFontSize
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap
       }

@@ -98,6 +98,8 @@ BarBlock {
         anchors.margins: 10
         text: "Power profile: " + root.profile
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+        font.family: Globals.mainFontFamily
+        font.pixelSize: Globals.mainFontSize
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap
       }

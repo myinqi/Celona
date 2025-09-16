@@ -45,6 +45,8 @@ Singleton {
   property string celonaReleaseNotes: ""
   // Global main UI font (user configurable)
   property string mainFontFamily: "JetBrains Mono Nerd Font"
+  // Global main UI font size (px). Currently used for tooltip text size.
+  property int mainFontSize: 12
   property string _themeBuf: ""
   // internal flags for async operations
   property bool _resetFromDefaultsRequested: false
@@ -281,6 +283,7 @@ Singleton {
   property string tooltipBorder: ""
   // Tooltip typography
   // When >0, applies to all tooltip texts; when 0, use component defaults
+  property int tooltipPixelSize: 12 // deprecated: use mainFontSize
   property int tooltipFontPixelSize: 12
   // When non-empty, sets tooltip font family; when empty, use component defaults
   property string tooltipFontFamily: ""
@@ -1119,6 +1122,9 @@ Singleton {
     tooltipBg = ""
     tooltipText = "#FFFFFF"
     tooltipBorder = ""
+    // Main font size
+    mainFontSize = 12
+    tooltipPixelSize = 12
     tooltipFontPixelSize = 12
     tooltipFontFamily = ""
     popupBg = ""
@@ -1159,6 +1165,9 @@ Singleton {
     tooltipBg = ""
     tooltipText = "#FFFFFF"
     tooltipBorder = ""
+    // Main font size (keep to a sensible default)
+    mainFontSize = 12
+    tooltipPixelSize = 12
     tooltipFontPixelSize = 12
     tooltipFontFamily = ""
     // Popups
@@ -1280,8 +1289,15 @@ Singleton {
     setIf("tooltipBg")
     setIf("tooltipText")
     setIf("tooltipBorder")
+    setIf("mainFontSize")
+    setIf("tooltipPixelSize")
     setIf("tooltipFontPixelSize")
     setIf("tooltipFontFamily")
+    // Migration: if new key is absent but legacy exists, mirror it
+    if (obj.mainFontSize === undefined) {
+      if (obj.tooltipPixelSize !== undefined) Globals.mainFontSize = obj.tooltipPixelSize
+      else if (obj.tooltipFontPixelSize !== undefined) Globals.mainFontSize = obj.tooltipFontPixelSize
+    }
     setIf("popupBg")
     setIf("popupText")
     setIf("popupBorder")
@@ -1382,7 +1398,8 @@ Singleton {
       barSideMargin,
       barHidden,
       // Fonts
-      mainFontFamily,      
+      mainFontFamily,
+      mainFontSize,
       // Persist Matugen flag right after barHidden as requested
       useMatugenColors,
       // Colors
@@ -1399,8 +1416,6 @@ Singleton {
       tooltipBg,
       tooltipText,
       tooltipBorder,
-      tooltipFontPixelSize,
-      tooltipFontFamily,
       popupBg,
       popupText,
       popupBorder,
@@ -1706,6 +1721,7 @@ Singleton {
           setIf("tooltipBg")
           setIf("tooltipText")
           setIf("tooltipBorder")
+          setIf("tooltipPixelSize")
           setIf("tooltipFontPixelSize")
           setIf("tooltipFontFamily")
           setIf("popupBg")

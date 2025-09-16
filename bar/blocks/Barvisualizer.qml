@@ -129,6 +129,8 @@ BarBlock {
                 anchors.margins: 10
                 text: "Audio Visualizer"
                 color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.NoWrap
             }

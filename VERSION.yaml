@@ -5,3 +5,4 @@ release_notes: |-
   - Theme editor: editable color fields with theme-aware styling
   - Game Mode: toggle via script with file-trigger fallback; optional IPC hook (default: 󰘳 +G)
   - Assorted fixes and UX improvements
+  - Global Font and Fontsize definition (Globals.mainFontFamily and Globals.mainFontSize)

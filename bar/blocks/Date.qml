@@ -86,6 +86,8 @@ BarBlock {
         anchors.margins: 10
         text: "Calendar"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+        font.family: Globals.mainFontFamily
+        font.pixelSize: Globals.mainFontSize
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap
       }
@@ -178,13 +180,13 @@ BarBlock {
           Button {
             text: "⟨"
             onClicked: calendar.prevMonth()
-            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             background: Rectangle { color: "transparent" }
           }
           Button {
             text: "⟪"
             onClicked: calendar.prevYear()
-            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             background: Rectangle { color: "transparent" }
           }
           Item { width: 6; height: 1 }
@@ -192,25 +194,27 @@ BarBlock {
             text: headerRow.months[calendar.displayMonth].slice(0, 3) + " " + calendar.displayYear
             font.bold: true
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
           }
           Item { width: 6; height: 1 }
           Button {
             text: "⟫"
             onClicked: calendar.nextYear()
-            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             background: Rectangle { color: "transparent" }
           }
           Button {
             text: "⟩"
             onClicked: calendar.nextMonth()
-            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             background: Rectangle { color: "transparent" }
           }
           Item { Layout.fillWidth: true; height: 1 }
           Button {
             text: "Now"
             onClicked: calendar.toToday()
-            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+            contentItem: Text { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             background: Rectangle { radius: 4; color: Globals.hoverHighlightColor !== "" ? Globals.hoverHighlightColor : "#6c7086" }
           }
         }
@@ -225,6 +229,8 @@ BarBlock {
               width: 28
               horizontalAlignment: Text.AlignHCenter
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
             }
           }
         }
@@ -245,6 +251,8 @@ BarBlock {
                 width: 28
                 horizontalAlignment: Text.AlignHCenter
                 color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
               }
               Repeater {
                 model: 7
@@ -258,6 +266,8 @@ BarBlock {
                     anchors.centerIn: parent
                     text: dayObj ? dayObj.day : ""
                     color: dayObj && dayObj.inMonth ? (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF") : "#808080"
+                    font.family: Globals.mainFontFamily
+                    font.pixelSize: Globals.mainFontSize
                   }
                 }
               }

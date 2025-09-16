@@ -104,6 +104,8 @@ BarBlock {
         anchors.margins: 10
         text: "Window selector"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+        font.family: Globals.mainFontFamily
+        font.pixelSize: Globals.mainFontSize
         wrapMode: Text.NoWrap
         verticalAlignment: Text.AlignVCenter
       }
@@ -208,6 +210,22 @@ BarBlock {
           anchors.margins: 10
           spacing: 8
 
+          // Header similar to Clipboard
+          RowLayout {
+            id: headerRow
+            spacing: 10
+            Layout.fillWidth: true
+            Text {
+              text: "Window selector"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
+              font.bold: true
+              color: Globals.popupText !== "" ? Globals.popupText : "#ddd"
+              Layout.alignment: Qt.AlignVCenter
+            }
+            Item { Layout.fillWidth: true }
+          }
+
           // Window list
           ListView {
             id: list
@@ -230,13 +248,15 @@ BarBlock {
                   text: iconForApp(app)
                   color: Globals.moduleIconColor !== "" ? Globals.moduleIconColor : (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
                   font.family: "Symbols Nerd Font Mono"
-                  font.pixelSize: 14
+                  font.pixelSize: Globals.mainFontSize
                   verticalAlignment: Text.AlignVCenter
                   width: 18
                 }
                 Text {
                   text: `${title || app || "Window"}`
                   color: Globals.popupText
+                  font.family: Globals.mainFontFamily
+                  font.pixelSize: Globals.mainFontSize
                   elide: Text.ElideRight
                   verticalAlignment: Text.AlignVCenter
                   width: parent.width - wsText.width - iconText.width - 16
@@ -245,6 +265,8 @@ BarBlock {
                   id: wsText
                   text: workspace !== undefined && workspace !== null ? `ws ${workspace}` : ""
                   color: Globals.moduleIconColor
+                  font.family: Globals.mainFontFamily
+                  font.pixelSize: Globals.mainFontSize
                   verticalAlignment: Text.AlignVCenter
                   horizontalAlignment: Text.AlignRight
                   width: 54

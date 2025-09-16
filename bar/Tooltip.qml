@@ -85,13 +85,18 @@ LazyLoader {
           onLoaded: {
             // Apply tooltip text color and font settings to nested items
             const c = Globals.tooltipText
+            const px = (Globals.mainFontSize !== undefined && Globals.mainFontSize > 0)
+              ? Globals.mainFontSize
+              : ((Globals.tooltipPixelSize !== undefined && Globals.tooltipPixelSize > 0)
+                  ? Globals.tooltipPixelSize
+                  : Globals.tooltipFontPixelSize)
             function applyStyle(it) {
               if (!it) return
               if ("color" in it && c && c !== "") { it.color = c }
               // Apply font settings when available
               if (it.font !== undefined) {
-                if (Globals.tooltipFontPixelSize > 0 && it.font.pixelSize !== undefined) {
-                  it.font.pixelSize = Globals.tooltipFontPixelSize
+                if (px > 0 && it.font.pixelSize !== undefined) {
+                  it.font.pixelSize = px
                 }
                 if (Globals.tooltipFontFamily !== "" && it.font.family !== undefined) {
                   it.font.family = Globals.tooltipFontFamily

@@ -199,6 +199,8 @@ BarBlock {
           text: "Pending updates"
           font.bold: true
           color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+          font.family: Globals.mainFontFamily
+          font.pixelSize: Globals.mainFontSize
         }
 
         // Scrollable area for the list
@@ -216,7 +218,7 @@ BarBlock {
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
             font.family: String(Globals.mainFontFamily || "JetBrains Mono Nerd Font")
-            font.pixelSize: 12
+            font.pixelSize: Globals.mainFontSize
             color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
             text: updatesLoading
                     ? "(Fetching updates...)"
@@ -322,6 +324,8 @@ BarBlock {
         textFormat: Text.PlainText
         text: "Left: Update\nRight: Show list"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+        font.family: Globals.mainFontFamily
+        font.pixelSize: Globals.mainFontSize
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap
       }

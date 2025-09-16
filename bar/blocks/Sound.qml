@@ -100,6 +100,7 @@ BarBlock {
                 text: "Left: Volume menu\nRight: Visualizer"
                 color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
                 font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.NoWrap
             }
@@ -158,15 +159,19 @@ BarBlock {
                     spacing: 8
                     width: parent.width
                     Text {
-                        text: "Cava Visualizer"
+                        // Make only this label bold
+                        textFormat: Text.RichText
+                        text: "<b>Cava Visualizer</b>"
                         color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                        font.pixelSize: 12
+                        font.family: Globals.mainFontFamily
+                        font.pixelSize: Globals.mainFontSize
                     }
                     Text {
                         text: vizWindow.nowPlaying !== "" ? `• ${vizWindow.nowPlaying}` : ""
                         color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
                         elide: Text.ElideRight
-                        font.pixelSize: 12
+                        font.family: Globals.mainFontFamily
+                        font.pixelSize: Globals.mainFontSize
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                         width: parent.width - 160
@@ -185,7 +190,8 @@ BarBlock {
                         visible: !vizWindow.cavaAvailable || vizWindow.errorText !== ""
                         text: vizWindow.errorText !== "" ? vizWindow.errorText : "please install cava pkg"
                         color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                        font.pixelSize: 12
+                        font.family: Globals.mainFontFamily
+                        font.pixelSize: Globals.mainFontSize
                     }
 
                     Row {
@@ -415,7 +421,8 @@ BarBlock {
                                 anchors.leftMargin: 10
                                 text: modelData.text
                                 color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                                font.pixelSize: 12
+                                font.family: Globals.mainFontFamily
+                                font.pixelSize: Globals.mainFontSize
                                 verticalAlignment: Text.AlignVCenter
                             }
 

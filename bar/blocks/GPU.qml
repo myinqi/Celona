@@ -245,10 +245,10 @@ BarBlock {
         anchors.fill: parent
         anchors.margins: 10
         spacing: 2
-        Text { text: "Model: " + root.gpuModel; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "Driver: " + root.gpuDriver; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "VRAM: " + (root.usedGB !== "-" ? (root.usedGB + " / " + root.totalGB + " GB") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "Temp: " + (root.tempC !== "-" ? (root.tempC + " °C") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Model: " + root.gpuModel; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+        Text { text: "Driver: " + root.gpuDriver; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+        Text { text: "VRAM: " + (root.usedGB !== "-" ? (root.usedGB + " / " + root.totalGB + " GB") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+        Text { text: "Temp: " + (root.tempC !== "-" ? (root.tempC + " °C") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       }
     }
   }

@@ -87,6 +87,8 @@ BarBlock {
         anchors.margins: 10
         text: "Left: Power menu\nRight: Lock screen"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+        font.family: Globals.mainFontFamily
+        font.pixelSize: Globals.mainFontSize
         wrapMode: Text.NoWrap
         verticalAlignment: Text.AlignVCenter
       }
@@ -178,13 +180,14 @@ BarBlock {
                   text: modelData.icon
                   color: Globals.moduleIconColor !== "" ? Globals.moduleIconColor : (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
                   font.family: "Symbols Nerd Font Mono"
-                  font.pixelSize: 14
+                  font.pixelSize: Globals.mainFontSize
                   verticalAlignment: Text.AlignVCenter
                 }
                 Text {
                   text: modelData.text
                   color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                  font.pixelSize: 12
+                  font.family: Globals.mainFontFamily
+                  font.pixelSize: Globals.mainFontSize
                   verticalAlignment: Text.AlignVCenter
                   elide: Text.ElideRight
                 }

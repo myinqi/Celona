@@ -109,7 +109,7 @@ BarBlock {
         anchors.fill: parent
         anchors.margins: 10
         spacing: 2
-        Text { text: "Usage: " + (isNaN(root.cpuPercent) ? "-" : (Math.floor(root.cpuPercent) + "%")) + "  |  Load: " + root.loadavg1 + ", " + root.loadavg5 + ", " + root.loadavg15; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Usage: " + (isNaN(root.cpuPercent) ? "-" : (Math.floor(root.cpuPercent) + "%")) + "  |  Load: " + root.loadavg1 + ", " + root.loadavg5 + ", " + root.loadavg15; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
         // 60s CPU usage histogram (time on X recent→rechts, usage on Y)
         Canvas {
           id: cpuHist
@@ -151,11 +151,11 @@ BarBlock {
             }
           }
         }
-        Text { text: "Temp: " + (root.cpuTempC !== "-" ? (root.cpuTempC + " °C") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "Gov: " + root.governor; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "CPU: " + root.cpuModel; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "vCPUs: " + root.logicalCores; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
-        Text { text: "Freq: " + root.cpuFreqGHz + " GHz (avg all cores)"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+        Text { text: "Temp: " + (root.cpuTempC !== "-" ? (root.cpuTempC + " °C") : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+        Text { text: "Gov: " + root.governor; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+        Text { text: "CPU: " + root.cpuModel; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+        Text { text: "vCPUs: " + root.logicalCores; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+        Text { text: "Freq: " + root.cpuFreqGHz + " GHz (avg all cores)"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       }
     }
   }
