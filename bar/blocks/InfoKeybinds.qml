@@ -28,8 +28,8 @@ BarBlock {
 
     property var keyBlacklist: ["Super_L"]
     property var keySubstitutions: ({
-        "Super": "󰖳",
-        "Mod": "󰖳",
+        "Super": "󰘳",
+        "Mod": "󰘳",
         "mouse_up": "Scroll ↓",    
         "mouse_down": "Scroll ↑",  
         "mouse:272": "LMB",
