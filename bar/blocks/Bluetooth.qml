@@ -26,7 +26,7 @@ BarBlock {
 
   // UI
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // Bluetooth icon (Material Design Nerd Font) — more reliable in Symbols NF
     // Compose icon + fixed-width status (3 chars) to prevent layout shifts (e.g., "on", "off")

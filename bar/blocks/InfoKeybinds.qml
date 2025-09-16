@@ -20,7 +20,7 @@ BarBlock {
     // Inline bar UI: keyboard icon
     content: BarText {
         id: label
-        mainFont: "JetBrains Mono Nerd Font"
+        mainFont: Globals.mainFontFamily
         symbolFont: "Symbols Nerd Font Mono"
         symbolText: "" // keyboard icon
         symbolSpacing: 0

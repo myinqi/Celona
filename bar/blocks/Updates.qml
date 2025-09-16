@@ -27,7 +27,7 @@ BarBlock {
   // UI
   content: BarText {
     id: txt
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // Fixed-width numeric area (0–999): pad to 3 chars to prevent layout shifts
     property string count3: String(count).padStart(3, " ")
@@ -215,7 +215,7 @@ BarBlock {
             width: parent.width
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
-            font.family: "JetBrains Mono Nerd Font"
+            font.family: String(Globals.mainFontFamily || "JetBrains Mono Nerd Font")
             font.pixelSize: 12
             color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
             text: updatesLoading

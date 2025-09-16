@@ -14,7 +14,7 @@ BarBlock {
   // Appearance
   property string iconGlyph: "󰅌" // nf-md-clipboard-text-outline
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // Show icon and the current number of history entries
     // Fixed-width numeric area (0–999): pad to 3 chars to prevent layout shifts
@@ -59,8 +59,7 @@ BarBlock {
         anchors.margins: 10
         text: "Left: Clipboard history\nRight: Delete history"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
-        font.pixelSize: Globals.tooltipFontPixelSize
-        font.family: Globals.tooltipFontFamily !== "" ? Globals.tooltipFontFamily : font.family
+        font.family: Globals.mainFontFamily
         verticalAlignment: Text.AlignVCenter
         wrapMode: Text.NoWrap
       }

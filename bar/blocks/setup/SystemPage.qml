@@ -111,6 +111,59 @@ Item {
             }
           }
 
+          // Main font configuration
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            Label {
+              text: "Main Font:"
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            }
+            TextField {
+              id: mainFontField
+              Layout.fillWidth: true
+              text: String(Globals.mainFontFamily || "JetBrains Mono Nerd Font")
+            }
+            Button {
+              id: applyFontBtn
+              text: "Apply"
+              enabled: mainFontField.text && mainFontField.text.trim().length > 0
+              onClicked: {
+                Globals.mainFontFamily = mainFontField.text.trim()
+                Globals.saveTheme()
+              }
+              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+              background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
+            }
+            Button {
+              id: resetFontBtn
+              text: "Reset"
+              onClicked: {
+                mainFontField.text = "JetBrains Mono Nerd Font"
+                Globals.mainFontFamily = "JetBrains Mono Nerd Font"
+                Globals.saveTheme()
+              }
+              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+              background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
+            }
+          }
+
+          // Live preview for main font
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            Label {
+              text: "Preview:"
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            }
+            Item { Layout.fillWidth: true }
+            Text {
+              text: "The quick brown fox jumps over the lazy dog 0123456789"
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: String(Globals.mainFontFamily || "JetBrains Mono Nerd Font")
+            }
+          }
+
           // Spacer to keep some breathing room at bottom
           Item { Layout.fillWidth: true; Layout.preferredHeight: 4 }
         }

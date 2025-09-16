@@ -9,7 +9,7 @@ import "root:/"
 BarBlock {
   id: text
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     symbolText: ` ${Datetime.date}`
   }

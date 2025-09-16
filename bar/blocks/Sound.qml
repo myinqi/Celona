@@ -29,7 +29,7 @@ BarBlock {
     }
 
     content: BarText {
-        mainFont: "JetBrains Mono Nerd Font"
+        mainFont: Globals.mainFontFamily
         symbolFont: "Symbols Nerd Font Mono"
         // Fixed-width percent (0-100) to prevent layout shifts: pad to 3 chars
         property string percent3: String(Math.round(sink?.audio?.volume * 100)).padStart(3, " ")
@@ -99,8 +99,7 @@ BarBlock {
                 anchors.margins: 10
                 text: "Left: Volume menu\nRight: Visualizer"
                 color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
-                font.pixelSize: Globals.tooltipFontPixelSize
-                font.family: Globals.tooltipFontFamily !== "" ? Globals.tooltipFontFamily : font.family
+                font.family: Globals.mainFontFamily
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.NoWrap
             }

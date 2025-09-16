@@ -15,7 +15,7 @@ BarBlock {
   // Icon-only block using Nerd Font gear
   content: BarText {
     id: label
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     symbolText: "" // gear
     symbolSpacing: 0

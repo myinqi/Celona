@@ -34,7 +34,7 @@ BarBlock {
             BarText {
                 id: noteIcon
                 anchors.centerIn: parent
-                mainFont: "JetBrains Mono Nerd Font"
+                mainFont: Globals.mainFontFamily
                 symbolFont: "Symbols Nerd Font Mono"
                 symbolText: "♪"
             }

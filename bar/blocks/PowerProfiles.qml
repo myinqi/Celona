@@ -40,7 +40,7 @@ BarBlock {
 
   // UI
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // No text after the icon -> avoid extra gap from letter-spacing
     symbolSpacing: 0

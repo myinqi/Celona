@@ -11,7 +11,7 @@ BarBlock {
 
   // Display: network icon + percent for Wi‑Fi, cable icon only for Ethernet
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     symbolText: root.displayText
   }

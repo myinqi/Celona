@@ -10,7 +10,7 @@ BarBlock {
 
   // Display: GPU icon + usage percent
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // GPU-Icon (Nerd Font). Bei fehlender Glyph zeigt die Schriftart ein Ersatzsymbol.
     // Icon kann bei Bedarf vom Nutzer überschrieben werden.

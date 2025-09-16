@@ -125,7 +125,7 @@ BarBlock {
 
   // Consistent module text using BarText (icon + value colors from Globals)
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     symbolSpacing: 0
     symbolText: `${root.glyph} ${root.tempText}`
@@ -173,21 +173,21 @@ BarBlock {
         Text {
           text: root.loading ? "Weather" : (root.regionName && root.regionName.length > 0 ? `${root.placeText} (${root.regionName})` : `${root.placeText}`)
           color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-          font.pixelSize: 12
+          font.family: Globals.mainFontFamily
           elide: Text.ElideRight
         }
         Text {
           visible: !root.loading && (root.population && root.population.length > 0)
           text: `Population: ${root.population}`
           color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-          font.pixelSize: 12
+          font.family: Globals.mainFontFamily
           wrapMode: Text.NoWrap
           elide: Text.ElideRight
         }
         Text {
           text: root.loading ? "Loading…" : `${root.description}`
           color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-          font.pixelSize: 12
+          font.family: Globals.mainFontFamily
           wrapMode: Text.NoWrap
           elide: Text.ElideRight
         }
@@ -197,7 +197,7 @@ BarBlock {
           text: root.loading
                 ? "--°"
                 : `<span style="color:${Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"}">Now: <b>${root.tempText}</b>  Min: ${root.minText}  Max: ${root.maxText}</span>`
-          font.pixelSize: 12
+          font.family: Globals.mainFontFamily
           wrapMode: Text.NoWrap
           elide: Text.ElideRight
         }
@@ -208,14 +208,14 @@ BarBlock {
           visible: root.forecast && root.forecast.length > 0
           text: "Forecast"
           color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-          font.pixelSize: 12
+          font.family: Globals.mainFontFamily
           font.bold: true
         }
         Text {
           visible: !root.loading && (!root.forecast || root.forecast.length === 0)
           text: "No forecast available"
           color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-          font.pixelSize: 12
+          font.family: Globals.mainFontFamily
         }
         Repeater {
           model: root.forecast
@@ -224,7 +224,7 @@ BarBlock {
             Text {
               text: modelData.label
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-              font.pixelSize: 12
+              font.family: Globals.mainFontFamily
               width: 80
               wrapMode: Text.NoWrap
               elide: Text.ElideNone
@@ -232,12 +232,12 @@ BarBlock {
             Text {
               text: modelData.glyph
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-              font.pixelSize: 12
+              font.family: Globals.mainFontFamily
             }
             Text {
               text: `${modelData.min} / ${modelData.max}`
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-              font.pixelSize: 12
+              font.family: Globals.mainFontFamily
             }
           }
         }

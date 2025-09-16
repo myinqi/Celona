@@ -11,7 +11,7 @@ BarBlock {
   // Display
   content: BarText {
     // CPU icon (Font Awesome microchip) + usage percent
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // Fixed-width percent (0-100) to prevent layout shifts: pad to 3 chars
     property string percent3: isNaN(cpuPercent) ? "  -" : String(Math.floor(cpuPercent)).padStart(3, " ")

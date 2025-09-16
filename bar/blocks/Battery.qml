@@ -13,7 +13,7 @@ BarBlock {
   
   content: BarText {
     // Ensure consistent fonts and icon coloring
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     symbolText: battery
     // If only an icon is shown (no space), avoid extra icon letter-spacing; else allow spacing before text

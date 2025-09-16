@@ -43,6 +43,8 @@ Singleton {
   // Exposed version info
   property string celonaVersion: "dev"
   property string celonaReleaseNotes: ""
+  // Global main UI font (user configurable)
+  property string mainFontFamily: "JetBrains Mono Nerd Font"
   property string _themeBuf: ""
   // internal flags for async operations
   property bool _resetFromDefaultsRequested: false
@@ -1258,6 +1260,7 @@ Singleton {
     if (!obj) return
     // Preserve original types from JSON (booleans must stay booleans)
     function setIf(k) { if (obj[k] !== undefined) Globals[k] = obj[k] }
+    setIf("mainFontFamily")
     setIf("barBgColor")
     setIf("barBorderColor")
     setIf("barPosition")
@@ -1378,6 +1381,8 @@ Singleton {
       barEdgeMargin,
       barSideMargin,
       barHidden,
+      // Fonts
+      mainFontFamily,      
       // Persist Matugen flag right after barHidden as requested
       useMatugenColors,
       // Colors

@@ -61,7 +61,7 @@ BarBlock {
   readonly property bool isNiri: !isHyprland
 
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     symbolSpacing: 0
     symbolText: root.iconGlyph

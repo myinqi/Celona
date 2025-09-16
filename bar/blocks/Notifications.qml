@@ -87,7 +87,7 @@ BarBlock {
   }
 
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // Always show icon + fixed-width count (0–999). Cap display at 999 and pad to 3 chars.
     property string count3: String(Math.min(notifCount, 999)).padStart(3, " ")

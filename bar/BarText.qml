@@ -11,7 +11,9 @@ Text {
   // Determine if bar background is visually light to tune shadow strength
   readonly property color __barBg: Globals.barBgColor
   readonly property bool __barIsLight: (0.2126*__barBg.r + 0.7152*__barBg.g + 0.0722*__barBg.b) > 0.5
-  property string mainFont: "FiraCode"
+  // Default to global main font, fallback to JetBrains Mono Nerd Font if Globals not yet loaded
+  property string mainFont: (typeof Globals !== 'undefined' && Globals && Globals.mainFontFamily && Globals.mainFontFamily.length)
+                            ? Globals.mainFontFamily : "JetBrains Mono Nerd Font"
   property string symbolFont: "Symbols Nerd Font Mono"
   property int pointSize: 12
   property int symbolSize: pointSize * 1.4

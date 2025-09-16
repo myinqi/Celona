@@ -10,7 +10,7 @@ BarBlock {
   id: text
   content: BarText {
     // Symbol für Arbeitsspeicher aus Symbols Nerd Font (nf-mdi-memory: )
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // Fixed-width percent (0-100) to prevent layout shifts: pad to 3 chars
     property string percent3: String(Math.floor(percentUsed)).padStart(3, " ")

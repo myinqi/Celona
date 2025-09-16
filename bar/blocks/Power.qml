@@ -17,7 +17,7 @@ BarBlock {
   property bool logHyprlock: false
 
   content: BarText {
-    mainFont: "JetBrains Mono Nerd Font"
+    mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // No value text follows the glyph; avoid extra gap from letter-spacing
     symbolSpacing: 0
