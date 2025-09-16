@@ -85,10 +85,10 @@ Window {
           Layout.preferredWidth: 180
           Layout.fillHeight: true
           model: [
+            { name: "Layout", comp: "LayoutPage" },            
             { name: "Theme", comp: "ThemePage" },
-            { name: "Layout", comp: "LayoutPage" },
-            { name: "Modules", comp: "ModulesPage" },
             { name: "Wallpaper", comp: "WallpapersPage" },
+            { name: "Modules", comp: "ModulesPage" },
             { name: "Dock", comp: "DockPage" },
             { name: "System", comp: "SystemPage" }
           ]
@@ -110,10 +110,10 @@ Window {
           }
           onCurrentIndexChanged: {
             switch (currentIndex) {
-              case 0: stack.currentIndex = 0; break // Theme
-              case 1: stack.currentIndex = 1; break // Layout
-              case 2: stack.currentIndex = 2; break // Modules
-              case 3: stack.currentIndex = 3; break // Wallpaper
+              case 0: stack.currentIndex = 1; break // Theme
+              case 1: stack.currentIndex = 0; break // Layout
+              case 2: stack.currentIndex = 3; break // Modules
+              case 3: stack.currentIndex = 2; break // Wallpaper
               case 4: stack.currentIndex = 4; break // Dock
               case 5: stack.currentIndex = 5; break // System
             }
