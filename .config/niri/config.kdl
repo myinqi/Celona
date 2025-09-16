@@ -238,6 +238,14 @@ window-rule {
     // block-out-from "screencast"
 }
 
+window-rule {
+    match title=r#"^Celona Setup$"#
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
 
 binds {
     // Most actions that you can bind here can also be invoked programmatically with `niri msg action do-something`.

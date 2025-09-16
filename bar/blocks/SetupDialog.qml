@@ -58,7 +58,7 @@ Window {
         Item { Layout.fillWidth: true }
         Button {
           id: closeBtn
-          text: "Close"
+          text: " X "
           onClicked: dialog.visible = false
           contentItem: Label {
             text: parent.text

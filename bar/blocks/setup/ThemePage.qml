@@ -292,12 +292,7 @@ Item {
               Layout.minimumWidth: 140
               Layout.maximumWidth: 220
               width: 160; height: 40
-              Rectangle {
-                anchors.fill: parent
-                radius: 4
-                color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.base
-                border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
-              }
+
               TextField {
                 anchors.fill: parent
                 anchors.margins: 6
@@ -329,7 +324,7 @@ Item {
             }
 
             Rectangle {
-              width: 30; height: 22
+              width: 30; height: 28
               radius: 4
               color: editor.getColor(modelData.key)
               border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
