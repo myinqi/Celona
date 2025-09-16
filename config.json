@@ -2,7 +2,7 @@
   "barPosition": "top",
   "baseBarHeight": 34,
   "barEdgeMargin": 6,
-  "barSideMargin": 6,
+  "barSideMargin": 8,
   "barHidden": false,
   "useMatugenColors": true,
   "barBgColor": "#cc141318",

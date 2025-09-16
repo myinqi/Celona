@@ -35,6 +35,8 @@ Key paths in this repository:
 
 2) Hyprland: also follow the detailed steps in the installation.txt file (just add hyprland to line 65, you can have both niri and hyprland if you wish to switch between them)
 
+Important: the installation.txt describes the installation for a fresh installation with CachyOS. If you have a different Linux distribution, you can follow the steps in the installation.txt file, but you will need to install the dependencies yourself. 
+
 
 ## Requirements
 

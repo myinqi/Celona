@@ -7,7 +7,7 @@ input {
             layout "de"
             options "grp:win_space_toggle,ctrl:nocaps"
         }       
-        numlock   // Enable numlock on startup, omitting this setting disables it.
+        numlock   // numlock on startup
     }
 
     touchpad {
@@ -41,7 +41,7 @@ input {
         // scroll-button 273
         // middle-emulation
     }
-
+	workspace-auto-back-and-forth
 	warp-mouse-to-focus
     focus-follows-mouse max-scroll-amount="0%"
 }

@@ -201,7 +201,7 @@ Item {
 
               RowLayout {
                 Layout.fillWidth: true
-                Label { text: "Dock Items"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.bold: true }
+                //Label { text: "Dock Items"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.bold: true }
                 Item { Layout.fillWidth: true }
                 Text {
                   text: "New Dock items must currently be defined in config.json."

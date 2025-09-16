@@ -25,6 +25,7 @@ sudo snapper -c root set-config ALLOW_USERS="$USER" SYNC_ACL=yes
 sudo snapper -c home set-config ALLOW_USERS="$USER" SYNC_ACL=yes
 sudo micro /etc/updatedb.conf  #add .snapshots to prunenames -> PRUNENAMES = ".git .hg .svn .snapshots" then save and quit Ctrl+s Ctrl+q
 
+#note: on cachyOS the next 4 lines are already configured, skip it.
 #if you selected grub bootloader check: sudo micro /etc/mkinitcpio.conf    #at HOOKS= add -> grub-btrfs-overlayfs then save and quit Ctrl+s Ctrl+q
 #if you selected grub bootloader type: sudo mkinitcpio -P
 #if you selected grub bootloader type: sudo systemctl enable --now grub-btrfsd.service
@@ -39,8 +40,7 @@ snapper -c home create -t pre -c number -d 'pre Celona installation'
 
 # you can check the snapshots with "snapper ls" for root snapshots and "snapper -c home ls" for home snapshots #
 
-### Install the Celona Bar ###
-### continue here ############
+### Install the Celona Bar ### ### continue here ############
 mkdir ~/.config/quickshell
 cd ~/.config/quickshell
 git clone https://github.com/myinqi/Celona.git
@@ -62,7 +62,7 @@ run niri-session
 # in the secound terminal past the next commands ...
 
 ### Preperations ###
-sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker
+sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust
 
 sudo systemctl enable --now udisks2
 
@@ -88,14 +88,14 @@ systemctl --user restart xdg-desktop-portal.service \
   xdg-desktop-portal-gtk.service xdg-desktop-portal-gnome.service
 
 
-# next step may take some time to complete
-git clone https://aur.archlinux.org/paru.git
-cd paru
-makepkg -si
+# next step may take some time to complete on cachyos its already installed, skip it and continue at line 99
+#git clone https://aur.archlinux.org/paru.git
+#cd paru
+#makepkg -si
 
-cd ..
+#cd ..
 
-sudo rm -r paru
+#sudo rm -r paru
 sudo rsync -a ~/.config/quickshell/Celona/.paru/paru.conf /etc/paru.conf
 
 
@@ -190,9 +190,5 @@ clear
 snapper -c home ls
 sudo snapper -c home undochange <number of your pre snapshot>..<number of your post snapshot>
 reboot
-
-
-ToDo:
-## parse niri msg outputs and implement settings for display 
 
 
