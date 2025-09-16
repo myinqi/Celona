@@ -23,7 +23,8 @@ Item {
       text: "System"
       color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
       font.bold: true
-      font.pixelSize: 16
+      font.family: Globals.mainFontFamily
+      font.pixelSize: Globals.mainFontSize
     }
 
     Rectangle {
@@ -55,6 +56,8 @@ Item {
             Label {
               text: "Celona Version:"
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
             }
             Item { Layout.fillWidth: true }
             Text {
@@ -71,6 +74,8 @@ Item {
             Label {
               text: "Release Notes:"
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
             }
             Item { Layout.fillWidth: true }
             Button {
@@ -78,7 +83,7 @@ Item {
               text: page.showReleaseNotes ? "hide" : "show"
               enabled: (Globals.celonaReleaseNotes && Globals.celonaReleaseNotes.length > 0)
               onClicked: page.showReleaseNotes = !page.showReleaseNotes
-              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
               background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             }
           }
@@ -118,6 +123,8 @@ Item {
             Label {
               text: "Main Font:"
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
             }
             TextField {
               id: mainFontField
@@ -132,7 +139,7 @@ Item {
                 Globals.mainFontFamily = mainFontField.text.trim()
                 Globals.saveTheme()
               }
-              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
               background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             }
             Button {
@@ -143,7 +150,7 @@ Item {
                 Globals.mainFontFamily = "JetBrains Mono Nerd Font"
                 Globals.saveTheme()
               }
-              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
               background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             }
           }
@@ -157,6 +164,8 @@ Item {
             Label {
               text: "Main Font Size:"
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
             }
             Item { Layout.fillWidth: true }
             // Slider gives immediate visual feedback; range clamped to 11–17
@@ -180,21 +189,7 @@ Item {
             }
           }
 
-          // Preview label on its own line
-          Label {
-            text: "Preview:"
-            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-            font.italic: true
-          }
-
-          // Preview text on its own line
-          Text {
-            text: "Lorem ipsum dolor sit amet, elitr sed diam. 0123456789"
-            color: Globals.popupBorder
-            font.family: String(Globals.mainFontFamily || "JetBrains Mono Nerd Font")
-            font.pixelSize: Number(Globals.mainFontSize || 12)
-            wrapMode: Text.Wrap
-          }
+          
 
 
           // Spacer to keep some breathing room at bottom

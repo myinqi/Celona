@@ -50,7 +50,8 @@ Item {
       text: "Theme"
       color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
       font.bold: true
-      font.pixelSize: 17
+      font.family: Globals.mainFontFamily
+      font.pixelSize: Globals.mainFontSize
     }
 
     // Header row: Colors + Matugen toggle
@@ -63,6 +64,8 @@ Item {
         font.bold: true
         font.italic: true
         Layout.preferredWidth: 80
+        font.family: Globals.mainFontFamily
+        font.pixelSize: Globals.mainFontSize
       }
       RowLayout {
         spacing: 0
@@ -83,10 +86,7 @@ Item {
             id: matugenTip
             visible: matugenBox.hovered
             text: Globals.matugenAvailable ? (matugenBox.checked ? "Matugen colors applied from colors.css" : "Disable to reset to defaults") : "colors.css not found in project"
-            contentItem: Text {
-              text: matugenTip.text
-              color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
-            }
+            contentItem: Text { text: matugenTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             background: Rectangle {
               color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
               border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
@@ -101,6 +101,8 @@ Item {
           verticalAlignment: Text.AlignVCenter
           elide: Text.ElideRight
           Layout.alignment: Qt.AlignVCenter
+          font.family: Globals.mainFontFamily
+          font.pixelSize: Globals.mainFontSize
           MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: matugenBox.checked = !matugenBox.checked }
         }
         // Theme Mode toggle moved here next to the checkbox
@@ -108,7 +110,7 @@ Item {
           id: themeModeBtn
           visible: Globals.useMatugenColors
           enabled: Globals.useMatugenColors && !matugenProc.running
-          text: "Theme Mode: " + (page.currentMatugenMode !== "" ? page.currentMatugenMode : (Globals.useMatugenColors ? "unknown" : "disabled"))
+          text: "theme mode: " + (page.currentMatugenMode !== "" ? page.currentMatugenMode : (Globals.useMatugenColors ? "unknown" : "disabled"))
           onClicked: {
             let next = (page.currentMatugenMode === "light") ? "dark" : (page.currentMatugenMode === "dark" ? "light" : "dark")
             page.currentMatugenMode = next
@@ -119,7 +121,7 @@ Item {
           leftPadding: 12
           rightPadding: 12
           Layout.leftMargin: 80
-          contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+          contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
         }
       }
@@ -285,6 +287,8 @@ Item {
               Layout.preferredWidth: 189
               Layout.minimumWidth: 189
               Layout.maximumWidth: 189
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
             }
 
             Item {

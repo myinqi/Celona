@@ -62,7 +62,8 @@ Item {
       text: "Wallpaper"
       color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
       font.bold: true
-      font.pixelSize: 17
+      font.family: Globals.mainFontFamily
+      font.pixelSize: Globals.mainFontSize
     }
 
     // Content (framed)
@@ -86,11 +87,17 @@ Item {
           Label {
             text: "Animated Wallpaper:"
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
+            horizontalAlignment: Text.AlignHCenter
+            Layout.alignment: Qt.AlignVCenter
           }
           Item { Layout.fillWidth: true }
           Text {
             text: wpSwitch.checked ? "On (mpvpaper)" : "Off (static)"
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
           }
           Switch {
             id: wpSwitch
@@ -111,6 +118,8 @@ Item {
               contentItem: Text {
                 text: wpTip.text
                 color: (Globals.tooltipText && Globals.tooltipText !== "") ? Globals.tooltipText : "#FFFFFF"
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
               }
               background: Rectangle {
                 color: (Globals.tooltipBg && Globals.tooltipBg !== "") ? Globals.tooltipBg : palette.active.toolTipBase
@@ -130,6 +139,10 @@ Item {
             text: "Static:"
             Layout.preferredWidth: 110
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
+            horizontalAlignment: Text.AlignHCenter
+            Layout.alignment: Qt.AlignVCenter
           }
           TextField {
             id: staticPathField
@@ -137,14 +150,18 @@ Item {
             text: String(Globals.wallpaperStaticPath || "")
           }
           Button {
-            text: "Browse..."
+            text: "browse..."
             onClicked: {
               staticFileDialog.open()
             }
+            leftPadding: 12
+            rightPadding: 12
+            contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
           }
           Button {
             id: applyStaticBtn
-            text: "Apply"
+            text: "apply"
             enabled: staticPathField.text && staticPathField.text.trim().length > 0
             onClicked: {
               Globals.wallpaperStaticPath = staticPathField.text
@@ -164,12 +181,26 @@ Item {
               matugenProc.command = ["bash", "-lc", '"' + togglePath.replace(/"/g,'\\"') + '"']
               matugenProc.running = true
             }
+            leftPadding: 12
+            rightPadding: 12
+            contentItem: Label { text: parent.text.toLowerCase(); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             ToolTip {
               id: staticApplyTip
               visible: applyStaticBtn.hovered
               text: "Set static wallpaper path and save"
-              contentItem: Text { text: staticApplyTip.text; color: (Globals.tooltipText && Globals.tooltipText !== "") ? Globals.tooltipText : "#FFFFFF" }
-              background: Rectangle { color: (Globals.tooltipBg && Globals.tooltipBg !== "") ? Globals.tooltipBg : palette.active.toolTipBase; border.color: (Globals.tooltipBorder && Globals.tooltipBorder !== "") ? Globals.tooltipBorder : palette.active.light; border.width: 1; radius: 6 }
+              contentItem: Text {
+                text: staticApplyTip.text
+                color: (Globals.tooltipText && Globals.tooltipText !== "") ? Globals.tooltipText : "#FFFFFF"
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
+              }
+              background: Rectangle {
+                color: (Globals.tooltipBg && Globals.tooltipBg !== "") ? Globals.tooltipBg : palette.active.toolTipBase
+                border.color: (Globals.tooltipBorder && Globals.tooltipBorder !== "") ? Globals.tooltipBorder : palette.active.light
+                border.width: 1
+                radius: 6
+              }
             }
           }
         }
@@ -182,6 +213,10 @@ Item {
             text: "Animated:"
             Layout.preferredWidth: 110
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
+            horizontalAlignment: Text.AlignHCenter
+            Layout.alignment: Qt.AlignVCenter
           }
           TextField {
             id: animatedPathField
@@ -189,14 +224,18 @@ Item {
             text: String(Globals.wallpaperAnimatedPath || "")
           }
           Button {
-            text: "Browse..."
+            text: "browse..."
             onClicked: {
               animatedFileDialog.open()
             }
+            leftPadding: 12
+            rightPadding: 12
+            contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
           }
           Button {
             id: applyAnimatedBtn
-            text: "Apply"
+            text: "apply"
             enabled: animatedPathField.text && animatedPathField.text.trim().length > 0
             onClicked: {
               Globals.wallpaperAnimatedPath = animatedPathField.text
@@ -215,11 +254,15 @@ Item {
               matugenProc.command = ["bash", "-lc", '"' + togglePath2.replace(/"/g,'\\"') + '"']
               matugenProc.running = true
             }
+            leftPadding: 12
+            rightPadding: 12
+            contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             ToolTip {
               id: animatedApplyTip
               visible: applyAnimatedBtn.hovered
               text: "Set animated wallpaper path and save"
-              contentItem: Text { text: animatedApplyTip.text; color: (Globals.tooltipText && Globals.tooltipText !== "") ? Globals.tooltipText : "#FFFFFF" }
+              contentItem: Text { text: animatedApplyTip.text; color: (Globals.tooltipText && Globals.tooltipText !== "") ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
               background: Rectangle { color: (Globals.tooltipBg && Globals.tooltipBg !== "") ? Globals.tooltipBg : palette.active.toolTipBase; border.color: (Globals.tooltipBorder && Globals.tooltipBorder !== "") ? Globals.tooltipBorder : palette.active.light; border.width: 1; radius: 6 }
             }
           }

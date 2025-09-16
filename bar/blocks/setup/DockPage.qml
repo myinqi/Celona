@@ -24,7 +24,8 @@ Item {
       text: "Dock"
       color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
       font.bold: true
-      font.pixelSize: 17
+      font.family: Globals.mainFontFamily
+      font.pixelSize: Globals.mainFontSize
     }
 
     // Content (framed)
@@ -58,7 +59,7 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Show Dock:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140 }
+            Label { text: "Show Dock:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Item { Layout.fillWidth: true }
             Switch {
               id: showDockSwitch
@@ -66,7 +67,7 @@ Item {
               checked: Globals.showDock
               onToggled: { Globals.showDock = checked; save() }
             }
-            Text { text: showDockSwitch.checked ? "On" : "Off"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignLeft }
+            Text { text: showDockSwitch.checked ? "On" : "Off"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignLeft }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
 
@@ -74,15 +75,15 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Position:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 110 }
-            Label { text: "Horizontal"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+            Label { text: "Position:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 110; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+            Label { text: "Horizontal"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             ComboBox {
               id: posH
               model: ["left", "right"]
               currentIndex: Math.max(0, model.indexOf(Globals.dockPositionHorizontal || "right"))
               onActivated: { Globals.dockPositionHorizontal = model[currentIndex]; save() }
             }
-            Label { text: "Vertical"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+            Label { text: "Vertical"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             ComboBox {
               id: posV
               model: ["top", "center", "bottom"]
@@ -97,7 +98,7 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Auto Hide:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 110 }
+            Label { text: "Auto Hide:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 110; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Switch {
               id: autoHideSwitch
               checked: (Globals.dockLayerPosition === "autohide")
@@ -106,7 +107,7 @@ Item {
                 save()
               }
             }
-            Text { text: autoHideSwitch.checked ? "On" : "Off"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignLeft }
+            Text { text: autoHideSwitch.checked ? "On" : "Off"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignLeft }
             Item { Layout.fillWidth: true }
           }
 
@@ -114,7 +115,7 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Autohide In (ms)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140 }
+            Label { text: "Autohide In (ms)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Slider {
               id: inDur
               from: 0; to: 1000; stepSize: 10
@@ -122,13 +123,13 @@ Item {
               Layout.fillWidth: true
               onMoved: { Globals.dockAutoHideInDurationMs = Math.round(value); save() }
             }
-            Text { text: String(Math.round(inDur.value)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+            Text { text: String(Math.round(inDur.value)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Autohide Out (ms)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140 }
+            Label { text: "Autohide Out (ms)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Slider {
               id: outDur
               from: 0; to: 1500; stepSize: 10
@@ -136,7 +137,7 @@ Item {
               Layout.fillWidth: true
               onMoved: { Globals.dockAutoHideOutDurationMs = Math.round(value); save() }
             }
-            Text { text: String(Math.round(outDur.value)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+            Text { text: String(Math.round(outDur.value)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
 
@@ -144,33 +145,33 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Icon Size (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140 }
+            Label { text: "Icon Size (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Slider { from: 32; to: 128; stepSize: 1; value: Number(Globals.dockIconSizePx||64); Layout.fillWidth: true; onMoved: { Globals.dockIconSizePx = Math.round(value); save() } }
-            Text { text: String(Math.round(Globals.dockIconSizePx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+            Text { text: String(Math.round(Globals.dockIconSizePx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Icon Radius"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140 }
+            Label { text: "Icon Radius"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Slider { from: 0; to: 32; stepSize: 1; value: Number(Globals.dockIconRadius||10); Layout.fillWidth: true; onMoved: { Globals.dockIconRadius = Math.round(value); save() } }
-            Text { text: String(Math.round(Globals.dockIconRadius||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+            Text { text: String(Math.round(Globals.dockIconRadius||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Icon Border (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140 }
+            Label { text: "Icon Border (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Slider { from: 0; to: 6; stepSize: 1; value: Number(Globals.dockIconBorderPx||1); Layout.fillWidth: true; onMoved: { Globals.dockIconBorderPx = Math.round(value); save() } }
-            Text { text: String(Math.round(Globals.dockIconBorderPx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+            Text { text: String(Math.round(Globals.dockIconBorderPx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Icon Spacing"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140 }
+            Label { text: "Icon Spacing"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Slider { from: 0; to: 24; stepSize: 1; value: Number(Globals.dockIconSpacing||0); Layout.fillWidth: true; onMoved: { Globals.dockIconSpacing = Math.round(value); save() } }
-            Text { text: String(Math.round(Globals.dockIconSpacing||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+            Text { text: String(Math.round(Globals.dockIconSpacing||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
 
@@ -178,10 +179,10 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Show Labels"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 110 }
+            Label { text: "Show Labels"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 110; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Switch { checked: Globals.dockIconLabel; onToggled: { Globals.dockIconLabel = checked; save() } }
             Item { Layout.fillWidth: true }
-            Label { text: "Allow Reorder"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+            Label { text: "Allow Reorder"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Switch { checked: Globals.allowDockIconMovement; onToggled: { Globals.allowDockIconMovement = checked; save() } }
             Item { Layout.fillWidth: true }
           }
@@ -201,11 +202,13 @@ Item {
 
               RowLayout {
                 Layout.fillWidth: true
-                Label { text: "Dock Items:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.bold: true }
+                Label { text: "Dock Items:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.bold: true; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
                 Item { Layout.fillWidth: true }
                 Text {
                   text: "New items must be defined in the config.json file."
                   color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                  font.family: Globals.mainFontFamily
+                  font.pixelSize: Globals.mainFontSize
                   horizontalAlignment: Text.AlignRight
                   wrapMode: Text.WordWrap
                 }
@@ -240,7 +243,7 @@ Item {
                     RowLayout {
                       Layout.fillWidth: true
                       spacing: 8
-                      Label { text: "Label"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70 }
+                      Label { text: "Label"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
                       TextField {
                         Layout.fillWidth: true
                         text: String(itemRef.label||"")
@@ -261,7 +264,7 @@ Item {
                     RowLayout {
                       Layout.fillWidth: true
                       spacing: 8
-                      Label { text: "Command"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70 }
+                      Label { text: "Command"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
                       TextField {
                         Layout.fillWidth: true
                         text: String(itemRef.cmd||"")
@@ -276,7 +279,7 @@ Item {
                     RowLayout {
                       Layout.fillWidth: true
                       spacing: 8
-                      Label { text: "Icon"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70 }
+                      Label { text: "Icon"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
                       TextField {
                         id: iconField
                         Layout.fillWidth: true
@@ -293,18 +296,18 @@ Item {
                     RowLayout {
                       Layout.fillWidth: true
                       spacing: 8
-                      Label { text: "Size Ratio"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70 }
+                      Label { text: "Size Ratio"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
                       Slider { from: 0.1; to: 1.0; stepSize: 0.01; value: Number(itemRef.iconSizeRatio||0.55); Layout.fillWidth: true; onMoved: { itemRef.iconSizeRatio = Number(value.toFixed(2)); touchDockItems(); save() } }
-                      Text { text: String((itemRef.iconSizeRatio||0.55).toFixed(2)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+                      Text { text: String((itemRef.iconSizeRatio||0.55).toFixed(2)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
                       Item { width: 20; Layout.preferredWidth: 20 }
                     }
 
                     RowLayout {
                       Layout.fillWidth: true
                       spacing: 8
-                      Label { text: "Offset Y"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70 }
+                      Label { text: "Offset Y"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
                       Slider { from: -24; to: 24; stepSize: 1; value: Number(itemRef.iconOffsetYPx||0); Layout.fillWidth: true; onMoved: { itemRef.iconOffsetYPx = Math.round(value); touchDockItems(); save() } }
-                      Text { text: String(Math.round(itemRef.iconOffsetYPx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+                      Text { text: String(Math.round(itemRef.iconOffsetYPx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
                       Item { width: 20; Layout.preferredWidth: 20 }
                     }
 

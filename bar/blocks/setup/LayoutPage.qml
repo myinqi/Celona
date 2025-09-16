@@ -21,7 +21,8 @@ Item {
       text: "Layout"
       color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
       font.bold: true
-      font.pixelSize: 17
+      font.family: Globals.mainFontFamily
+      font.pixelSize: Globals.mainFontSize
     }
 
     // Controls (framed)
@@ -42,9 +43,9 @@ Item {
     RowLayout {
       Layout.fillWidth: true
       spacing: 10
-      Label { text: "Title & Workspaces order:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+      Label { text: "Title & Workspaces order:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       Item { Layout.fillWidth: true }
-      Text { text: swapSwitch.checked ? "Title center, WS left" : "Title left, WS center"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+      Text { text: swapSwitch.checked ? "Title center, WS left" : "Title left, WS center"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       Switch { id: swapSwitch; checked: Globals.swapTitleAndWorkspaces; onToggled: { Globals.swapTitleAndWorkspaces = checked; Globals.saveTheme() } }
     }
 
@@ -52,9 +53,9 @@ Item {
     RowLayout {
       Layout.fillWidth: true
       spacing: 10
-      Label { text: "Bar Position (top/bottom):"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+      Label { text: "Bar Position (top/bottom):"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       Item { Layout.fillWidth: true }
-      Text { text: posSwitch.checked ? "Bottom" : "Top"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+      Text { text: posSwitch.checked ? "Bottom" : "Top"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       Switch {
         id: posSwitch
         checked: Globals.barPosition === "bottom"
@@ -63,7 +64,7 @@ Item {
           id: posTip
           visible: posSwitch.hovered
           text: posSwitch.checked ? "Bottom" : "Top"
-          contentItem: Text { text: posTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF" }
+          contentItem: Text { text: posTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           background: Rectangle { color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase; border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light; border.width: 1; radius: 6 }
         }
       }
@@ -73,9 +74,9 @@ Item {
     RowLayout {
       Layout.fillWidth: true
       spacing: 10
-      Label { text: "Bar Height:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+      Label { text: "Bar Height:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       Item { Layout.fillWidth: true }
-      Text { id: barHeightValue; text: String(Globals.baseBarHeight !== undefined ? Globals.baseBarHeight : 38) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+      Text { id: barHeightValue; text: String(Globals.baseBarHeight !== undefined ? Globals.baseBarHeight : 38) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
       Slider {
         id: barHeightSlider
         from: 30; to: 40; stepSize: 1; wheelEnabled: true
@@ -90,10 +91,7 @@ Item {
           id: heightTip
           visible: parent.hovered
           text: "Visual bar height"
-          contentItem: Text {
-            text: heightTip.text
-            color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
-          }
+          contentItem: Text { text: heightTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           background: Rectangle {
             color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
             border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
@@ -108,9 +106,9 @@ Item {
     RowLayout {
       Layout.fillWidth: true
       spacing: 10
-      Label { text: "Bar Margin (" + (Globals.barPosition === "top" ? "top" : "bottom") + "):"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+      Label { text: "Bar Margin (" + (Globals.barPosition === "top" ? "top" : "bottom") + "):"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       Item { Layout.fillWidth: true }
-      Text { id: marginValue; text: String(Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+      Text { id: marginValue; text: String(Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
       Slider {
         id: marginSlider
         from: 0; to: 12; stepSize: 1; wheelEnabled: true
@@ -125,10 +123,7 @@ Item {
           id: edgeTip
           visible: parent.hovered
           text: (Globals.barPosition === "top" ? "Margin from top" : "Margin from bottom")
-          contentItem: Text {
-            text: edgeTip.text
-            color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
-          }
+          contentItem: Text { text: edgeTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           background: Rectangle {
             color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
             border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
@@ -143,9 +138,9 @@ Item {
     RowLayout {
       Layout.fillWidth: true
       spacing: 10
-      Label { text: "Bar Margin (left/right):"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF" }
+      Label { text: "Bar Margin (left/right):"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       Item { Layout.fillWidth: true }
-      Text { id: sideMarginValue; text: String(Globals.barSideMargin !== undefined ? Globals.barSideMargin : 0) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+      Text { id: sideMarginValue; text: String(Globals.barSideMargin !== undefined ? Globals.barSideMargin : 0) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
       Slider {
         id: sideMarginSlider
         from: 0; to: 400; stepSize: 1; wheelEnabled: true
@@ -160,10 +155,7 @@ Item {
           id: sideTip
           visible: parent.hovered
           text: "Margin from left/right"
-          contentItem: Text {
-            text: sideTip.text
-            color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
-          }
+          contentItem: Text { text: sideTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           background: Rectangle {
             color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
             border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
@@ -183,11 +175,18 @@ Item {
         id: hideBarChk
         text: "Hide Bar (Game mode)"
         checked: Globals.barHidden
-        onToggled: { Globals.barHidden = checked; Globals.saveTheme() }
+        onToggled: { 
+          Globals.barHidden = checked; 
+          Globals.saveTheme() 
+        }
         spacing: 6
         Component.onCompleted: {
           const c = (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
           if (hideBarChk.contentItem && hideBarChk.contentItem.color !== undefined) hideBarChk.contentItem.color = c
+          if (hideBarChk.contentItem && hideBarChk.contentItem.font) { 
+            hideBarChk.contentItem.font.family = Globals.mainFontFamily; 
+            hideBarChk.contentItem.font.pixelSize = Globals.mainFontSize 
+          }
         }
         Connections {
           target: Globals
@@ -202,10 +201,7 @@ Item {
           text: hideBarChk.checked
                 ? "Game mode: Bar hidden (only gear icon). Modules are unloaded to save CPU and memory."
                 : "Bar visible"
-          contentItem: Text {
-            text: hideTip.text
-            color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
-          }
+          contentItem: Text { text: hideTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           background: Rectangle {
             color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
             border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
