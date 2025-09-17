@@ -19,7 +19,7 @@ BarBlock {
 
   content: Row {
     id: mediaCtl
-    spacing: 8
+    spacing: 2
     anchors.verticalCenter: parent.verticalCenter
     // Match Barvisualizer bar color (adaptive via visualizerBarColorEffective)
     property string baseColor: (
@@ -30,8 +30,8 @@ BarBlock {
 
     // previous
     Item {
-      width: 22; height: 22
-      Text { anchors.centerIn: parent; text: "󰒮"; font.family: "Symbols Nerd Font Mono"; color: mediaCtl.baseColor; font.pixelSize: 16 }
+      width: 28; height: 28
+      Text { anchors.centerIn: parent; text: "󰒮"; font.family: "Symbols Nerd Font Mono"; color: mediaCtl.baseColor; font.pixelSize: 18 }
       MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: prevProc.running = true }
     }
 
@@ -40,7 +40,7 @@ BarBlock {
     id: tipWindow
     visible: root.mouseArea.containsMouse
     implicitWidth: tipLabel.implicitWidth + 20
-    implicitHeight: tipLabel.implicitHeight + 14
+    implicitHeight: tipLabel.implicitHeight + 20
     color: "transparent"
 
     anchor {
@@ -82,20 +82,20 @@ BarBlock {
   }
     // play/pause (dynamic)
     Item {
-      width: 22; height: 22
+      width: 28; height: 28
       Text {
         anchors.centerIn: parent
         text: root.isPlaying ? "󰏤" : "󰐊"
         font.family: "Symbols Nerd Font Mono"
         color: mediaCtl.baseColor
-        font.pixelSize: 16
+        font.pixelSize: 18
       }
       MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { toggleProc.running = true } }
     }
     // next
     Item {
-      width: 22; height: 22
-      Text { anchors.centerIn: parent; text: "󰒭"; font.family: "Symbols Nerd Font Mono"; color: mediaCtl.baseColor; font.pixelSize: 16 }
+      width: 28; height: 28
+      Text { anchors.centerIn: parent; text: "󰒭"; font.family: "Symbols Nerd Font Mono"; color: mediaCtl.baseColor; font.pixelSize: 18 }
       MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: nextProc.running = true }
     }
   }
