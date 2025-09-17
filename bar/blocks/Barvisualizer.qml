@@ -113,9 +113,9 @@ BarBlock {
     PopupWindow {
         id: tipWindow
         visible: false
-        // Narrow tooltip and horizontally scroll title if it overflows
-        // Width: ~35% of window, clamped to [220, 360]
-        implicitWidth: Math.max(220, Math.min(360, Math.floor((root.QsWindow?.window?.width || 1200) * 0.35)))
+        // Dynamic width: fit content for short titles, cap for long titles, then marquee scroll
+        // Clamp to [minW, maxW]
+        implicitWidth: Math.min(360, Math.max(140, marqueeText.implicitWidth + 20))
         // Height follows content text
         implicitHeight: marqueeText.implicitHeight + 20
         color: "transparent"
