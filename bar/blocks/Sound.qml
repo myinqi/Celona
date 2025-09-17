@@ -126,6 +126,7 @@ BarBlock {
         property bool cavaAvailable: true
         property string errorText: ""
         property string nowPlaying: ""
+        property bool isPlaying: false
         // desired bar visuals
         property int _targetBarWidth: 6
         property int _targetSpacing: 2
@@ -136,6 +137,30 @@ BarBlock {
             if (totalWidth <= 0) return 32
             const n = Math.floor((totalWidth + spacing) / (bw + spacing))
             return Math.max(16, Math.min(128, n))
+        }
+
+        // Restart helper to recover from theme/renderer changes (e.g. Matugen apply)
+        function restartVisualizer() {
+            try {
+                if (!vizWindow.visible) return
+                vizProc.running = false
+                // Keep current bars count, reset values, and start next tick
+                vizWindow.values = new Array(vizWindow.bars).fill(0)
+                Qt.callLater(() => { if (vizWindow.visible) vizProc.running = true })
+            } catch (e) { /* ignore */ }
+        }
+
+        // Debounced restart when theme changes to avoid multiple quick restarts
+        Timer {
+            id: restartDebounce
+            interval: 200
+            repeat: false
+            onTriggered: vizWindow.restartVisualizer()
+        }
+        function scheduleRestart() {
+            // Only when visible; coalesce multiple triggers
+            if (!vizWindow.visible) return
+            restartDebounce.restart()
         }
 
         anchor {
@@ -210,6 +235,52 @@ BarBlock {
                         z: 2
                     }
 
+                    // Media control buttons (prev / play-pause / next) on the top-right
+                    Row {
+                        id: mediaControls
+                        spacing: 8
+                        anchors.top: parent.top
+                        anchors.topMargin: 2
+                        anchors.right: parent.right
+                        anchors.rightMargin: 10
+                        z: 3
+
+                        // Helper for hover color
+                        function hoverColor(hovered) {
+                            return hovered
+                              ? (Globals.hoverHighlightColor || "#ffffff")
+                              : (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
+                        }
+
+                        // previous
+                        Item {
+                            width: 22; height: 22
+                            property bool hovered: false
+                            Text { anchors.centerIn: parent; text: "󰒮"; font.family: "Symbols Nerd Font Mono"; color: mediaControls.hoverColor(parent.hovered) }
+                            MouseArea { anchors.fill: parent; hoverEnabled: true; onEntered: parent.hovered = true; onExited: parent.hovered = false; onClicked: { prevProc.running = true } }
+                        }
+                        // play/pause
+                        Item {
+                            width: 22; height: 22
+                            property bool hovered: false
+                            // Note: no reliable playing state here; toggle always
+                            Text {
+                                anchors.centerIn: parent
+                                text: vizWindow.isPlaying ? "󰏤" : "󰐊" // pause when playing, play when paused
+                                font.family: "Symbols Nerd Font Mono"
+                                color: mediaControls.hoverColor(parent.hovered)
+                            }
+                            MouseArea { anchors.fill: parent; hoverEnabled: true; onEntered: parent.hovered = true; onExited: parent.hovered = false; onClicked: { toggleProc.running = true } }
+                        }
+                        // next
+                        Item {
+                            width: 22; height: 22
+                            property bool hovered: false
+                            Text { anchors.centerIn: parent; text: "󰒭"; font.family: "Symbols Nerd Font Mono"; color: mediaControls.hoverColor(parent.hovered) }
+                            MouseArea { anchors.fill: parent; hoverEnabled: true; onEntered: parent.hovered = true; onExited: parent.hovered = false; onClicked: { nextProc.running = true } }
+                        }
+                    }
+
                     // Missing cava message
                     Text {
                         anchors.centerIn: parent
@@ -232,7 +303,9 @@ BarBlock {
                                 height: Math.max(2, (vizWindow.values[index] / 100) * barsRow.height)
                                 anchors.bottom: parent.bottom
                                 radius: 2
-                                color: Globals.visualizerBarColor !== "" ? Globals.visualizerBarColor : "#00bee7"
+                                color: (Globals.visualizerBarColorEffective && Globals.visualizerBarColorEffective !== "")
+                                         ? Globals.visualizerBarColorEffective
+                                         : (Globals.visualizerBarColor !== "" ? Globals.visualizerBarColor : "#00bee7")
                             }
                         }
                     }
@@ -260,10 +333,12 @@ BarBlock {
                 vizWindow.values = new Array(vizWindow.bars).fill(0)
                 vizProc.running = true
                 nowProc.running = true
+                statusProc.running = true
             } else {
                 if (Globals.popupContext && Globals.popupContext.popup === vizWindow) Globals.popupContext.popup = null
                 vizProc.running = false
                 nowProc.running = false
+                statusProc.running = false
             }
         }
 
@@ -317,13 +392,22 @@ BarBlock {
                 if (vizWindow.bars !== desired) vizWindow.bars = desired
             }
         }
+        // Restart the embedded cava process when theme changes to avoid freezes
+        Connections {
+            target: Globals
+            function onVisualizerBarColorChanged() { vizWindow.scheduleRestart() }
+            function onThemeEpochChanged() { vizWindow.scheduleRestart() }
+            function onUseMatugenColorsChanged() { vizWindow.scheduleRestart() }
+            function onBarBgColorChanged() { vizWindow.scheduleRestart() }
+            function onPopupBgChanged() { vizWindow.scheduleRestart() }
+        }
 
         Process {
             id: vizProc
             running: false
             command: ["sh", "-c",
                 `if command -v cava >/dev/null 2>&1; then \\
-                   printf '[general]\\nframerate=60\\nbars=${vizWindow.bars}\\nsleep_timer=3\\n[output]\\nchannels=mono\\nmethod=raw\\nraw_target=/dev/stdout\\ndata_format=ascii\\nascii_max_range=100' | cava -p /dev/stdin; \\
+                   printf '[general]\\nframerate=60\\nbars=${vizWindow.bars}\\nsleep_timer=3\\n[output]\\nchannels=mono\\nmethod=raw\\nraw_target=/dev/stdout\\ndata_format=ascii\\nascii_max_range=100' | exec -a cava_popup cava -p /dev/stdin; \\
                  else \\
                    echo '__CAVA_MISSING__'; \\
                  fi`
@@ -373,6 +457,33 @@ BarBlock {
             }
             stderr: SplitParser { onRead: data => console.log(`[Sound] now stderr: ${String(data)}`) }
         }
+
+        // Follow player status to toggle play/pause icon dynamically
+        Process {
+            id: statusProc
+            running: false
+            command: ["sh", "-c",
+                `if command -v playerctl >/dev/null 2>&1; then \\
+                   playerctl -F status; \\
+                 else \\
+                   echo '__PLAYERCTL_MISSING__'; \\
+                 fi`
+            ]
+            stdout: SplitParser {
+                onRead: data => {
+                    const line = String(data).trim()
+                    if (line === '__PLAYERCTL_MISSING__') { statusProc.running = false; return }
+                    if (line === 'Playing') vizWindow.isPlaying = true
+                    else if (line === 'Paused' || line === 'Stopped') vizWindow.isPlaying = false
+                }
+            }
+            stderr: SplitParser { onRead: data => console.log(`[Sound] status stderr: ${String(data)}`) }
+        }
+
+        // Media control processes (playerctl)
+        Process { id: prevProc; running: false; command: ["sh","-c","playerctl previous || true"]; onRunningChanged: if (!running) {} }
+        Process { id: toggleProc; running: false; command: ["sh","-c","playerctl play-pause || true"]; onRunningChanged: if (!running) {} }
+        Process { id: nextProc; running: false; command: ["sh","-c","playerctl next || true"]; onRunningChanged: if (!running) {} }
     }
 
     PopupWindow {

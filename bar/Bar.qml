@@ -127,6 +127,13 @@ Scope {
               // No negative margins needed; group spacing controls gap
               visible: Globals.showBarvisualizer
             }
+            // Media controls as a separate clickable block to avoid overlay/highlight conflicts
+            Blocks.MediaControls {
+              id: mediaControlsBlk
+              Layout.alignment: Qt.AlignVCenter
+              // Toggle via ModulesPage (separate from Barvisualizer visibility)
+              visible: Globals.showMediaControls
+            }
           }
         }
 

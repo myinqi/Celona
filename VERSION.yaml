@@ -6,3 +6,4 @@ release_notes: |-
   - Game Mode: toggle via script with file-trigger fallback; optional IPC hook (default: 󰘳 +G)
   - Assorted fixes and UX improvements
   - Global Font and Fontsize definition (Globals.mainFontFamily and Globals.mainFontSize)
+  - New MediaControls module (toggled by modules page)

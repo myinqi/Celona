@@ -352,6 +352,34 @@ Singleton {
   property string windowTitleColor: "#00bee7"
   // Visualizer bars color
   property string visualizerBarColor: "#00bee7"
+  // Computed: choose a darker, more legible variant on light themes
+  readonly property bool isLightTheme: (function() {
+    try {
+      const bg6 = toRgb6((Globals.barBgColor && Globals.barBgColor.length) ? Globals.barBgColor : (Globals.popupBg && Globals.popupBg.length ? Globals.popupBg : '#ffffff'))
+      const r = parseInt(bg6.slice(0,2),16)/255.0
+      const g = parseInt(bg6.slice(2,4),16)/255.0
+      const b = parseInt(bg6.slice(4,6),16)/255.0
+      const lum = 0.2126*r + 0.7152*g + 0.0722*b
+      return lum >= 0.6
+    } catch (e) { return false }
+  })()
+  readonly property string visualizerBarColorEffective: (function() {
+    try {
+      // Base color from theme
+      const c6 = toRgb6(Globals.visualizerBarColor || '#00bee7')
+      if (!Globals.isLightTheme) return '#' + c6
+      // Darken 35% for contrast on light backgrounds
+      function darken(hex6, pct) {
+        const p = Math.max(0, Math.min(100, pct))/100.0
+        const r = Math.round(parseInt(hex6.slice(0,2),16) * (1.0 - p))
+        const g = Math.round(parseInt(hex6.slice(2,4),16) * (1.0 - p))
+        const b = Math.round(parseInt(hex6.slice(4,6),16) * (1.0 - p))
+        const hx = n => Math.max(0, Math.min(255, n|0)).toString(16).padStart(2,'0')
+        return '#' + hx(r) + hx(g) + hx(b)
+      }
+      return darken(c6, 35)
+    } catch (e) { return Globals.visualizerBarColor || '#00bee7' }
+  })()
   // Weather settings
   // Location can be "lat,lon" or a city name recognized by wttr.in
   property string weatherLocation: "" // empty => auto by IP
@@ -383,6 +411,8 @@ Singleton {
   property bool useNewSetupUI: false
   // Show bar visualizer module
   property bool showBarvisualizer: false
+  // Show media controls module (separate block next to Barvisualizer)
+  property bool showMediaControls: true
 
   // --- Game Mode hotkey fallback via file trigger ---
   // Touching this file toggles Game Mode without IPC
@@ -1310,6 +1340,7 @@ Singleton {
     setIf("showWelcome")
     setIf("showWindowTitle")
     setIf("showWorkspaces")
+    setIf("showMediaControls")
     setIf("showSystemTray")
     setIf("showUpdates")
     setIf("showNetwork")
@@ -1425,22 +1456,30 @@ Singleton {
       // Layout & behavior
       reorderMode,
       swapTitleAndWorkspaces,
-      rightModulesOrder,
+      rightModulesOrder: Globals.rightModulesOrder,
       // toggles
-      showWelcome,
-      showWindowTitle,
-      showWorkspaces,
-      showSystemTray,
-      showUpdates,
-      showNetwork,
-      showBluetooth,
-      showCPU,
-      showGPU,
-      showMemory,
-      showPowerProfiles,
-      showClipboard,
-      showNotifications,
-      showWindowSelector,
+      showWelcome: Globals.showWelcome,
+      showWindowTitle: Globals.showWindowTitle,
+      showWorkspaces: Globals.showWorkspaces,
+      showMediaControls: Globals.showMediaControls,
+      showSystemTray: Globals.showSystemTray,
+      showUpdates: Globals.showUpdates,
+      showNetwork: Globals.showNetwork,
+      showBluetooth: Globals.showBluetooth,
+      showCPU: Globals.showCPU,
+      showGPU: Globals.showGPU,
+      showMemory: Globals.showMemory,
+      showPowerProfiles: Globals.showPowerProfiles,
+      showClipboard: Globals.showClipboard,
+      showNotifications: Globals.showNotifications,
+      showWindowSelector: Globals.showWindowSelector,
+      showSound: Globals.showSound,
+      showKeybinds: Globals.showKeybinds,
+      showBattery: Globals.showBattery,
+      showDate: Globals.showDate,
+      showTime: Globals.showTime,
+      showPower: Globals.showPower,
+      showWeather: Globals.showWeather,
       showSound,
       showKeybinds,
       showBattery,

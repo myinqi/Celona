@@ -17,6 +17,8 @@ Rectangle {
   property var onClicked: function() {}
   property int leftPadding: 5
   property int rightPadding: 5
+  // When true, the internal MouseArea will not accept any buttons (clicks pass through to children)
+  property bool passClicks: false
 
   property string hoveredBgColor: Globals.hoverHighlightColor
   // Track hover state passively (does not consume events) so child MouseAreas
@@ -56,7 +58,7 @@ Rectangle {
     id: mouseArea
     anchors.fill: root
     hoverEnabled: true
-    acceptedButtons: Qt.LeftButton
+    acceptedButtons: root.passClicks ? Qt.NoButton : Qt.LeftButton
     onClicked: root.onClicked()
   }
 

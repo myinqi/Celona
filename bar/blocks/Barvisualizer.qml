@@ -74,7 +74,9 @@ BarBlock {
                         height: Math.max(2, (root.values[index] / 100) * barsRow.height)
                         anchors.bottom: parent.bottom
                         radius: 1
-                        color: Globals.visualizerBarColor !== "" ? Globals.visualizerBarColor : "#00bee7"
+                        color: (Globals.visualizerBarColorEffective && Globals.visualizerBarColorEffective !== "")
+                                 ? Globals.visualizerBarColorEffective
+                                 : (Globals.visualizerBarColor !== "" ? Globals.visualizerBarColor : "#00bee7")
                     }
                 }
             }
@@ -85,6 +87,8 @@ BarBlock {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
+        // Do not consume clicks so inner controls remain clickable
+        acceptedButtons: Qt.NoButton
         onEntered: tipWindow.visible = true
         onExited: tipWindow.visible = false
     }
@@ -127,7 +131,7 @@ BarBlock {
                 id: tipLabel
                 anchors.fill: parent
                 anchors.margins: 10
-                text: "Audio Visualizer"
+                text: root.nowPlaying
                 color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
                 font.family: Globals.mainFontFamily
                 font.pixelSize: Globals.mainFontSize
