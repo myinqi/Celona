@@ -105,6 +105,10 @@ Item {
             }
           } catch (e) { /* no-op */ }
         }
+        Component.onCompleted: {
+          // Initial delayed refresh to catch compositor readiness after startup
+          if (outputsRetry && !outputsRetry.running) outputsRetry.start()
+        }
 
         // Outputs selector (simple row, aligned with other rows)
         RowLayout {
@@ -173,6 +177,8 @@ Item {
                 Globals.wallpaperTool = val
                 Globals.saveTheme()
                 if (Globals.wallpaperAnimatedEnabled) Globals.startAnimatedWallpaper(); else Globals.stopAnimatedAndSetStatic()
+                // Re-run outputs detection shortly after wallpaper tool changes
+                if (outputsRetry && !outputsRetry.running) outputsRetry.start()
               }
             }
           }
@@ -383,6 +389,8 @@ Item {
                 Globals.stopAnimatedAndSetStatic()
               }
               Globals.saveTheme()
+              // Re-run outputs detection shortly after toggling animated wallpaper
+              if (outputsRetry && !outputsRetry.running) outputsRetry.start()
             }
             ToolTip {
               id: wpTip
@@ -407,6 +415,15 @@ Item {
         // Discover outputs via swww (fallback: empty -> all)
         // Backing model for outputs dropdown
         ListModel { id: outputsListModel }
+
+        // Lightweight retry timer to re-trigger detection after startup/tool changes
+        Timer {
+          id: outputsRetry
+          interval: 800
+          repeat: false
+          running: false
+          onTriggered: outputsProc.running = true
+        }
 
         Process {
           id: outputsProc
