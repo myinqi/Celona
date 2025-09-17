@@ -118,7 +118,7 @@ BarBlock {
         id: vizWindow
         visible: false
         implicitWidth: 571
-        implicitHeight: 250
+        implicitHeight: 100
         color: "transparent"
 
         property int bars: 48
@@ -126,6 +126,17 @@ BarBlock {
         property bool cavaAvailable: true
         property string errorText: ""
         property string nowPlaying: ""
+        // desired bar visuals
+        property int _targetBarWidth: 6
+        property int _targetSpacing: 2
+
+        function _computeBars(totalWidth) {
+            const spacing = _targetSpacing
+            const bw = Math.max(2, _targetBarWidth)
+            if (totalWidth <= 0) return 32
+            const n = Math.floor((totalWidth + spacing) / (bw + spacing))
+            return Math.max(16, Math.min(128, n))
+        }
 
         anchor {
             window: root.QsWindow?.window
@@ -138,14 +149,30 @@ BarBlock {
                     const y = (Globals.barPosition === "top")
                       ? (root.height + gap)
                       : (-(root.height + gap))
-                    vizWindow.anchor.rect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+                    const left = Math.max(0, Number(Globals.barSideMargin || 0))
+                    // compensate 1px border on both sides (total 2px)
+                    const borderComp = -2
+                    const leftEff = Math.max(0, left - borderComp)
+                    const w = Math.max(50, win.width - (leftEff * 2))
+                    // Map root-relative rect into window coordinates to match other popups' vertical offset
+                    const baseRect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+                    // Place full-width rect with side margins and explicitly size the window
+                    vizWindow.anchor.rect = Qt.rect(leftEff, baseRect.y, w, baseRect.height)
+                    vizWindow.width = w
+                    vizWindow.implicitWidth = w
+                    // Recompute bar count based on available width
+                    const desired = vizWindow._computeBars(w - 20) // account for internal paddings
+                    if (vizWindow.bars !== desired) vizWindow.bars = desired
                 }
             }
         }
 
         Rectangle {
             anchors.fill: parent
-            color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+            // Use bar background color for the visualizer window background
+            color: (Globals.barBgColor && Globals.barBgColor !== "")
+                     ? Globals.barBgColor
+                     : (Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase)
             border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
             border.width: 1
             radius: 8
@@ -155,34 +182,33 @@ BarBlock {
                 anchors.margins: 10
                 spacing: 8
 
-                Row {
-                    spacing: 8
-                    width: parent.width
-                    Text {
-                        // Make only this label bold
-                        textFormat: Text.RichText
-                        text: "<b>Cava Visualizer</b>"
-                        color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                        font.family: Globals.mainFontFamily
-                        font.pixelSize: Globals.mainFontSize
-                    }
-                    Text {
-                        text: vizWindow.nowPlaying !== "" ? `• ${vizWindow.nowPlaying}` : ""
-                        color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                        elide: Text.ElideRight
-                        font.family: Globals.mainFontFamily
-                        font.pixelSize: Globals.mainFontSize
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                        width: parent.width - 160
-                    }
-                }
+                // Header moved into graph as an overlay so bars can animate behind it
 
                 Rectangle {
                     id: graph
                     width: parent.width
-                    height: parent.height - 28
+                    // Use full available height so bars anchor to the very bottom of the popup
+                    height: parent.height
                     color: "transparent"
+
+                    // Single-line overlay (title + now playing) centered, with bars behind
+                    Text {
+                        id: overlayTitle
+                        anchors.top: parent.top
+                        anchors.topMargin: 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: parent.width - 20
+                        textFormat: Text.RichText
+                        text: vizWindow.nowPlaying !== ""
+                              ? ("<b>Cava Visualizer</b> • " + vizWindow.nowPlaying)
+                              : "<b>Cava Visualizer</b>"
+                        color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignHCenter
+                        font.family: Globals.mainFontFamily
+                        font.pixelSize: Globals.mainFontSize
+                        z: 2
+                    }
 
                     // Missing cava message
                     Text {
@@ -197,12 +223,12 @@ BarBlock {
                     Row {
                         id: barsRow
                         anchors.fill: parent
-                        spacing: 2
+                        spacing: vizWindow._targetSpacing
                         visible: vizWindow.cavaAvailable && vizWindow.errorText === ""
                         Repeater {
                             model: vizWindow.values.length
                             Rectangle {
-                                width: (barsRow.width - (barsRow.spacing * (vizWindow.values.length - 1))) / vizWindow.values.length
+                                width: (barsRow.width - (barsRow.spacing * (vizWindow.values.length - 1))) / Math.max(1, vizWindow.values.length)
                                 height: Math.max(2, (vizWindow.values[index] / 100) * barsRow.height)
                                 anchors.bottom: parent.bottom
                                 radius: 2
@@ -225,6 +251,12 @@ BarBlock {
 
                 vizWindow.errorText = ""
                 vizWindow.cavaAvailable = true
+                // Recompute bars for current window width and set values accordingly
+                const win = root.QsWindow?.window
+                const left = Math.max(0, Number(Globals.barSideMargin || 0))
+                const w = win ? Math.max(50, win.width - (left * 2)) : vizWindow.implicitWidth
+                const desired = vizWindow._computeBars(w - 20)
+                if (vizWindow.bars !== desired) vizWindow.bars = desired
                 vizWindow.values = new Array(vizWindow.bars).fill(0)
                 vizProc.running = true
                 nowProc.running = true
@@ -232,6 +264,57 @@ BarBlock {
                 if (Globals.popupContext && Globals.popupContext.popup === vizWindow) Globals.popupContext.popup = null
                 vizProc.running = false
                 nowProc.running = false
+            }
+        }
+
+        // If bar count changes while visible, restart cava with new bars
+        onBarsChanged: {
+            if (vizWindow.visible) {
+                vizProc.running = false
+                vizWindow.values = new Array(vizWindow.bars).fill(0)
+                vizProc.running = true
+            }
+        }
+
+        // React to window width and margin changes while visible to keep full-width layout
+        Connections {
+            target: root.QsWindow ? root.QsWindow.window : null
+            function onWidthChanged() {
+                if (!vizWindow.visible) return
+                const win = root.QsWindow?.window
+                if (!win) return
+                const left = Math.max(0, Number(Globals.barSideMargin || 0))
+                const borderComp = -2
+                const leftEff = Math.max(0, left - borderComp)
+                const w = Math.max(50, win.width - (leftEff * 2))
+                const gap = 5
+                const y = (Globals.barPosition === "top") ? (root.height + gap) : (-(root.height + gap))
+                const baseRect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+                vizWindow.anchor.rect = Qt.rect(leftEff, baseRect.y, w, baseRect.height)
+                vizWindow.width = w
+                vizWindow.implicitWidth = w
+                const desired = vizWindow._computeBars(w - 20)
+                if (vizWindow.bars !== desired) vizWindow.bars = desired
+            }
+        }
+        Connections {
+            target: Globals
+            function onBarSideMarginChanged() {
+                if (!vizWindow.visible) return
+                const win = root.QsWindow?.window
+                if (!win) return
+                const left = Math.max(0, Number(Globals.barSideMargin || 0))
+                const borderComp = -2
+                const leftEff = Math.max(0, left - borderComp)
+                const w = Math.max(50, win.width - (leftEff * 2))
+                const gap = 5
+                const y = (Globals.barPosition === "top") ? (root.height + gap) : (-(root.height + gap))
+                const baseRect = win.contentItem.mapFromItem(root, 0, y, root.width, root.height)
+                vizWindow.anchor.rect = Qt.rect(leftEff, baseRect.y, w, baseRect.height)
+                vizWindow.width = w
+                vizWindow.implicitWidth = w
+                const desired = vizWindow._computeBars(w - 20)
+                if (vizWindow.bars !== desired) vizWindow.bars = desired
             }
         }
 
