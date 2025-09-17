@@ -15,6 +15,8 @@ BarBlock {
 
   // Internal model of windows
   property var windows: [] // [{ id, title, app, workspace }]
+  // Track a compact hash of the last applied list to avoid unnecessary model resets (prevents scroll jumps)
+  property string _lastListHash: ""
   // Map: workspace internal id -> displayed index (per-output)
   property var _niriWsIndexById: ({})
   property string _niriWsBuf: ""
@@ -26,25 +28,31 @@ BarBlock {
   // Map: workspace id -> 1-based order index (built from workspaces JSON, sorted by number/index)
   property var _wsIdToOrderIndex: ({})
 
-  // Map common app classes to Nerd Font glyphs for a small icon in the list
-  function iconForApp(appName) {
+  // Map common app classes/titles to Nerd Font glyphs for a small icon in the list
+  function iconForApp(appName, titleText) {
     const a = String(appName || "").toLowerCase()
+    const t = String(titleText || "").toLowerCase()
     // Common mappings; extend as needed
     if (a.includes("firefox")) return "󰈹"
+    if (a.includes("zen")) return ""    
     if (a.includes("chromium") || a.includes("chrome")) return ""
-    if (a.includes("vscode") || a.includes("code")) return ""
-    if (a.includes("kitty")) return "󰄛"
-    if (a.includes("alacritty")) return "󰞷"
-    if (a.includes("ghostty")) return "󱘖"
+    if (a.includes("vscode") || a.includes("code")) return ""
+    if (a.includes("windsurf")) return ""    
+    if (a.includes("kitty")) return ""
+    if (a.includes("alacritty")) return ""
+    if (a.includes("ghostty")) return ""
+    // Celona Setup: match either app id/class or window title
+    if (a.includes("celona") || t.includes("celona")) return ""    
     if (a.includes("wezterm")) return "󰮤"
     if (a.includes("foot")) return "󰆍"
-    if (a.includes("terminal") || a.includes("term")) return ""
+    if (a.includes("terminal") || a.includes("term")) return ""
     if (a.includes("thunar") || a.includes("nautilus") || a.includes("dolphin") || a.includes("nemo")) return "󰉋"
     if (a.includes("spotify")) return "󰓇"
     if (a.includes("discord")) return "󰙯"
     if (a.includes("steam")) return ""
+    if (a.includes("haruna")) return ""    
+    if (a.includes("gimp")) return ""      
     if (a.includes("vlc")) return "󰕼"
-    if (a.includes("gimp")) return ""
     if (a.includes("inkscape")) return ""
     if (a.includes("libreoffice") || a.includes("writer")) return "󰈬"
     if (a.includes("signal")) return "󰍩"
@@ -160,10 +168,19 @@ BarBlock {
     visible: false
     // Size explicitly based on rows (avoid relying on Layout implicit sizing)
     property int rowHeight: 34
-    property int listHeight: Math.max(160, Math.min(480, Math.max(1, contentModel.count) * rowHeight))
+    // Max height: ~70% of window height minus margins; fallback if window not available
+    property int maxListHeight: Math.max(180, Math.floor(((root.QsWindow && root.QsWindow.window) ? root.QsWindow.window.height : 900) * 0.7) - 80)
+    // Dynamic list height: up to maxListHeight, otherwise fit rows
+    property int listHeight: Math.min(maxListHeight, Math.max(1, contentModel.count) * rowHeight)
     implicitWidth: 360
-    implicitHeight: listHeight + 20
+    // Account for header + margins by using the Column's implicitHeight
+    // (Column includes headerRow + spacing + ListView height, plus we have 20px outer padding)
+    implicitHeight: contentCol ? (contentCol.implicitHeight + 20) : (listHeight + 60)
     color: "transparent"
+    // While true, periodic/compositor refreshes are deferred to avoid interrupting user scroll/hover
+    property bool deferRefresh: false
+    // Debounce timer to release the defer flag shortly after user interaction
+    Timer { id: deferRelease; interval: 700; repeat: false; onTriggered: menuWindow.deferRefresh = false }
     onVisibleChanged: {
       if (visible) {
         tipWindow.visible = false
@@ -193,6 +210,9 @@ BarBlock {
     MouseArea {
       anchors.fill: parent
       hoverEnabled: true
+      // Do not consume clicks/wheel so ListView can scroll and receive interactions
+      acceptedButtons: Qt.NoButton
+      onWheel: (event) => { menuWindow.deferRefresh = true; deferRelease.restart(); event.accepted = false }
       onExited: { if (!containsMouse) closeTimer.start() }
       onEntered: closeTimer.stop()
       Timer { id: closeTimer; interval: 500; onTriggered: menuWindow.visible = false }
@@ -233,6 +253,10 @@ BarBlock {
             height: menuWindow.listHeight
             clip: true
             model: contentModel
+            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+            onMovementStarted: { menuWindow.deferRefresh = true; deferRelease.restart() }
+            onFlickStarted: { menuWindow.deferRefresh = true; deferRelease.restart() }
+            onMovementEnded: { deferRelease.restart() }
             delegate: Rectangle {
               width: list.width
               height: menuWindow.rowHeight
@@ -245,8 +269,10 @@ BarBlock {
                 // Small app icon glyph
                 Text {
                   id: iconText
-                  text: iconForApp(app)
-                  color: Globals.moduleIconColor !== "" ? Globals.moduleIconColor : (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
+                  text: iconForApp(app, title)
+                  color: (Globals.visualizerBarColorEffective && Globals.visualizerBarColorEffective !== "")
+                           ? Globals.visualizerBarColorEffective
+                           : (Globals.visualizerBarColor !== "" ? Globals.visualizerBarColor : "#00bee7")
                   font.family: "Symbols Nerd Font Mono"
                   font.pixelSize: Globals.mainFontSize
                   verticalAlignment: Text.AlignVCenter
@@ -264,7 +290,9 @@ BarBlock {
                 Text {
                   id: wsText
                   text: workspace !== undefined && workspace !== null ? `ws ${workspace}` : ""
-                  color: Globals.moduleIconColor
+                  color: (Globals.visualizerBarColorEffective && Globals.visualizerBarColorEffective !== "")
+                           ? Globals.visualizerBarColorEffective
+                           : (Globals.visualizerBarColor !== "" ? Globals.visualizerBarColor : "#00bee7")
                   font.family: Globals.mainFontFamily
                   font.pixelSize: Globals.mainFontSize
                   verticalAlignment: Text.AlignVCenter
@@ -320,6 +348,23 @@ BarBlock {
 
   function setWindows(arr) {
     windows = arr || []
+    // Build a compact hash to detect no-op updates and avoid resetting the model (prevents scroll jumps)
+    try {
+      const compact = []
+      for (let i = 0; i < windows.length; i++) {
+        const w = windows[i] || {}
+        compact.push([w.id, w.title, w.app, w.workspace])
+      }
+      const h = Qt.md5(JSON.stringify(compact))
+      if (menuWindow.visible && (menuWindow.deferRefresh || h === _lastListHash)) {
+        // Skip updating while user interacts or when content is unchanged
+        return
+      }
+      _lastListHash = h
+    } catch (e) { /* ignore hashing errors and proceed */ }
+
+    // Preserve scroll position if visible
+    const keepY = (menuWindow.visible && list) ? list.contentY : 0
     contentModel.clear()
     // Helper: derive workspace display index for a Niri window using workspaces JSON
     function mapNiriWsFromWorkspaceId(wsId) {
@@ -336,6 +381,10 @@ BarBlock {
       const w = windows[i]
       const wsFinal = mapNiriWsFromWorkspaceId(w.workspace)
       contentModel.append({ id: w.id, title: w.title, app: w.app, workspace: wsFinal })
+    }
+    // Restore scroll position
+    if (menuWindow.visible && list) {
+      Qt.callLater(() => { list.contentY = keepY })
     }
   }
 
@@ -464,15 +513,15 @@ BarBlock {
     id: menuRefresh
     interval: 700
     repeat: true
-    running: menuWindow.visible && isNiri
-    onTriggered: refreshWindows()
+    running: menuWindow.visible && isNiri && !menuWindow.deferRefresh
+    onTriggered: if (!menuWindow.deferRefresh) refreshWindows()
   }
 
   // Keep in sync with compositor events (reuse CompositorUtils event stream)
   Connections {
     target: Utils.CompositorUtils
     enabled: isNiri || isHyprland
-    function onWorkspacesChanged() { if (menuWindow.visible) refreshWindows() }
-    function onActiveTitleChanged() { if (menuWindow.visible) refreshWindows() }
+    function onWorkspacesChanged() { if (menuWindow.visible && !menuWindow.deferRefresh) refreshWindows() }
+    function onActiveTitleChanged() { if (menuWindow.visible && !menuWindow.deferRefresh) refreshWindows() }
   }
 }
