@@ -1780,7 +1780,19 @@ Singleton {
         // Start swww-daemon if not running, then set wallpaper
         script += "pgrep -x swww-daemon >/dev/null 2>&1 || (nohup swww-daemon >/dev/null 2>&1 & sleep 1)\n"
         // Use absolute path (swww does not expand ~)
-        script += "swww img '" + imgAbs.replace(/'/g, "'\\''") + "' --transition-type none\n"
+        const imgEsc = imgAbs.replace(/'/g, "'\\''")
+        const hasAll = (outs.length === 0) || outs.some(o => String(o) === "*")
+        if (hasAll) {
+          // When no outputs specified or '*' present, let swww apply to all by OMITTING --outputs
+          script += "swww img '" + imgEsc + "' --transition-type none\n"
+        } else {
+          // Pass a comma-separated list of outputs in a single call
+          const list = outs.map(o => String(o||"").replace(/'/g, "'\\''")).filter(s => s.length > 0).join(',')
+          if (list.length > 0)
+            script += "swww img --outputs '" + list + "' '" + imgEsc + "' --transition-type none\n"
+          else
+            script += "swww img '" + imgEsc + "' --transition-type none\n"
+        }
       } else if (tool === "hyprpaper") {
         // Only applicable on Hyprland where hyprctl is available
         script += "command -v hyprctl >/dev/null 2>&1 || exit 0\n"

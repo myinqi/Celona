@@ -5,7 +5,7 @@
   "barSideMargin": 8,
   "barHidden": false,
   "mainFontFamily": "JetBrains Mono Nerd Font",
-  "mainFontSize": 12,
+  "mainFontSize": 15,
   "useMatugenColors": true,
   "barBgColor": "#5e000000",
   "barBorderColor": "#00bee7",
@@ -84,7 +84,7 @@
   "useNewSetupUI": true,
   "showBarvisualizer": true,
   "ShowDock": false,
-  "DockPositionHorizontal": "right",
+  "DockPositionHorizontal": "left",
   "DockPositionVertical": "top",
   "DockIconBorderPx": 2,
   "DockIconRadius": 10,
@@ -110,13 +110,6 @@
       "label": "Browser",
       "cmd": "zen-browser",
       "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/zen-browser.png",
-      "iconSizeRatio": 0.55,
-      "iconOffsetYPx": -8
-    },
-    {
-      "label": "Coding",
-      "cmd": "windsurf",
-      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/vscode.png",
       "iconSizeRatio": 0.55,
       "iconOffsetYPx": -8
     }

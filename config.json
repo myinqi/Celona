@@ -112,13 +112,6 @@
       "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/zen-browser.png",
       "iconSizeRatio": 0.55,
       "iconOffsetYPx": -8
-    },
-    {
-      "label": "Coding",
-      "cmd": "windsurf",
-      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/vscode.png",
-      "iconSizeRatio": 0.55,
-      "iconOffsetYPx": -8
     }
   ]
 }

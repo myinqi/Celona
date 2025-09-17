@@ -85,60 +85,134 @@ Item {
       border.width: 1
 
       ColumnLayout {
+        id: contentCol
         anchors.fill: parent
         anchors.margins: 8
         spacing: 10
+        // Outputs state and sync helper at the container level
+        property var availableOutputs: []
+        function syncSelectedFromGlobals() {
+          try {
+            const cur = Array.isArray(Globals.wallpaperOutputs) ? Globals.wallpaperOutputs.slice() : []
+            const star = cur.indexOf("*") >= 0 || cur.length === 0
+            if (outputsCombo) {
+              if (star) outputsCombo.currentIndex = 0
+              else {
+                const name = cur[0]
+                const idx = 1 + Math.max(0, contentCol.availableOutputs.indexOf(name))
+                outputsCombo.currentIndex = (idx >= 1) ? idx : 0
+              }
+            }
+          } catch (e) { /* no-op */ }
+        }
 
-        // Top row: Animated wallpaper toggle aligned like module rows
+        // Outputs selector (simple row, aligned with other rows)
         RowLayout {
           Layout.fillWidth: true
           spacing: 10
           Label {
-            text: "Animated Wallpaper:"
+            text: "Outputs:"
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
             font.family: Globals.mainFontFamily
             font.pixelSize: Globals.mainFontSize
-            horizontalAlignment: Text.AlignHCenter
+            horizontalAlignment: Text.AlignHLeft
             Layout.alignment: Qt.AlignVCenter
+            // Align with "Static:" and "Animated:" label columns
+            Layout.preferredWidth: 110
+          }
+          ComboBox {
+            id: outputsCombo
+            textRole: "text"
+            model: outputsListModel
+            //Layout.fillWidth: true
+            Layout.preferredWidth: 120
+            onCurrentIndexChanged: {
+              const item = (model && model.get && currentIndex >= 0 && currentIndex < model.count) ? model.get(currentIndex) : null
+              const name = item ? String(item.text) : "All (*)"
+              if (name === "All (*)") Globals.wallpaperOutputs = ["*"]
+              else Globals.wallpaperOutputs = [name]
+              Globals.saveTheme()
+              if (Globals.wallpaperAnimatedEnabled) Globals.startAnimatedWallpaper(); else Globals.stopAnimatedAndSetStatic()
+            }
           }
           Item { Layout.fillWidth: true }
-          Text {
-            text: wpSwitch.checked ? "On (mpvpaper)" : "Off (static)"
+          Button {
+            id: refreshOutputsBtn
+            text: "refresh"
+            onClicked: outputsProc.running = true
+            leftPadding: 12; rightPadding: 12
+            contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+            background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
+          }
+        }
+
+        // Tool selector (swww / hyprpaper)
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "Tool:"
+            Layout.preferredWidth: 110
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
             font.family: Globals.mainFontFamily
             font.pixelSize: Globals.mainFontSize
+            horizontalAlignment: Text.AlignHLeft
+            Layout.alignment: Qt.AlignVCenter
           }
-          Switch {
-            id: wpSwitch
-            checked: Globals.wallpaperAnimatedEnabled
-            onToggled: {
-              Globals.wallpaperAnimatedEnabled = checked
-              if (checked) {
-                Globals.startAnimatedWallpaper()
-              } else {
-                Globals.stopAnimatedAndSetStatic()
-              }
-              Globals.saveTheme()
+          ComboBox {
+            id: toolCombo
+            model: ["swww", "hyprpaper"]
+            Component.onCompleted: {
+              const cur = String(Globals.wallpaperTool || "swww")
+              const idx = model.indexOf(cur)
+              toolCombo.currentIndex = (idx >= 0) ? idx : 0
             }
-            ToolTip {
-              id: wpTip
-              visible: wpSwitch.hovered
-              text: wpSwitch.checked ? ("Stop to set static wallpaper via " + Globals.wallpaperTool) : "Start animated wallpaper via mpvpaper"
-              contentItem: Text {
-                text: wpTip.text
-                color: (Globals.tooltipText && Globals.tooltipText !== "") ? Globals.tooltipText : "#FFFFFF"
-                font.family: Globals.mainFontFamily
-                font.pixelSize: Globals.mainFontSize
+            onActivated: (index) => {
+              const val = String(model[index])
+              if (val && val !== Globals.wallpaperTool) {
+                Globals.wallpaperTool = val
+                Globals.saveTheme()
+                if (Globals.wallpaperAnimatedEnabled) Globals.startAnimatedWallpaper(); else Globals.stopAnimatedAndSetStatic()
               }
-              background: Rectangle {
-                color: (Globals.tooltipBg && Globals.tooltipBg !== "") ? Globals.tooltipBg : palette.active.toolTipBase
-                border.color: (Globals.tooltipBorder && Globals.tooltipBorder !== "") ? Globals.tooltipBorder : palette.active.light
-                border.width: 1
-                radius: 6
+            }
+          }
+          Item { Layout.fillWidth: true }
+        }
+
+        // mpvpaper options (applies when animated wallpaper is enabled)
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "mpv Options:"
+            Layout.preferredWidth: 110
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
+            horizontalAlignment: Text.AlignHLeft
+            Layout.alignment: Qt.AlignVCenter
+          }
+          TextField {
+            id: mpvOptsField
+            Layout.preferredWidth: 210
+            //Layout.fillWidth: true
+            text: String(Globals.mpvpaperOptions || "")
+            placeholderText: "--loop --no-audio"
+            onEditingFinished: {
+              const v = String(text)
+              if (v !== Globals.mpvpaperOptions) {
+                Globals.mpvpaperOptions = v
+                Globals.saveTheme()
+                if (Globals.wallpaperAnimatedEnabled) Globals.startAnimatedWallpaper()
               }
             }
           }
         }
+
+        // Spacer: visually separate Outputs from following sections (about two text lines)
+        Item { Layout.preferredHeight: Globals.mainFontSize * 0 }
+
+
 
         // Static wallpaper selector
         RowLayout {
@@ -150,7 +224,7 @@ Item {
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
             font.family: Globals.mainFontFamily
             font.pixelSize: Globals.mainFontSize
-            horizontalAlignment: Text.AlignHCenter
+            horizontalAlignment: Text.AlignHLeft
             Layout.alignment: Qt.AlignVCenter
           }
           TextField {
@@ -159,7 +233,7 @@ Item {
             text: String(Globals.wallpaperStaticPath || "")
           }
           Button {
-            text: "browse..."
+            text: "browse"
             onClicked: {
               staticFileDialog.open()
             }
@@ -225,7 +299,7 @@ Item {
             color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
             font.family: Globals.mainFontFamily
             font.pixelSize: Globals.mainFontSize
-            horizontalAlignment: Text.AlignHCenter
+            horizontalAlignment: Text.AlignHLeft
             Layout.alignment: Qt.AlignVCenter
           }
           TextField {
@@ -234,7 +308,7 @@ Item {
             text: String(Globals.wallpaperAnimatedPath || "")
           }
           Button {
-            text: "browse..."
+            text: "browse"
             onClicked: {
               animatedFileDialog.open()
             }
@@ -276,6 +350,82 @@ Item {
               contentItem: Text { text: animatedApplyTip.text; color: (Globals.tooltipText && Globals.tooltipText !== "") ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
               background: Rectangle { color: (Globals.tooltipBg && Globals.tooltipBg !== "") ? Globals.tooltipBg : palette.active.toolTipBase; border.color: (Globals.tooltipBorder && Globals.tooltipBorder !== "") ? Globals.tooltipBorder : palette.active.light; border.width: 1; radius: 6 }
             }
+          }
+        }
+
+        // Top row: Animated wallpaper toggle aligned like module rows
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "Animated Wallpaper:"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
+            horizontalAlignment: Text.AlignHCenter
+            Layout.alignment: Qt.AlignVCenter
+          }
+          Item { Layout.fillWidth: true }
+          Text {
+            text: wpSwitch.checked ? "On (mpvpaper)" : "Off (static)"
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
+          }
+          Switch {
+            id: wpSwitch
+            checked: Globals.wallpaperAnimatedEnabled
+            onToggled: {
+              Globals.wallpaperAnimatedEnabled = checked
+              if (checked) {
+                Globals.startAnimatedWallpaper()
+              } else {
+                Globals.stopAnimatedAndSetStatic()
+              }
+              Globals.saveTheme()
+            }
+            ToolTip {
+              id: wpTip
+              visible: wpSwitch.hovered
+              text: wpSwitch.checked ? ("Stop to set static wallpaper via " + Globals.wallpaperTool) : "Start animated wallpaper via mpvpaper"
+              contentItem: Text {
+                text: wpTip.text
+                color: (Globals.tooltipText && Globals.tooltipText !== "") ? Globals.tooltipText : "#FFFFFF"
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
+              }
+              background: Rectangle {
+                color: (Globals.tooltipBg && Globals.tooltipBg !== "") ? Globals.tooltipBg : palette.active.toolTipBase
+                border.color: (Globals.tooltipBorder && Globals.tooltipBorder !== "") ? Globals.tooltipBorder : palette.active.light
+                border.width: 1
+                radius: 6
+              }
+            }
+          }
+        }
+
+        // Discover outputs via swww (fallback: empty -> all)
+        // Backing model for outputs dropdown
+        ListModel { id: outputsListModel }
+
+        Process {
+          id: outputsProc
+          running: true
+          command: ["bash","-lc","swww query 2>/dev/null | cut -d: -f1 | sed 's/^ *//;s/ *$//' | grep -v '^$' || true"]
+          property string _buf: ""
+          stdout: SplitParser { onRead: data => { outputsProc._buf += String(data) } }
+          onRunningChanged: if (!running) {
+            const lines = outputsProc._buf.split(/\n/).map(s => s.trim()).filter(s => s.length>0)
+            const uniq = Array.from(new Set(lines))
+            // Only rebuild the model if we actually detected outputs; otherwise keep the previous list
+            if (uniq.length > 0) {
+              contentCol.availableOutputs = uniq
+              outputsListModel.clear()
+              outputsListModel.append({ text: "All (*)" })
+              for (let i = 0; i < uniq.length; i++) outputsListModel.append({ text: String(uniq[i]) })
+              contentCol.syncSelectedFromGlobals()
+            }
+            outputsProc._buf = ""
           }
         }
 
