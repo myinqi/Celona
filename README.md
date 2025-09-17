@@ -65,14 +65,15 @@ Most optional dependencies are used only if present and configured.
 
 ## Configuration
 
-The primary configuration file is `config.json` in the repository root. It holds paths and feature flags that modules and setup pages read at runtime. Notable keys include:
-
-- `wallpaperStaticPath` – path to a static wallpaper image
-- `wallpaperAnimatedPath` – path to an animated wallpaper (video)
+The primary configuration file is `config.json` in the repository root. It holds paths and feature flags that modules and setup pages read at runtime. 
+to be set by the user:
 - `keybindsPath` – path to keybinds file; supports Hyprland `.conf` or Niri `.kdl`
-- Various toggles for showing/hiding modules
+- `weatherLocation` – your location for the weather module
+- `weatherUnit` – the unit of the weather module (C or F)
+- `DockItems` – custom items for the dock module (if you use a dock)
+All other settings are handled by the setup UI (Gear-Icon in the left corner of the bar).
 
-When theme settings are changed via the setup UI (Gear-Icon in the left corner of the bar), the updated values are persisted to `config.json` by `Globals.saveTheme()`.
+When theme settings are changed via the setup UI, the updated values are persisted to `config.json` by `Globals.saveTheme()`.
 
 ## Theming and Light/Dark Toggle
 
@@ -91,11 +92,6 @@ Celona integrates with Matugen to derive a color palette from your wallpaper.
   - Fuzzel (`~/.config/fuzzel/themes/matugen_colors.ini`)
   - Hyprgreetr, Hyprlock, Cava, SwayNC (respective config files)
 
-### Kvantum (Qt) Theme Sync
-
-To sync Qt apps using Kvantum on Light/Dark toggle, ensure this helper exists and is executable:
-
-- `scripts/qt-kvantum-mode.sh`
 
 Default themes can be overridden via environment variables when launching Quickshell:
 
@@ -152,7 +148,8 @@ Modules register with a global popup context to ensure only one popup is visible
 ## Usage Tips
 
 - Hover and click bar modules to open their popups.
-- Use the Setup gear (if enabled) to adjust colors and features.
+- Use the Setup gear to adjust your personal settings.
+- Windowskey+G hides the bar, stops the animated background, and unloads all modules, use this feature for gaming or intensive fullscreen applications. Windowskey+G again shows the bar and restarts the animated background.
 - For the Keybinds module, set `keybindsPath` to your Hyprland or Niri configuration file. For Niri, pointing to `~/.config/niri/config.kdl` enables direct parsing from the `binds` block.
 
 ## Development
@@ -161,6 +158,7 @@ Modules register with a global popup context to ensure only one popup is visible
 - Popups should respect `Globals.popupContext` to maintain mutual exclusivity.
 - Prefer non-destructive file updates for external integrations and validate file availability before writing.
 - Use `console.log` with clear prefixes per module to aid debugging.
+- I included all my configuration files in the repository to create a good "out of the box" experience. Just follow the steps in the installation.txt file. Recommendation: use it on a fresh CachyOS installation.
 
 ### Running locally
 
