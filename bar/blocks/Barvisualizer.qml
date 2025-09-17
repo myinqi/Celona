@@ -7,8 +7,8 @@ import "root:/"
 
 BarBlock {
     id: root
-    // Only show when module is enabled and a media player is present (from Globals propagated by MediaControls)
-    visible: Globals.showBarvisualizer && (Globals.hasActivePlayer || root.hasLocalPlayer)
+    // Only show when enabled and audio is active (fallback: MPRIS active)
+    visible: Globals.showBarvisualizer && (Globals.hasAudioActivity || Globals.hasActivePlayer)
     leftPadding: 0
     rightPadding: 0
 
@@ -17,9 +17,10 @@ BarBlock {
     property bool cavaAvailable: true
     property string errorText: ""
     property string nowPlaying: ""
-    // Local presence tracker (fallback) and convenience alias for readability
-    property bool hasLocalPlayer: false
-    readonly property bool active: (Globals.showBarvisualizer && (Globals.hasActivePlayer || root.hasLocalPlayer))
+    // Track last successful values update for watchdog restarts
+    property double _lastUpdateMs: 0
+    // Convenience alias for readability
+    readonly property bool active: (Globals.showBarvisualizer && (Globals.hasAudioActivity || Globals.hasActivePlayer))
     // local presence flag removed; rely on Globals.hasActivePlayer for consistency with MediaControls
 
     content: Item {
@@ -47,25 +48,12 @@ BarBlock {
                 symbolText: "♪"
             }
 
-    // Presence detection centralized in MediaControls; add a local simple watcher as fallback
-    Process {
-        id: presenceFallback
-        running: true
-        command: ["bash","-lc",
-            "if ! command -v playerctl >/dev/null 2>&1; then " +
-            "  while true; do echo __NONE__; sleep 10; done; " +
-            "else " +
-            "  while true; do " +
-            "    if playerctl -a status 2>/dev/null | grep -Eq 'Playing|Paused'; then echo __HAS__; else echo __NONE__; fi; " +
-            "    sleep 1; " +
-            "  done; " +
-            "fi"
-        ]
-        stdout: SplitParser { onRead: data => { const s = String(data).trim(); const v = (s === '__HAS__'); if (root.hasLocalPlayer !== v) { root.hasLocalPlayer = v; console.log(`[Barvisualizer] local presence: ${v ? 'HAS' : 'NONE'}`) } } }
-        stderr: SplitParser { onRead: _ => {} }
+    // Visibility controlled by Globals.hasAudioActivity (debounced). Optional debug:
+    onVisibleChanged: {
+        console.log(`[Barvisualizer] visible=${visible} active=${root.active} audio=${Globals.hasAudioActivity}`)
+        if (visible) restartVisualizer()
+        else vizProc.running = false
     }
-
-    onVisibleChanged: console.log(`[Barvisualizer] visible=${visible} active=${root.active} hasGlobal=${Globals.hasActivePlayer} hasLocal=${root.hasLocalPlayer}`)
         }
         
         // Compact visualizer area (60px)
@@ -232,7 +220,7 @@ BarBlock {
         command: ["sh", "-c",
             // Use a custom process name (cava_bar) so global `pkill -USR1 -x cava` doesn't hit this instance
             `if command -v cava >/dev/null 2>&1; then \\
-               printf '[general]\\nframerate=60\\nbars=${root.bars}\\nsleep_timer=3\\n[output]\\nchannels=mono\\nmethod=raw\\nraw_target=/dev/stdout\\ndata_format=ascii\\nascii_max_range=100' | exec -a cava_bar cava -p /dev/stdin; \\
+               printf '[general]\\nframerate=60\\nbars=${root.bars}\\nsleep_timer=2\\n[output]\\nchannels=mono\\nmethod=raw\\nraw_target=/dev/stdout\\ndata_format=ascii\\nascii_max_range=100' | exec -a cava_bar cava -p /dev/stdin; \\
              else \\
                echo '__CAVA_MISSING__'; \\
              fi`
@@ -265,6 +253,9 @@ BarBlock {
                 root.errorText = ""
                 root.cavaAvailable = true
                 root.values = new Array(root.bars).fill(0)
+                console.log('[Barvisualizer] cava started')
+            } else {
+                console.log('[Barvisualizer] cava stopped')
             }
         }
     }
@@ -297,6 +288,10 @@ BarBlock {
         target: Globals
         function onBarPositionChanged() {
             if (tipWindow.visible) tipWindow.visible = false
+        }
+        // Restart viz on audio activity change to ensure fresh capture
+        function onHasAudioActivityChanged() {
+            if (Globals.hasAudioActivity && root.visible) restartVisualizer()
         }
         // When theme changes (Matugen apply) we also update visualizerBarColor in Globals.
         // Use that change as a signal to force-restart the embedded cava process to avoid freezes.

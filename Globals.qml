@@ -368,39 +368,65 @@ Singleton {
   // Auto-hide/show media-related modules only when a player is actively Playing or Paused
   // and looks like real media (has a non-empty title) and is not a wallpaper/aux process (e.g., mpvpaper).
   property bool hasActivePlayer: false
+  // Debounce for presence changes to avoid flicker on rapid transitions
+  property bool _pendingHasActivePlayer: false
+  Timer { id: _playerDebounce; interval: 300; repeat: false; onTriggered: Globals.hasActivePlayer = Globals._pendingHasActivePlayer }
   Process {
     id: playerPresenceProc
-    running: true
+    running: false
+    // One-shot check; a Timer below controls the adaptive polling interval
     command: ["bash","-lc",
-      "if ! command -v playerctl >/dev/null 2>&1; then " +
-      "  while true; do echo __NONE__; sleep 10; done; " +
-      "else " +
-      "  while true; do " +
-      "    found=0; " +
-      "    for p in $(playerctl -l 2>/dev/null); do " +
-      "      status=$(playerctl -p \"$p\" status 2>/dev/null || true); " +
-      "      title=$(playerctl -p \"$p\" metadata --format '{{xesam:title}}' 2>/dev/null || true); " +
-      "      pid=$(playerctl -p \"$p\" metadata --format '{{mpris:pid}}' 2>/dev/null || true); " +
-      "      cmdline=$( [ -n \"$pid\" ] && ps -p \"$pid\" -o cmd= 2>/dev/null || echo '' ); " +
-      "      ppid=$( [ -n \"$pid\" ] && ps -p \"$pid\" -o ppid= 2>/dev/null | tr -d ' ' || echo '' ); " +
-      "      pcmd=$( [ -n \"$ppid\" ] && ps -p \"$ppid\" -o cmd= 2>/dev/null || echo '' ); " +
-      "      if echo \"$status\" | grep -Eq 'Playing|Paused' \\\n+            && [ -n \"$title\" ] \\\n+            && [ -n \"$pid\" ] \\\n+            && [ -n \"$cmdline\" ] \\\n+            && ! echo \"$cmdline\" | grep -qi 'mpvpaper' \\\n+            && ! echo \"$pcmd\" | grep -qi 'mpvpaper'; then " +
-      "        found=1; break; " +
-      "      fi; " +
-      "    done; " +
-      "    if [ \"$found\" = 1 ]; then echo __HAS__; else echo __NONE__; fi; " +
-      "    sleep 1; " +
-      "  done; " +
-      "fi"
+      "if ! command -v playerctl >/dev/null 2>&1; then echo __NONE__; exit 0; fi; " +
+      "if playerctl -a status 2>/dev/null | grep -Eq 'Playing|Paused'; then echo __HAS__; else echo __NONE__; fi;"
     ]
     stdout: SplitParser {
       onRead: data => {
         const s = String(data).trim()
-        if (s === '__HAS__') Globals.hasActivePlayer = true
-        else if (s === '__NONE__') Globals.hasActivePlayer = false
+        if (s === '__HAS__') { Globals._pendingHasActivePlayer = true; _playerDebounce.restart() }
+        else { Globals._pendingHasActivePlayer = false; _playerDebounce.restart() }
       }
     }
     stderr: SplitParser { onRead: _ => {} }
+  }
+
+  // Adaptive polling for MPRIS presence
+  Timer {
+    id: playerPollTimer
+    interval: Globals.hasActivePlayer ? 700 : 3000
+    repeat: true
+    running: true
+    onTriggered: { if (!playerPresenceProc.running) playerPresenceProc.running = true }
+  }
+
+  // --- Audio activity (PipeWire/Pulse via pactl) ---
+  // Used for Barvisualizer so it can appear on any system audio, independent of MPRIS.
+  property bool hasAudioActivity: false
+  property bool _pendingHasAudioActivity: false
+  Timer { id: _audioDebounce; interval: 300; repeat: false; onTriggered: Globals.hasAudioActivity = Globals._pendingHasAudioActivity }
+  Process {
+    id: audioPresenceProc
+    running: false
+    // One-shot check; a Timer below controls the adaptive polling interval
+    command: ["bash","-lc",
+      "if ! command -v pactl >/dev/null 2>&1; then echo __NOAUDIO__; exit 0; fi; " +
+      "if pactl list sink-inputs short 2>/dev/null | grep -q .; then echo __AUDIO__; else echo __NOAUDIO__; fi;"
+    ]
+    stdout: SplitParser {
+      onRead: data => {
+        const s = String(data).trim()
+        if (s === '__AUDIO__') { Globals._pendingHasAudioActivity = true; _audioDebounce.restart() }
+        else { Globals._pendingHasAudioActivity = false; _audioDebounce.restart() }
+      }
+    }
+    stderr: SplitParser { onRead: _ => {} }
+  }
+  // Adaptive polling for audio activity
+  Timer {
+    id: audioPollTimer
+    interval: Globals.hasAudioActivity ? 1200 : 3000
+    repeat: true
+    running: true
+    onTriggered: { if (!audioPresenceProc.running) audioPresenceProc.running = true }
   }
   readonly property string visualizerBarColorEffective: (function() {
     try {
