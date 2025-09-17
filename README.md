@@ -73,6 +73,10 @@ to be set by the user:
 - `DockItems` – custom items for the dock module (if you use a dock)
 All other settings are handled by the setup UI (Gear-Icon in the left corner of the bar).
 
+Wallpapers: I added some sample wallpapers in the Repo, search for your screen resolution folder and apply them via the Wallpapers Setup Page.
+Animated wallpapers: if you wish to use your own animated wallpapers, in the repo is a script to extract the first frame from the animated wallpaper and use it as static wallpaper. (scripts/extract-first-frame.sh)
+If no static wallpaper is set but you choose an animated one - you can use the matugen option, Celona creates a temp static wallpaper and uses this for the color generation. But this is only a backup, you should use the script to create a proper static wallpaper.
+
 When theme settings are changed via the setup UI, the updated values are persisted to `config.json` by `Globals.saveTheme()`.
 
 ## Theming and Light/Dark Toggle
