@@ -127,13 +127,10 @@ gsettings set org.gnome.desktop.interface icon-theme 'kora-pgrey'
 gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
 gsettings set org.gnome.desktop.interface cursor-size 28
 
-### configure SDDM Theme ###
-sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/sddm.conf /etc/sddm.conf
-
-
 
 ### Set the Celona configuration ###
 #Copy the .config Folder from the Celona Repo into your local .config Folder und override existing files there.
+sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/sddm.conf /etc/sddm.conf
 rsync -a ~/.config/quickshell/Celona/.config/ ~/.config/
 sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/metadata.desktop /usr/share/sddm/themes/silent/metadata.desktop
 sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/celona.conf /usr/share/sddm/themes/silent/configs/

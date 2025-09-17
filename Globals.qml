@@ -363,6 +363,45 @@ Singleton {
       return lum >= 0.6
     } catch (e) { return false }
   })()
+
+  // --- Media presence (MPRIS) ---
+  // Auto-hide/show media-related modules only when a player is actively Playing or Paused
+  // and looks like real media (has a non-empty title) and is not a wallpaper/aux process (e.g., mpvpaper).
+  property bool hasActivePlayer: false
+  Process {
+    id: playerPresenceProc
+    running: true
+    command: ["bash","-lc",
+      "if ! command -v playerctl >/dev/null 2>&1; then " +
+      "  while true; do echo __NONE__; sleep 10; done; " +
+      "else " +
+      "  while true; do " +
+      "    found=0; " +
+      "    for p in $(playerctl -l 2>/dev/null); do " +
+      "      status=$(playerctl -p \"$p\" status 2>/dev/null || true); " +
+      "      title=$(playerctl -p \"$p\" metadata --format '{{xesam:title}}' 2>/dev/null || true); " +
+      "      pid=$(playerctl -p \"$p\" metadata --format '{{mpris:pid}}' 2>/dev/null || true); " +
+      "      cmdline=$( [ -n \"$pid\" ] && ps -p \"$pid\" -o cmd= 2>/dev/null || echo '' ); " +
+      "      ppid=$( [ -n \"$pid\" ] && ps -p \"$pid\" -o ppid= 2>/dev/null | tr -d ' ' || echo '' ); " +
+      "      pcmd=$( [ -n \"$ppid\" ] && ps -p \"$ppid\" -o cmd= 2>/dev/null || echo '' ); " +
+      "      if echo \"$status\" | grep -Eq 'Playing|Paused' \\\n+            && [ -n \"$title\" ] \\\n+            && [ -n \"$pid\" ] \\\n+            && [ -n \"$cmdline\" ] \\\n+            && ! echo \"$cmdline\" | grep -qi 'mpvpaper' \\\n+            && ! echo \"$pcmd\" | grep -qi 'mpvpaper'; then " +
+      "        found=1; break; " +
+      "      fi; " +
+      "    done; " +
+      "    if [ \"$found\" = 1 ]; then echo __HAS__; else echo __NONE__; fi; " +
+      "    sleep 1; " +
+      "  done; " +
+      "fi"
+    ]
+    stdout: SplitParser {
+      onRead: data => {
+        const s = String(data).trim()
+        if (s === '__HAS__') Globals.hasActivePlayer = true
+        else if (s === '__NONE__') Globals.hasActivePlayer = false
+      }
+    }
+    stderr: SplitParser { onRead: _ => {} }
+  }
   readonly property string visualizerBarColorEffective: (function() {
     try {
       // Base color from theme

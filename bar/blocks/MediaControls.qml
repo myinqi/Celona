@@ -7,6 +7,8 @@ import "root:/"
 
 BarBlock {
   id: root
+  // Only show when module is enabled and a media player is present (local check)
+  visible: Globals.showMediaControls && root.hasPlayer
 
   // keep compact
   leftPadding: 0
@@ -16,9 +18,13 @@ BarBlock {
 
   // expose state for play/pause icon
   property bool isPlaying: false
+  // local presence flag so visibility doesn't depend on Globals polling
+  property bool hasPlayer: false
 
   content: Row {
     id: mediaCtl
+    // As an extra safety, hide the inner content when no player is present
+    visible: root.hasPlayer
     spacing: 2
     anchors.verticalCenter: parent.verticalCenter
     // Match Barvisualizer bar color (adaptive via visualizerBarColorEffective)
@@ -35,10 +41,36 @@ BarBlock {
       MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: prevProc.running = true }
     }
 
+  // Lightweight player presence watcher (not tied to visibility)
+  Process {
+    id: presenceProc
+    running: true
+    command: ["bash","-lc",
+      "if ! command -v playerctl >/dev/null 2>&1; then " +
+      "  while true; do echo __NONE__; sleep 10; done; " +
+      "else " +
+      "  while true; do " +
+      "    if playerctl -a status 2>/dev/null | grep -Eq 'Playing|Paused'; then echo __HAS__; else echo __NONE__; fi; " +
+      "    sleep 1; " +
+      "  done; " +
+      "fi"
+    ]
+    stdout: SplitParser { onRead: data => {
+      const s = String(data).trim();
+      const v = (s === '__HAS__');
+      if (root.hasPlayer !== v) {
+        root.hasPlayer = v;
+        Globals.hasActivePlayer = v;
+        console.log(`[MediaControls] presence: ${v ? 'HAS' : 'NONE'}`)
+      }
+    } }
+    stderr: SplitParser { onRead: _ => {} }
+  }
+
   // Hover tooltip under the bar like other modules
   PopupWindow {
     id: tipWindow
-    visible: root.mouseArea.containsMouse
+    visible: root.hasPlayer && root.mouseArea.containsMouse
     implicitWidth: tipLabel.implicitWidth + 20
     implicitHeight: tipLabel.implicitHeight + 20
     color: "transparent"

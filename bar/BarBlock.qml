@@ -5,8 +5,9 @@ import "root:/"
 
 Rectangle {
   id: root
-  Layout.preferredWidth: contentContainer.implicitWidth + leftPadding + rightPadding
-  Layout.preferredHeight: 26
+  // Exclude hidden blocks from layout entirely
+  Layout.preferredWidth: root.visible ? (contentContainer.implicitWidth + leftPadding + rightPadding) : 0
+  Layout.preferredHeight: root.visible ? 26 : 0
 
   property Item content
   property Item mouseArea: mouseArea

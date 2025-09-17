@@ -7,7 +7,8 @@ import "root:/"
 
 BarBlock {
     id: root
-    visible: Globals.showBarvisualizer
+    // Only show when module is enabled and a media player is present (from Globals propagated by MediaControls)
+    visible: Globals.showBarvisualizer && (Globals.hasActivePlayer || root.hasLocalPlayer)
     leftPadding: 0
     rightPadding: 0
 
@@ -16,13 +17,19 @@ BarBlock {
     property bool cavaAvailable: true
     property string errorText: ""
     property string nowPlaying: ""
+    // Local presence tracker (fallback) and convenience alias for readability
+    property bool hasLocalPlayer: false
+    readonly property bool active: (Globals.showBarvisualizer && (Globals.hasActivePlayer || root.hasLocalPlayer))
+    // local presence flag removed; rely on Globals.hasActivePlayer for consistency with MediaControls
 
     content: Item {
         // Ensure content aligns to the very start of the BarBlock
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: iconWrap.width + 4 + vizArea.width
-        implicitHeight: 26
+        // Collapse content completely when inactive
+        implicitWidth: root.active ? (iconWrap.width + 4 + vizArea.width) : 0
+        implicitHeight: root.active ? 26 : 0
+        visible: root.active
         
         // Music note icon (BarText centers itself; wrap it so we can left-align)
         Item {
@@ -31,6 +38,7 @@ BarBlock {
             anchors.verticalCenter: parent.verticalCenter
             width: noteIcon.implicitWidth
             height: parent.height
+            visible: root.active
             BarText {
                 id: noteIcon
                 anchors.centerIn: parent
@@ -38,6 +46,26 @@ BarBlock {
                 symbolFont: "Symbols Nerd Font Mono"
                 symbolText: "♪"
             }
+
+    // Presence detection centralized in MediaControls; add a local simple watcher as fallback
+    Process {
+        id: presenceFallback
+        running: true
+        command: ["bash","-lc",
+            "if ! command -v playerctl >/dev/null 2>&1; then " +
+            "  while true; do echo __NONE__; sleep 10; done; " +
+            "else " +
+            "  while true; do " +
+            "    if playerctl -a status 2>/dev/null | grep -Eq 'Playing|Paused'; then echo __HAS__; else echo __NONE__; fi; " +
+            "    sleep 1; " +
+            "  done; " +
+            "fi"
+        ]
+        stdout: SplitParser { onRead: data => { const s = String(data).trim(); const v = (s === '__HAS__'); if (root.hasLocalPlayer !== v) { root.hasLocalPlayer = v; console.log(`[Barvisualizer] local presence: ${v ? 'HAS' : 'NONE'}`) } } }
+        stderr: SplitParser { onRead: _ => {} }
+    }
+
+    onVisibleChanged: console.log(`[Barvisualizer] visible=${visible} active=${root.active} hasGlobal=${Globals.hasActivePlayer} hasLocal=${root.hasLocalPlayer}`)
         }
         
         // Compact visualizer area (60px)
@@ -49,6 +77,7 @@ BarBlock {
             width: 225
             height: 28
             color: "transparent"
+            visible: root.active
             
             // Error/missing cava message
             Text {
@@ -89,7 +118,7 @@ BarBlock {
         hoverEnabled: true
         // Do not consume clicks so inner controls remain clickable
         acceptedButtons: Qt.NoButton
-        onEntered: tipWindow.visible = true
+        onEntered: tipWindow.visible = root.active
         onExited: tipWindow.visible = false
     }
 
