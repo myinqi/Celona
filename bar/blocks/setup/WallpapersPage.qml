@@ -414,18 +414,147 @@ Item {
           command: ["bash","-lc","swww query 2>/dev/null | cut -d: -f1 | sed 's/^ *//;s/ *$//' | grep -v '^$' || true"]
           property string _buf: ""
           stdout: SplitParser { onRead: data => { outputsProc._buf += String(data) } }
-          onRunningChanged: if (!running) {
-            const lines = outputsProc._buf.split(/\n/).map(s => s.trim()).filter(s => s.length>0)
-            const uniq = Array.from(new Set(lines))
-            // Only rebuild the model if we actually detected outputs; otherwise keep the previous list
-            if (uniq.length > 0) {
-              contentCol.availableOutputs = uniq
+          onRunningChanged: {
+            if (running) {
+              // Reset buffer at start of each run
+              outputsProc._buf = ""
+            } else {
+              const lines = outputsProc._buf.split(/\n/).map(s => s.trim()).filter(s => s.length>0)
+              const uniq = Array.from(new Set(lines))
+              if (uniq.length > 0) {
+                outputsListModel.clear()
+                outputsListModel.append({ text: "All (*)" })
+                contentCol.availableOutputs = uniq
+                for (let i = 0; i < uniq.length; i++) outputsListModel.append({ text: String(uniq[i]) })
+                contentCol.syncSelectedFromGlobals()
+                outputsProc._buf = ""
+              } else {
+                // Seed from config if we have named outputs there
+                const cfg = Array.isArray(Globals.wallpaperOutputs) ? Globals.wallpaperOutputs.slice() : []
+                const seeded = cfg.filter(x => x && x !== "*")
+                if (seeded.length > 0) {
+                  const merged = Array.from(new Set(seeded))
+                  outputsListModel.clear()
+                  outputsListModel.append({ text: "All (*)" })
+                  contentCol.availableOutputs = merged
+                  for (let i = 0; i < merged.length; i++) outputsListModel.append({ text: String(merged[i]) })
+                  contentCol.syncSelectedFromGlobals()
+                }
+                // Try compositor-specific fallback: Hyprland -> Niri -> wlroots
+                hyprProc.running = true
+              }
+            }
+          }
+        }
+
+        // Fallback 1: Hyprland monitors
+        Process {
+          id: hyprProc
+          running: false
+          command: ["bash","-lc","hyprctl monitors 2>/dev/null | awk '/^[[:space:]]*Monitor /{print $2}' | grep -v '^$' || true"]
+          property string _buf: ""
+          stdout: SplitParser { onRead: data => { hyprProc._buf += String(data) } }
+          onRunningChanged: {
+            if (running) {
+              hyprProc._buf = ""
+            } else {
+              const lines = hyprProc._buf.split(/\n/).map(s => s.trim()).filter(s => s.length>0)
+              const uniq = Array.from(new Set(lines))
+              if (uniq.length > 0) {
+                outputsListModel.clear()
+                outputsListModel.append({ text: "All (*)" })
+                contentCol.availableOutputs = uniq
+                for (let i = 0; i < uniq.length; i++) outputsListModel.append({ text: String(uniq[i]) })
+                contentCol.syncSelectedFromGlobals()
+              } else {
+                // Seed from config if we have named outputs there
+                const cfg = Array.isArray(Globals.wallpaperOutputs) ? Globals.wallpaperOutputs.slice() : []
+                const seeded = cfg.filter(x => x && x !== "*")
+                if (seeded.length > 0) {
+                  const merged = Array.from(new Set(seeded))
+                  outputsListModel.clear()
+                  outputsListModel.append({ text: "All (*)" })
+                  contentCol.availableOutputs = merged
+                  for (let i = 0; i < merged.length; i++) outputsListModel.append({ text: String(merged[i]) })
+                  contentCol.syncSelectedFromGlobals()
+                }
+                // Fallback 2: Niri (JSON outputs)
+                niriProc.running = true
+              }
+              hyprProc._buf = ""
+            }
+          }
+        }
+
+        // Fallback 2: Niri outputs
+        Process {
+          id: niriProc
+          running: false
+          command: ["bash","-lc","niri msg -j outputs 2>/dev/null | awk -F\" '/\"name\"[[:space:]]*:/ {print $4}' | grep -v '^$' || true"]
+          property string _buf: ""
+          stdout: SplitParser { onRead: data => { niriProc._buf += String(data) } }
+          onRunningChanged: {
+            if (running) {
+              niriProc._buf = ""
+            } else {
+              const lines = niriProc._buf.split(/\n/).map(s => s.trim()).filter(s => s.length>0)
+              const uniq = Array.from(new Set(lines))
+              if (uniq.length > 0) {
+                outputsListModel.clear()
+                outputsListModel.append({ text: "All (*)" })
+                contentCol.availableOutputs = uniq
+                for (let i = 0; i < uniq.length; i++) outputsListModel.append({ text: String(uniq[i]) })
+                contentCol.syncSelectedFromGlobals()
+              } else {
+                // Seed from config if we have named outputs there
+                const cfg = Array.isArray(Globals.wallpaperOutputs) ? Globals.wallpaperOutputs.slice() : []
+                const seeded = cfg.filter(x => x && x !== "*")
+                if (seeded.length > 0) {
+                  const merged = Array.from(new Set(seeded))
+                  outputsListModel.clear()
+                  outputsListModel.append({ text: "All (*)" })
+                  contentCol.availableOutputs = merged
+                  for (let i = 0; i < merged.length; i++) outputsListModel.append({ text: String(merged[i]) })
+                  contentCol.syncSelectedFromGlobals()
+                }
+                // Fallback 3: generic wlroots via wlr-randr
+                wlrProc.running = true
+              }
+              niriProc._buf = ""
+            }
+          }
+        }
+
+        // Fallback 3: wlr-randr
+        Process {
+          id: wlrProc
+          running: false
+          command: ["bash","-lc","wlr-randr 2>/dev/null | awk '$2==\"connected\"{print $1}' | grep -v '^$' || true"]
+          property string _buf: ""
+          stdout: SplitParser { onRead: data => { wlrProc._buf += String(data) } }
+          onRunningChanged: {
+            if (running) {
+              wlrProc._buf = ""
+            } else {
+              const lines = wlrProc._buf.split(/\n/).map(s => s.trim()).filter(s => s.length>0)
+              const uniq = Array.from(new Set(lines))
+              // Always rebuild model; prefer detected outputs, else seed from config
+              let finalList = []
+              if (uniq.length > 0) finalList = uniq
+              else {
+                const cfg = Array.isArray(Globals.wallpaperOutputs) ? Globals.wallpaperOutputs.slice() : []
+                finalList = cfg.filter(x => x && x !== "*")
+              }
               outputsListModel.clear()
               outputsListModel.append({ text: "All (*)" })
-              for (let i = 0; i < uniq.length; i++) outputsListModel.append({ text: String(uniq[i]) })
+              if (finalList.length > 0) {
+                const merged = Array.from(new Set(finalList))
+                contentCol.availableOutputs = merged
+                for (let i = 0; i < merged.length; i++) outputsListModel.append({ text: String(merged[i]) })
+              }
               contentCol.syncSelectedFromGlobals()
+              wlrProc._buf = ""
             }
-            outputsProc._buf = ""
           }
         }
 
