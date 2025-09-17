@@ -429,7 +429,57 @@ Item {
           }
         }
 
-        
+        // Preview of currently selected static wallpaper
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 10
+          Label {
+            text: "Preview:"
+            Layout.preferredWidth: 110
+            color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+            font.family: Globals.mainFontFamily
+            font.pixelSize: Globals.mainFontSize
+            horizontalAlignment: Text.AlignHLeft
+            Layout.alignment: Qt.AlignTop
+          }
+          Rectangle {
+            id: previewBox
+            Layout.fillWidth: true
+            Layout.preferredHeight: 140
+            radius: 6
+            color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
+            border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+            border.width: 1
+            clip: true
+            Image {
+              id: staticPreview
+              anchors.fill: parent
+              anchors.margins: 0
+              source: {
+                const t = String(staticPathField && staticPathField.text ? staticPathField.text : Globals.wallpaperStaticPath || "")
+                const p = page.expandHome(t)
+                return (p && p.startsWith("/")) ? ("file://" + p) : ""
+              }
+              fillMode: Image.PreserveAspectFit
+              asynchronous: true
+              cache: false
+              smooth: true
+            }
+            // Error/empty overlay
+            Item {
+              anchors.fill: parent
+              visible: (!staticPreview.source || staticPreview.source.length === 0 || staticPreview.status === Image.Error)
+              Rectangle { anchors.fill: parent; color: "#00000000" }
+              Label {
+                anchors.centerIn: parent
+                text: "No preview"
+                color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
+              }
+            }
+          }
+        }
 
         // Native file dialogs (platform dialogs should open as floating windows)
         Platform.FileDialog {
