@@ -1,4 +1,4 @@
-version: "1.1 (Luna)"
+version: "1.2 (Luna)"
 release_notes: |-
   - New Setup window as a regular WM-managed window (better input & WM rule integration)
   - Theme editor: editable color fields with theme-aware styling
@@ -9,3 +9,4 @@ release_notes: |-
   - Rework of Sound module and Barvisualizer module
   - Rework of WindowSelector module
   - New functions in fuzzel (differnt pickers added, just open fuzzel and type "picker")
+  - New WallpapersPage with more customization options
