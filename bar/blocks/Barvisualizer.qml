@@ -96,12 +96,11 @@ BarBlock {
     PopupWindow {
         id: tipWindow
         visible: false
-        // Allow longer text before elide: cap tooltip width to 55% of window width, max 700px
-        implicitWidth: Math.min(
-            Math.min(700, Math.floor((root.QsWindow?.window?.width || 1200) * 0.55)),
-            tipLabel.implicitWidth + 20
-        )
-        implicitHeight: tipLabel.implicitHeight + 20
+        // Narrow tooltip and horizontally scroll title if it overflows
+        // Width: ~35% of window, clamped to [220, 360]
+        implicitWidth: Math.max(220, Math.min(360, Math.floor((root.QsWindow?.window?.width || 1200) * 0.35)))
+        // Height follows content text
+        implicitHeight: marqueeText.implicitHeight + 20
         color: "transparent"
 
         anchor {
@@ -127,16 +126,58 @@ BarBlock {
             border.width: 1
             radius: 8
 
-            Text {
-                id: tipLabel
+            // Marquee viewport
+            Item {
+                id: marqueeViewport
                 anchors.fill: parent
                 anchors.margins: 10
-                text: root.nowPlaying
-                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
-                font.family: Globals.mainFontFamily
-                font.pixelSize: Globals.mainFontSize
-                verticalAlignment: Text.AlignVCenter
-                wrapMode: Text.NoWrap
+                clip: true
+
+                // Scrolling text
+                Text {
+                    id: marqueeText
+                    text: root.nowPlaying
+                    color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+                    font.family: Globals.mainFontFamily
+                    font.pixelSize: Globals.mainFontSize
+                    verticalAlignment: Text.AlignVCenter
+                    wrapMode: Text.NoWrap
+                    y: (marqueeViewport.height - height) / 2
+                    onTextChanged: {
+                        x = 0
+                        marqueeAnim.restart()
+                    }
+                }
+
+                // Animate only when needed and while visible (ping-pong without jump)
+                SequentialAnimation {
+                    id: marqueeAnim
+                    running: (marqueeText.implicitWidth > marqueeViewport.width) && tipWindow.visible
+                    loops: Animation.Infinite
+                    // configurable durations
+                    property int travel: Math.abs(marqueeViewport.width - marqueeText.implicitWidth)
+                    property int slideDuration: Math.max(1800, 25 * travel)
+                    PauseAnimation { duration: 600 }
+                    // forward to left (revealing tail)
+                    NumberAnimation {
+                        target: marqueeText
+                        property: "x"
+                        from: 0
+                        to: Math.min(0, marqueeViewport.width - marqueeText.implicitWidth)
+                        duration: marqueeAnim.slideDuration
+                        easing.type: Easing.Linear
+                    }
+                    PauseAnimation { duration: 500 }
+                    // backward to start (no jump)
+                    NumberAnimation {
+                        target: marqueeText
+                        property: "x"
+                        to: 0
+                        duration: marqueeAnim.slideDuration
+                        easing.type: Easing.Linear
+                    }
+                    onStopped: marqueeText.x = 0
+                }
             }
         }
     }
