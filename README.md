@@ -85,7 +85,7 @@ Celona integrates with Matugen to derive a color palette from your wallpaper.
   - Updates the system GTK color scheme via `gsettings`
   - Optionally updates the Qt (Kvantum) theme via `scripts/qt-kvantum-mode.sh` if present
   - Persists the selected mode under `~/.config/quickshell/Celona/matugen_mode`
-- After generation, Celona loads and applies the palette, updates bar colors, and synchronizes optional integrations:
+  - After generation, Celona loads and applies the palette, updates bar colors, and synchronizes optional integrations:
   - Niri active/inactive colors (`~/.config/niri/config.kdl`)
   - Ghostty (`~/.config/ghostty/themes/matugen_colors.conf` + live OSC script)
   - Fuzzel (`~/.config/fuzzel/themes/matugen_colors.ini`)
@@ -107,16 +107,15 @@ Celona will call the helper with `light` or `dark`.
 
 ## Modules
 
-The following modules live under `bar/blocks/`. Unless noted otherwise, each item is a single QML file with its own inline popup and relies on `Globals.qml` theme colors. All popups cooperate via a global popup context so only one is visible at a time.
+The following modules live under `bar/blocks/`. Unless noted otherwise, each item is a single QML file with its own inline popup and relies on `Globals.qml` theme colors. All popups cooperate via a global popup context so only one is visible at a time. Many modules use the adaptive accent color `Globals.visualizerBarColorEffective` so visuals remain readable on light and dark themes.
 
 - `ActiveWorkspace.qml` — compact indicator for the currently focused workspace.
-- `Barvisualizer.qml` — simple bar visualizer that reacts to theme changes (`Globals.themeEpoch`).
+- `Barvisualizer.qml` — compact audio bar visualizer. Reacts to theme changes (`Globals.themeEpoch`) and uses the adaptive accent color `Globals.visualizerBarColorEffective` for proper contrast on light/dark themes. Tooltip shows "Now Playing" with a smooth ping‑pong marquee when the title is long.
 - `Battery.qml` — battery status and popup details.
 - `Bluetooth.qml` — Bluetooth indicator and quick actions (if supported on the system).
 - `CPU.qml` — CPU usage indicator.
 - `Clipboard.qml` — clipboard history via `cliphist` and `wl-clipboard`; left‑click shows entries, right‑click offers management actions.
 - `Date.qml` — date display.
-- `Datetime.qml` — combined date and time display (alternative to using `Date.qml` + `Time.qml`).
 - `GPU.qml` — GPU usage indicator.
 - `InfoKeybinds.qml` — keybinds cheatsheet.
   - Hyprland: parses `.conf`.
@@ -128,15 +127,16 @@ The following modules live under `bar/blocks/`. Unless noted otherwise, each ite
 - `PowerProfiles.qml` — power profiles toggle/indicator, if available.
 - `Setup.qml` — entry to the setup dialog (gear icon) to manage theme and behavior.
 - `SetupDialog.qml` — wrapper dialog for setup pages.
-- `Sound.qml` — volume and sink/source controls with popup.
+- `Sound.qml` — volume and sink/source controls with a popup. Includes an embedded Cava visualizer that robustly restarts on theme changes. Uses `Globals.visualizerBarColorEffective` for the bar color.
 - `SystemTray.qml` — system tray area for compatible tray icons.
 - `Time.qml` — time display.
 - `Updates.qml` — system/package update indicator.
 - `Weather.qml` — weather info (optional; requires network access and configuration).
-- `Welcome.qml` — welcome message and hints area (can be hidden via settings).
-- `WindowSelector.qml` — lists open windows; supports Niri (`niri msg -j windows/workspaces`) and Hyprland.
+- `Welcome.qml` — welcome message and hints area.
+- `WindowSelector.qml` — lists open windows; supports Niri (`niri msg -j windows/workspaces`) and Hyprland. Dynamic height with a scrollbar; app glyphs and workspace numbers use the adaptive accent color. Focus actions call the corresponding compositor commands.
 - `WindowTitle.qml` — shows the active window title.
 - `Workspaces.qml` — workspace strip with active/inactive visuals.
+- `MediaControls.qml` — Previous / Play‑Pause / Next buttons. Color follows `Barvisualizer` (adaptive accent color). Visibility can be toggled in the Modules setup page.
 
 ### Setup pages (bar/blocks/setup/)
 

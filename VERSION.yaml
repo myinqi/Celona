@@ -1,9 +1,11 @@
-version: "1.0 (Luna)"
+version: "1.1 (Luna)"
 release_notes: |-
-  Initial stable release of Celona.
   - New Setup window as a regular WM-managed window (better input & WM rule integration)
   - Theme editor: editable color fields with theme-aware styling
   - Game Mode: toggle via script with file-trigger fallback; optional IPC hook (default: 󰘳 +G)
   - Assorted fixes and UX improvements
   - Global Font and Fontsize definition (Globals.mainFontFamily and Globals.mainFontSize)
   - New MediaControls module (toggled by modules page)
+  - Rework of Sound module and Barvisualizer module
+  - Rework of WindowSelector module
+  - New functions in fuzzel (differnt pickers added, just open fuzzel and type "picker")
