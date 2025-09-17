@@ -74,8 +74,8 @@
   "weatherUnit": "C",
   "keybindsPath": "~/.config/niri/config.kdl",
   "wallpaperAnimatedEnabled": true,
-  "wallpaperAnimatedPath": "/home/khrom/.config/quickshell/Celona/wallpapers/3440x1440/rainy.mp4",
-  "wallpaperStaticPath": "/home/khrom/.config/quickshell/Celona/wallpapers/3440x1440/rainy.png",
+  "wallpaperAnimatedPath": "~/.config/quickshell/Celona/wallpapers/3440x1440/rainy.mp4",
+  "wallpaperStaticPath": "~/.config/quickshell/Celona/wallpapers/3440x1440/rainy.png",
   "wallpaperOutputs": [
     "*"
   ],

@@ -51,6 +51,7 @@
   "showWelcome": true,
   "showWindowTitle": true,
   "showWorkspaces": true,
+  "showMediaControls": true,
   "showSystemTray": true,
   "showUpdates": true,
   "showNetwork": true,
@@ -58,7 +59,7 @@
   "showCPU": false,
   "showGPU": false,
   "showMemory": false,
-  "showPowerProfiles": true,
+  "showPowerProfiles": false,
   "showClipboard": true,
   "showNotifications": true,
   "showWindowSelector": true,
@@ -73,8 +74,8 @@
   "weatherUnit": "C",
   "keybindsPath": "~/.config/niri/config.kdl",
   "wallpaperAnimatedEnabled": true,
-  "wallpaperAnimatedPath": "/home/khrom/.config/quickshell/Celona/wallpapers/3440x1440/rainy.mp4",
-  "wallpaperStaticPath": "/home/khrom/.config/quickshell/Celona/wallpapers/3440x1440/rainy.png",
+  "wallpaperAnimatedPath": "~/.config/quickshell/Celona/wallpapers/3440x1440/rainy.mp4",
+  "wallpaperStaticPath": "~/.config/quickshell/Celona/wallpapers/3440x1440/rainy.png",
   "wallpaperOutputs": [
     "*"
   ],

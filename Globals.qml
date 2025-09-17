@@ -67,6 +67,18 @@ Singleton {
     }
   }
 
+  // Convert an absolute path under $HOME to a tilde path (~/...), leave others as-is
+  function toTildePath(p) {
+    try {
+      const s0 = String(p || '').trim()
+      if (!s0) return ''
+      const home = (Globals.homeReady ? Globals.homeDir : '')
+      if (home && s0.startsWith(home + '/'))
+        return '~' + s0.slice(home.length)
+      return s0
+    } catch (e) { return String(p||'') }
+  }
+
   // Load and parse VERSION.yaml (very lightweight YAML reader for two keys: version, release_notes)
   FileView {
     id: versionView
@@ -1755,6 +1767,8 @@ Singleton {
   // Stop mpvpaper and set static wallpaper via selected tool
   function stopAnimatedAndSetStatic() {
     const img = String(wallpaperStaticPath || "").trim()
+    // Resolve to absolute if starts with ~/ and we know homeDir
+    const imgAbs = (img.startsWith("~/") && Globals.homeReady) ? (Globals.homeDir + img.slice(1)) : img
     const outs = Array.isArray(wallpaperOutputs) ? wallpaperOutputs : []
     const tool = String(wallpaperTool || "swww").trim()
     // Always stop mpvpaper
@@ -1765,15 +1779,15 @@ Singleton {
       if (tool === "swww") {
         // Start swww-daemon if not running, then set wallpaper
         script += "pgrep -x swww-daemon >/dev/null 2>&1 || (nohup swww-daemon >/dev/null 2>&1 & sleep 1)\n"
-        script += "swww img '" + img.replace(/'/g, "'\"'\"'") + "' --transition-type none\n"
+        // Use absolute path (swww does not expand ~)
+        script += "swww img '" + imgAbs.replace(/'/g, "'\\''") + "' --transition-type none\n"
       } else if (tool === "hyprpaper") {
         // Only applicable on Hyprland where hyprctl is available
         script += "command -v hyprctl >/dev/null 2>&1 || exit 0\n"
         // Ensure hyprpaper is running
         script += "pgrep -x hyprpaper >/dev/null 2>&1 || (nohup hyprpaper >/dev/null 2>&1 & sleep 0.2)\n"
         // Prepare image path and preload
-        script += "img=\"" + img.replace(/"/g, '\\"') + "\"\n"
-        script += "if [ \"${img#~/}\" != \"$img\" ]; then img=\"$HOME/${img#~/}\"; fi\n"
+        script += "img=\"" + imgAbs.replace(/"/g, '\\"') + "\"\n"
         script += "hyprctl hyprpaper preload \"$img\" >/dev/null 2>&1 || true\n"
         for (let i = 0; i < outs.length; i++) {
           const o = String(outs[i])

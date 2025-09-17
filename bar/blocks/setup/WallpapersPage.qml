@@ -15,6 +15,15 @@ Item {
   width: parent ? parent.width : 0
   height: parent ? parent.height : 0
 
+  // Helpers
+  function expandHome(p) {
+    try {
+      const s = String(p||"")
+      if (s.startsWith("~/") && Globals.homeReady) return Globals.homeDir + s.slice(1)
+      return s
+    } catch (e) { return String(p||"") }
+  }
+
   // Track current Matugen mode from root:/matugen_mode (canonical)
   property string currentMatugenMode: ""
 
@@ -164,7 +173,8 @@ Item {
             text: "apply"
             enabled: staticPathField.text && staticPathField.text.trim().length > 0
             onClicked: {
-              Globals.wallpaperStaticPath = staticPathField.text
+              // Store tilde-relative path in config.json, expand to absolute on apply time in Globals
+              Globals.wallpaperStaticPath = Globals.toTildePath(staticPathField.text)
               // Force static apply: turn off animated and set static now
               Globals.wallpaperAnimatedEnabled = false
               wpSwitch.checked = false  // Update UI switch
@@ -238,7 +248,8 @@ Item {
             text: "apply"
             enabled: animatedPathField.text && animatedPathField.text.trim().length > 0
             onClicked: {
-              Globals.wallpaperAnimatedPath = animatedPathField.text
+              // Store tilde-relative path; `startAnimatedWallpaper()` expands ~ to $HOME internally
+              Globals.wallpaperAnimatedPath = Globals.toTildePath(animatedPathField.text)
               if (Globals.wallpaperAnimatedEnabled) {
                 Globals.startAnimatedWallpaper()
               }
@@ -274,9 +285,17 @@ Item {
         Platform.FileDialog {
           id: staticFileDialog
           title: "Choose static wallpaper"
-          folder: (Globals.wallpaperStaticPath && Globals.wallpaperStaticPath.startsWith("/"))
-                    ? "file://" + Globals.wallpaperStaticPath.substring(0, Globals.wallpaperStaticPath.lastIndexOf("/"))
-                    : "file://" + Platform.StandardPaths.writableLocation(Platform.StandardPaths.PicturesLocation)
+          // Remember last visited dir: prefer current text, then config; expand ~ to absolute
+          folder: {
+            const src = (staticPathField.text && staticPathField.text.trim().length)
+                        ? staticPathField.text : String(Globals.wallpaperStaticPath||"")
+            const abs = page.expandHome(src)
+            if (abs && abs.indexOf("/") >= 0 && abs.startsWith("/")) {
+              const dir = abs.substring(0, abs.lastIndexOf("/"))
+              return "file://" + dir
+            }
+            return "file://" + Platform.StandardPaths.writableLocation(Platform.StandardPaths.PicturesLocation)
+          }
           nameFilters: ["Images (*.png *.jpg *.jpeg *.webp *.bmp *.gif)", "All files (*)"]
           onAccepted: {
             const list = files && files.length ? files : (file ? [file] : [])
@@ -288,9 +307,17 @@ Item {
         Platform.FileDialog {
           id: animatedFileDialog
           title: "Choose animated wallpaper"
-          folder: (Globals.wallpaperAnimatedPath && Globals.wallpaperAnimatedPath.startsWith("/"))
-                    ? "file://" + Globals.wallpaperAnimatedPath.substring(0, Globals.wallpaperAnimatedPath.lastIndexOf("/"))
-                    : "file://" + Platform.StandardPaths.writableLocation(Platform.StandardPaths.MoviesLocation)
+          // Remember last visited dir: prefer current text, then config; expand ~ to absolute
+          folder: {
+            const src = (animatedPathField.text && animatedPathField.text.trim().length)
+                        ? animatedPathField.text : String(Globals.wallpaperAnimatedPath||"")
+            const abs = page.expandHome(src)
+            if (abs && abs.indexOf("/") >= 0 && abs.startsWith("/")) {
+              const dir = abs.substring(0, abs.lastIndexOf("/"))
+              return "file://" + dir
+            }
+            return "file://" + Platform.StandardPaths.writableLocation(Platform.StandardPaths.MoviesLocation)
+          }
           nameFilters: ["Videos (*.mp4 *.mkv *.webm *.mov *.avi *.m4v)", "All files (*)"]
           onAccepted: {
             const list = files && files.length ? files : (file ? [file] : [])
