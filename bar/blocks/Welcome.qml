@@ -105,20 +105,6 @@ BarBlock {
     }
   }
 
-  Process {
-    id: sidebarProc
-    running: false
-    command: ["sh", "-c", "flatpak run com.ml4w.sidebar"]
-    stdout: SplitParser { onRead: data => console.log(`[Welcome] OUT: ${String(data)}`) }
-    stderr: SplitParser { onRead: data => console.log(`[Welcome] ERR: ${String(data)}`) }
-  }
-
-  // Right-click: rofi app launcher (Waybar-like behavior)
-  Process {
-    id: rofiProc
-    running: false
-    command: ["sh", "-c", "sleep 0.2; pkill rofi || rofi -show drun -replace >/dev/null 2>&1 & disown || true"]
-  }
 
   // Niri: fuzzel launcher for both left/right clicks
   Process {

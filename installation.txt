@@ -25,7 +25,7 @@ sudo snapper -c root set-config ALLOW_USERS="$USER" SYNC_ACL=yes
 sudo snapper -c home set-config ALLOW_USERS="$USER" SYNC_ACL=yes
 sudo micro /etc/updatedb.conf  #add .snapshots to prunenames -> PRUNENAMES = ".git .hg .svn .snapshots" then save and quit Ctrl+s Ctrl+q
 
-#note: on cachyOS the next 4 lines are already configured, skip it.
+#note: on cachyOS the next 4 lines are already configured, skip it and continue at line 35
 #if you selected grub bootloader check: sudo micro /etc/mkinitcpio.conf    #at HOOKS= add -> grub-btrfs-overlayfs then save and quit Ctrl+s Ctrl+q
 #if you selected grub bootloader type: sudo mkinitcpio -P
 #if you selected grub bootloader type: sudo systemctl enable --now grub-btrfsd.service
@@ -62,10 +62,8 @@ run niri-session
 # in the secound terminal past the next commands ...
 
 ### Preperations ###
-sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust
-
+sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp xdg-desktop-portal-kde dolphin kio kio-extras kde-cli-tools desktop-file-utils shared-mime-info archlinux-xdg-menu xdg-utils kcalc
 sudo systemctl enable --now udisks2
-
 
 ### Polkit Agent with systemd ###
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 & disown
@@ -83,12 +81,15 @@ sudo systemctl enable sddm.service
 ## Portals config ##
 sudo rsync -a ~/.config/quickshell/Celona/.portal/niri-portals.conf /usr/share/xdg-desktop-portal/niri-portals.conf
 
+
 ## activate ##
 systemctl --user restart xdg-desktop-portal.service \
-  xdg-desktop-portal-gtk.service xdg-desktop-portal-gnome.service
+  xdg-desktop-portal-gtk.service xdg-desktop-portal-gnome.service plasma-xdg-desktop-portal-kde.service
 
+sudo update-desktop-database
+XDG_MENU_PREFIX=arch- kbuildsycoca6 --noincremental
 
-# next step may take some time to complete on cachyos its already installed, skip it and continue at line 99
+# next step may take some time to complete on cachyos its already installed, skip it and continue at line 100
 #git clone https://aur.archlinux.org/paru.git
 #cd paru
 #makepkg -si
@@ -126,6 +127,8 @@ sudo rsync -a ~/.config/quickshell/Celona/.fish/cachyos-config.fish /usr/share/c
 gsettings set org.gnome.desktop.interface icon-theme 'kora-pgrey'
 gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
 gsettings set org.gnome.desktop.interface cursor-size 28
+kwriteconfig6 --file kdeglobals --group Icons --key Theme "kora-pgrey"
+kbuildsycoca6 --noincremental
 
 
 ### Set the Celona configuration ###

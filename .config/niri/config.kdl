@@ -1,6 +1,8 @@
 // This config is in the KDL format: https://kdl.dev
 // https://github.com/YaLTeR/niri/wiki/Configuration:-Introduction
 
+// Input
+
 input {
     keyboard {
         xkb {
@@ -41,11 +43,12 @@ input {
         // scroll-button 273
         // middle-emulation
     }
-	workspace-auto-back-and-forth
+	// workspace-auto-back-and-forth  // this option breaks the window selector of Celona, keept it off
 	warp-mouse-to-focus
     focus-follows-mouse max-scroll-amount="0%"
 }
 
+// Output
 
 output "DP-3" { // check your outputs with "niri msg outputs" doku: https://variety4me.github.io/niri_docs/Configuration-Outputs/
     mode "3440x1440@165.001"
@@ -59,6 +62,7 @@ output "DP-3" { // check your outputs with "niri msg outputs" doku: https://vari
     backdrop-color "#473f77"
 }
 
+// Layout
 
 layout {
     // Set gaps around windows in logical pixels.
@@ -157,6 +161,8 @@ layout {
 prefer-no-csd
 screenshot-path "~/Bilder/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
+// Animations
+
 animations {
     // off
     slowdown 3.0
@@ -198,6 +204,8 @@ animations {
     }           
 }
 
+// Window Rules
+
 window-rule {
     geometry-corner-radius 10
     clip-to-geometry true
@@ -212,6 +220,11 @@ window-rule {
     match app-id=r#"Nautilus"#  
     draw-border-with-background false
     opacity 0.93
+}
+
+window-rule {
+    match app-id=r#"Dolphin"#  
+    draw-border-with-background false
 }
 
 window-rule {
@@ -247,6 +260,59 @@ window-rule {
     clip-to-geometry true
 }
 
+window-rule {
+    match title=r#"^KCalc$"#
+    open-floating true
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+// Layer Rules
+
+// Add a shadow for Celona Setup
+layer-rule {
+    match namespace="^Celona Setup$"
+    shadow {
+        on
+        softness 40
+        spread 5
+        offset x=0 y=5
+        draw-behind-window true
+        color "#00000064"
+    }
+    geometry-corner-radius 10
+}
+
+// Add a shadow for fuzzel
+layer-rule {
+    match namespace="^launcher$"
+    shadow {
+        on
+        softness 40
+        spread 5
+        offset x=0 y=5
+        draw-behind-window true
+        color "#00000064"
+    }
+    geometry-corner-radius 10
+    // baba-is-float true
+}
+
+// Add a shadow for Celona/quickshell
+layer-rule {
+    match namespace="^quickshell$"
+    match at-startup=true
+    shadow {
+        on
+        softness 40
+        spread 5
+        offset x=0 y=5
+        draw-behind-window true
+        color "#00000064"
+    }
+}
+
+
 binds {
     // Most actions that you can bind here can also be invoked programmatically with `niri msg action do-something`.
 
@@ -257,7 +323,8 @@ binds {
     Mod+Return hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
     Mod+Ctrl+Return hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     Mod+B hotkey-overlay-title="Open Browser: zen" { spawn "zen-browser"; }
-    Mod+E hotkey-overlay-title="Open Explorer: nautilus" { spawn "nautilus"; }
+    Mod+E hotkey-overlay-title="Open Explorer: dolphin" { spawn "dolphin"; }
+    Mod+Ctrl+E hotkey-overlay-title="Open Explorer: nautilus" { spawn "nautilus"; }    
     Super+Alt+L hotkey-overlay-title="Lock the Screen: hyprlock" { spawn "hyprlock"; }
 
     // Example volume keys mappings for PipeWire & WirePlumber.
