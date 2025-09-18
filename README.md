@@ -29,14 +29,37 @@ Key paths in this repository:
 - `Globals.qml` – project-wide state, theme handling, and integrations
 
 
-## Installation
+## Installation (script installer)
 
-1) Niri: follow the detailed steps in the installation.txt file (this file describes the installation on a fresh CachyOS system)
+To work properly please install a fresh CachyOS system (without desktop environment). 
+Btrfs is recommended, but not needed. For Btrfs the installer creates a snapshot of the system before the installation.
+Fish shell configuration required!
+You can deselect the zsh configuration, we do not need it
+You can deselect the Firefox configuration, we use zen-browser with Celona
+After installation log into system and perform the next steps:
 
-2) Hyprland: also follow the detailed steps in the installation.txt file (just add hyprland to line 65, you can have both niri and hyprland if you wish to switch between them)
+- The Celona repository must already exist at `~/.config/quickshell/Celona/`. So clone the repository first. 
+    ```
+    mkdir -p ~/.config/quickshell
+    git clone https://github.com/myinqi/Celona.git ~/.config/quickshell/Celona
+    fish ~/.config/quickshell/Celona/install.fish
+    ```
+- after installation reboot your system
+- final configuration of your hardware:
+      micro ~/.config/niri/config.kdl
+      on line 9 set your prefered keyboard layout again "us" "de" ...
+      on line 54 set your resolution and refresh rate. In my case mode "3440x1440@165.030" but yours is maybe "1920x1080@60.030"
+      on line 79 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
+      save and exit Ctrl+S Ctrl+Q
+      if you cant to customize edit the hyprgreetr config -> micro ~/.config/hyprgreetr/config.toml
 
-Important: the installation.txt describes the installation for a fresh installation with CachyOS. If you have a different Linux distribution, you can follow the steps in the installation.txt file, but you will need to install the dependencies yourself. 
+## Installation (manual, step by step)
 
+1) Niri: follow the detailed steps in the manual_installation.txt file (this file describes the installation on a fresh CachyOS system)
+
+2) Hyprland: also follow the detailed steps in the manual_installation.txt file (just add hyprland to line 65, you can have both niri and hyprland if you wish to switch between them)
+
+Important: the manual_installation.txt describes the installation for a fresh installation with CachyOS. If you have a different Linux distribution, you can follow the steps in the manual_installation.txt file, but you will need to install the dependencies yourself. 
 
 ## Requirements
 

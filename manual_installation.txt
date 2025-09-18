@@ -16,7 +16,7 @@
 ## install cachyos WITHOUT Desktop environment # we want a minimal system
 ## log into your system
 
-# important, only if you chosse Btrfs filesystem perform next lines! Else, skip and continue at line 42
+# important, only if you chosse Btrfs filesystem perform next lines! Else, skip and continue at line 37
 sudo snapper -c home create-config /home
 
 # check if the snapper configuration files for root and home are created:
@@ -24,12 +24,6 @@ sudo snapper list-configs   # it should show up home and root lines.
 sudo snapper -c root set-config ALLOW_USERS="$USER" SYNC_ACL=yes
 sudo snapper -c home set-config ALLOW_USERS="$USER" SYNC_ACL=yes
 sudo micro /etc/updatedb.conf  #add .snapshots to prunenames -> PRUNENAMES = ".git .hg .svn .snapshots" then save and quit Ctrl+s Ctrl+q
-
-#note: on cachyOS the next 4 lines are already configured, skip it and continue at line 35
-#if you selected grub bootloader check: sudo micro /etc/mkinitcpio.conf    #at HOOKS= add -> grub-btrfs-overlayfs then save and quit Ctrl+s Ctrl+q
-#if you selected grub bootloader type: sudo mkinitcpio -P
-#if you selected grub bootloader type: sudo systemctl enable --now grub-btrfsd.service
-#if you selected grub bootloader check if btrfsd service is running: sudo systemctl status grub-btrfsd.service
 
 # now we disable automatic timeline snapshots for the installation, we will turn it on again after finished installation!
 sudo systemctl disable --now snapper-timeline.timer snapper-cleanup.timer
@@ -51,7 +45,7 @@ sudo pacman -S ghostty cliphist
 niri-session  # exit it with SHIFT+SUPER+E
 
 micro ~/.config/niri/config.kdl
-# Line 16 uncomment and set your keyboard layout (de, us, ru .... what ever you want)
+# Line 89 uncomment and set your keyboard layout (de, us, ru .... what ever you want)
 # Line 365 change to: alacritty to ghostty in the spawn -> { spawn "ghostty"; }
 # change complete line 272 (the waybar spawn) to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"  #save and quit Ctrl+s Ctrl+q
 
@@ -89,7 +83,7 @@ systemctl --user restart xdg-desktop-portal.service \
 sudo update-desktop-database
 XDG_MENU_PREFIX=arch- kbuildsycoca6 --noincremental
 
-# next step may take some time to complete on cachyos its already installed, skip it and continue at line 100
+# next step may take some time to complete on cachyos its already installed, skip it and continue at line 94
 #git clone https://aur.archlinux.org/paru.git
 #cd paru
 #makepkg -si
@@ -98,12 +92,10 @@ XDG_MENU_PREFIX=arch- kbuildsycoca6 --noincremental
 
 #sudo rm -r paru
 sudo rsync -a ~/.config/quickshell/Celona/.paru/paru.conf /etc/paru.conf
-
+paru -Syu
 
 # next we install some packages from the AUR
 paru -S --noconfirm --needed --skipreview --removemake --cleanafter sddm-silent-theme bibata-cursor-theme-bin nwg-look kora-icon-theme mpvpaper matugen
-
-paru -Syu
 
 ### Install Hyprgreetr
 git clone https://github.com/myinqi/hyprgreetr.git
@@ -150,9 +142,9 @@ reboot
 #final setep (your keyboard and display settings):
 micro ~/.config/niri/config.kdl
 
-# on line 16 set your prefered keyboard layout again "us" "de" ...
-# on line 82 set your resolution and refresh rate. In my case mode "3440x1440@165.030" but yours is maybe "1920x1080@60.030"
-# on line 128 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
+# on line 9 set your prefered keyboard layout again "us" "de" ...
+# on line 54 set your resolution and refresh rate. In my case mode "3440x1440@165.030" but yours is maybe "1920x1080@60.030"
+# on line 79 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
 # save and exit Ctrl+S Ctrl+Q
 # if you cant to customize edit the hyprgreetr config -> micro ~/.config/hyprgreetr/config.toml
 
