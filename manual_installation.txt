@@ -56,7 +56,7 @@ run niri-session
 # in the secound terminal past the next commands ...
 
 ### Preperations ###
-sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp xdg-desktop-portal-kde dolphin kio kio-extras kde-cli-tools desktop-file-utils shared-mime-info archlinux-xdg-menu xdg-utils kcalc
+sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp xdg-desktop-portal-kde dolphin kio kio-extras kde-cli-tools desktop-file-utils shared-mime-info archlinux-xdg-menu xdg-utils kcalc gnome-session
 sudo systemctl enable --now udisks2
 
 ### Polkit Agent with systemd ###
@@ -114,24 +114,54 @@ sudo rm -r hyprgreetr
 sudo rsync -a ~/.config/quickshell/Celona/.fish/config.fish ~/.config/fish/config.fish
 sudo rsync -a ~/.config/quickshell/Celona/.fish/cachyos-config.fish /usr/share/cachyos-fish-config/cachyos-config.fish
 
+### fix "A stop job is running for User Manager for UID 1000" error
+# 1) Ensure gnome-session-ctl exists (install if missing)
+if not test -x /usr/lib/gnome-session-ctl
+    echo "gnome-session-ctl not found → installing gnome-session (sudo required)…"
+    sudo pacman -S --needed gnome-session
+end
 
-### Theme settings in terminal ###
-gsettings set org.gnome.desktop.interface icon-theme 'kora-pgrey'
-gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
-gsettings set org.gnome.desktop.interface cursor-size 28
-kwriteconfig6 --file kdeglobals --group Icons --key Theme "kora-pgrey"
-kbuildsycoca6 --noincremental
+# 2) Locate gnome-session-ctl (auto-detect path)
+set -l GSC "/usr/lib/gnome-session-ctl"
+if not test -x $GSC
+    set -l guess (pacman -Ql gnome-session 2>/dev/null | string match -r '.*gnome-session-ctl$' | awk '{print $2}')
+    if test -n "$guess" -a -x "$guess"
+        set GSC "$guess"
+    end
+end
+if not test -x $GSC
+    echo "ERROR: Could not find gnome-session-ctl. Check gnome-session installation."
+    exit 1
+end
+
+# 3) Write the service (user unit)
+mkdir -p ~/.config/systemd/user
+begin
+    printf "[Unit]\n"
+    printf "Description=Restart DBus after GNOME Session shutdown\n"
+    printf "Documentation=https://wiki.archlinux.org/title/Systemd/User\n"
+    printf "Wants=gnome-session-shutdown.target\n"
+    printf "After=gnome-session-shutdown.target\n"
+    printf "DefaultDependencies=no\n"
+    printf "\n"
+    printf "[Service]\n"
+    printf "Type=notify\n"
+    printf "Slice=-.slice\n"
+    printf "ExecStart=%s --restart-dbus\n" "$GSC"
+    printf "\n"
+    printf "[Install]\n"
+    printf "WantedBy=gnome-session-shutdown.target\n"
+end > ~/.config/systemd/user/gnome-session-restart-dbus.service
+
+# 4) Reload & enable (and start once)
+systemctl --user daemon-reload
+systemctl --user enable --now gnome-session-restart-dbus.service
+
+# 5) Show the effective unit for verification
+systemctl --user cat gnome-session-restart-dbus.service
+#END <--------------------------------------------------------------------------
 
 
-### Set the Celona configuration ###
-#Copy the .config Folder from the Celona Repo into your local .config Folder und override existing files there.
-sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/sddm.conf /etc/sddm.conf
-rsync -a ~/.config/quickshell/Celona/.config/ ~/.config/
-sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/metadata.desktop /usr/share/sddm/themes/silent/metadata.desktop
-sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/celona.conf /usr/share/sddm/themes/silent/configs/
-sudo rsync -a ~/.config/quickshell/Celona/wallpapers/3440x1440/ /usr/share/sddm/themes/silent/backgrounds/
-sudo rsync -a ~/.config/quickshell/Celona/.environment/environment /etc/environment
-bash ~/.config/fuzzel/install-pickers.sh
 
 #reboot your system
 reboot

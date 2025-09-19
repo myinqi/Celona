@@ -122,7 +122,7 @@ sudo pacman -S --needed --noconfirm xdg-desktop-portal-gnome; or die "failed ins
 
 # Core packages
 info "Installing core packages via pacman"
-set -l CORE_PKGS niri ghostty cliphist base-devel micro fuzzel zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp xdg-desktop-portal-kde dolphin kio kio-extras kde-cli-tools desktop-file-utils shared-mime-info archlinux-xdg-menu xdg-utils kcalc
+set -l CORE_PKGS niri ghostty cliphist base-devel micro fuzzel zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp xdg-desktop-portal-kde dolphin kio kio-extras kde-cli-tools desktop-file-utils shared-mime-info archlinux-xdg-menu xdg-utils kcalc gnome-session
 if test $DO_HYPR -eq 1
     set CORE_PKGS $CORE_PKGS hyprland
 end
