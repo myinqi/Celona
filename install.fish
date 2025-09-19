@@ -61,6 +61,7 @@ function celona_banner
     echo " ░▒▓██████▓▒░░▒▓████████▓▒░▒▓████████▓▒░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ "
 end
 
+clear
 celona_banner
 
 # Verify Celona repo exists
@@ -229,10 +230,6 @@ if test $DO_BTRFS -eq 1
     sudo snapper -c home set-config TIMELINE_CREATE=no; or true
     sudo systemctl enable --now snapper-timeline.timer; or warn "enable snapper-timeline failed"
     sudo systemctl enable --now snapper-cleanup.timer; or warn "enable snapper-cleanup failed"
-    if confirm "Create POST snapshots for root and home now?"
-        snapper -c root create -t post -c number -d 'post Celona installation'; or warn "root post snapshot failed"
-        snapper -c home create -t post -c number -d 'post Celona installation'; or warn "home post snapshot failed"
-    end
 end
 
 # Final hints

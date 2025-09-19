@@ -298,20 +298,6 @@ layer-rule {
     // baba-is-float true
 }
 
-// Add a shadow for Celona/quickshell
-layer-rule {
-    match namespace="^quickshell$"
-    match at-startup=true
-    shadow {
-        on
-        softness 40
-        spread 5
-        offset x=0 y=5
-        draw-behind-window true
-        color "#00000064"
-    }
-}
-
 
 binds {
     // Most actions that you can bind here can also be invoked programmatically with `niri msg action do-something`.
