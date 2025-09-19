@@ -114,6 +114,26 @@ sudo rm -r hyprgreetr
 sudo rsync -a ~/.config/quickshell/Celona/.fish/config.fish ~/.config/fish/config.fish
 sudo rsync -a ~/.config/quickshell/Celona/.fish/cachyos-config.fish /usr/share/cachyos-fish-config/cachyos-config.fish
 
+
+### Theme settings in terminal ###
+gsettings set org.gnome.desktop.interface icon-theme 'kora-pgrey'
+gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
+gsettings set org.gnome.desktop.interface cursor-size 28
+kwriteconfig6 --file kdeglobals --group Icons --key Theme "kora-pgrey"
+kbuildsycoca6 --noincremental
+
+
+### Set the Celona configuration ###
+#Copy the .config Folder from the Celona Repo into your local .config Folder und override existing files there.
+sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/sddm.conf /etc/sddm.conf
+rsync -a ~/.config/quickshell/Celona/.config/ ~/.config/
+sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/metadata.desktop /usr/share/sddm/themes/silent/metadata.desktop
+sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/celona.conf /usr/share/sddm/themes/silent/configs/
+sudo rsync -a ~/.config/quickshell/Celona/wallpapers/3440x1440/ /usr/share/sddm/themes/silent/backgrounds/
+sudo rsync -a ~/.config/quickshell/Celona/.environment/environment /etc/environment
+bash ~/.config/fuzzel/install-pickers.sh
+
+
 ### fix "A stop job is running for User Manager for UID 1000" error
 # 1) Ensure gnome-session-ctl exists (install if missing)
 if not test -x /usr/lib/gnome-session-ctl

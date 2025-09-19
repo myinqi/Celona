@@ -73,7 +73,7 @@
   "weatherLocation": "90587, Obermichelbach, DE",
   "weatherUnit": "C",
   "keybindsPath": "~/.config/niri/config.kdl",
-  "wallpaperAnimatedEnabled": false,
+  "wallpaperAnimatedEnabled": true,
   "wallpaperAnimatedPath": "~/.config/quickshell/Celona/wallpapers/3440x1440/rainy.mp4",
   "wallpaperStaticPath": "~/.config/quickshell/Celona/wallpapers/3440x1440/rainy.png",
   "wallpaperOutputs": [
