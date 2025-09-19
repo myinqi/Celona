@@ -52,7 +52,7 @@ After installation log into system and perform the next steps:
       on line 79 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
       save and exit Ctrl+S Ctrl+Q
       if you cant to customize edit the hyprgreetr config -> micro ~/.config/hyprgreetr/config.toml
-      open qt5ct and qt6ct and set kvantum as theme   (ignore the error msg on bot, it works even with it)
+      open qt5ct and qt6ct and set kvantum as theme and set dialog to GTK3 or XDG  (ignore the error msg on bot, it works even with it)
 
 ## Installation (manual, step by step)
 

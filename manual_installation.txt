@@ -206,6 +206,9 @@ snapper -c home create -t post --pre-number <the number of your pre celona snaps
 ##CachyOS Tuning, open Terminal SUPER+Return
 mirror
 
+#QT Theme
+open qt5ct and qt6ct and set kvantum as theme and set dialog to GTK3 or XDG  (ignore the error msg on bot, it works even with it)
+
 #optional if you plan to play some games:
 sudo pacman -S cachyos-gaming-meta
 
