@@ -47,10 +47,10 @@ niri-session  # exit it with SHIFT+SUPER+E
 micro ~/.config/niri/config.kdl
 # Line 89 uncomment and set your keyboard layout (de, us, ru .... what ever you want)
 # Line 365 change to: alacritty to ghostty in the spawn -> { spawn "ghostty"; }
-# change complete line 272 (the waybar spawn) to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"  #save and quit Ctrl+s Ctrl+q
+# change complete line 271 (the waybar spawn) to:   spawn-at-startup "bash" "-c" "wl-paste --watch cliphist store &"  #save and quit Ctrl+s Ctrl+q
 
-
-run niri-session
+#run niri-session again
+niri-session
 # open two terminals (SUPER+T)
 # in one of the terminals: micro ~/.config/quickshell/Celona/installation.txt
 # in the secound terminal past the next commands ...
@@ -176,9 +176,6 @@ end > ~/.config/systemd/user/gnome-session-restart-dbus.service
 # 4) Reload & enable (and start once)
 systemctl --user daemon-reload
 systemctl --user enable --now gnome-session-restart-dbus.service
-
-# 5) Show the effective unit for verification
-systemctl --user cat gnome-session-restart-dbus.service
 #END <--------------------------------------------------------------------------
 
 
