@@ -1188,9 +1188,16 @@ Singleton {
       out = out.replace(/(^|\n)([\t ]*)inactive-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
         return pre + indent + "inactive-color " + q + iHex + q
       })
+      // Also update ring background colors to match the active color
+      out = out.replace(/(^|\n)([\t ]*)background-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
+        return pre + indent + "background-color " + q + aHex + q
+      })
+      out = out.replace(/(^|\n)([\t ]*)backdrop-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
+        return pre + indent + "backdrop-color " + q + aHex + q
+      })
       if (out !== text) {
         const b64 = Qt.btoa(out)
-        console.log('[Niri] writing updated active/inactive colors to', niriConfigFileAbs)
+        console.log('[Niri] writing updated active/inactive/background/backdrop colors to', niriConfigFileAbs)
         niriSaveProc.command = [
           "bash","-lc",
           "mkdir -p ~/.config/niri && printf '%s' '" + b64 + "' | base64 -d > '" + niriConfigFileAbs + "'"
