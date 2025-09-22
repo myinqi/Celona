@@ -233,10 +233,30 @@ if test $DO_BTRFS -eq 1
     sudo systemctl enable --now snapper-cleanup.timer; or warn "enable snapper-cleanup failed"
 end
 
+# Fix "A stop job is running for User Manager for UID 1000" error on shutdown
+info "Applying shutdown stop-job timeout and quickshell cleanup service"
+mkdir -p ~/.config/systemd/user.conf.d
+printf "[Manager]\nDefaultTimeoutStopSec=10s\n" > ~/.config/systemd/user.conf.d/timeout.conf
+systemctl --user daemon-reexec
+mkdir -p ~/.config/systemd/user
+begin
+    printf "[Unit]\nDescription=Cleanup quickshell scopes before exit\nBefore=exit.target\n\n"
+    printf "[Service]\nType=simple\n"
+    printf "ExecStart=/usr/bin/sleep infinity\n"
+    printf "ExecStop=/usr/bin/bash -lc 'systemctl --user kill \"app-niri-qs-*.scope\" 2>/dev/null; pkill -TERM -x mpvpaper 2>/dev/null; sleep 0.3; pkill -KILL -x mpvpaper 2>/dev/null'\n"
+    printf "TimeoutStopSec=5s\nKillMode=mixed\n\n"
+    printf "[Install]\nWantedBy=default.target\n"
+end > ~/.config/systemd/user/qs-cleanup.service
+systemctl --user daemon-reload
+systemctl --user enable --now qs-cleanup.service
+
 # Final hints
 set -l MSG "Installation complete. Notes:\n- Adjust ~/.config/niri/config.kdl (keyboard layout, resolution/refresh rate, max width).\n- Log out/in or reboot to apply SDDM/portals.\n- Customize ~/.config/hyprgreetr/config.toml.\n- Set a wallpaper and briefly toggle dark/light theme to trigger Matugen."
 
+set_color --bold green
 echo -e $MSG
+set_color normal
+
 
 if confirm "Reboot now to complete installation?"
     sudo reboot
