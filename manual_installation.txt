@@ -56,7 +56,7 @@ niri-session
 # in the secound terminal past the next commands ...
 
 ### Preperations ###
-sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp kcalc libadwaita adwaita-cursors adwaita-fonts adwaita-icon-theme adwaita-icon-theme-legacy
+sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp kcalc libadwaita adwaita-cursors adwaita-fonts adwaita-icon-theme adwaita-icon-theme-legacy gnome-themes-extra
 sudo systemctl enable --now udisks2
 
 ### Polkit Agent with systemd ###
@@ -135,50 +135,21 @@ sudo rsync -a ~/.config/quickshell/Celona/.environment/environment /etc/environm
 bash ~/.config/fuzzel/install-pickers.sh
 
 
-### fix "A stop job is running for User Manager for UID 1000" error
-# 1) Ensure gnome-session-ctl exists (install if missing)
-if not test -x /usr/lib/gnome-session-ctl
-    echo "gnome-session-ctl not found → installing gnome-session (sudo required)…"
-    sudo pacman -S --needed gnome-session
-end
-
-# 2) Locate gnome-session-ctl (auto-detect path)
-set -l GSC "/usr/lib/gnome-session-ctl"
-if not test -x $GSC
-    set -l guess (pacman -Ql gnome-session 2>/dev/null | string match -r '.*gnome-session-ctl$' | awk '{print $2}')
-    if test -n "$guess" -a -x "$guess"
-        set GSC "$guess"
-    end
-end
-if not test -x $GSC
-    echo "ERROR: Could not find gnome-session-ctl. Check gnome-session installation."
-    exit 1
-end
-
-# 3) Write the service (user unit)
+### fix "A stop job is running for User Manager for UID 1000" error on shutdown
+mkdir -p ~/.config/systemd/user.conf.d
+printf "[Manager]\nDefaultTimeoutStopSec=10s\n" > ~/.config/systemd/user.conf.d/timeout.conf
+systemctl --user daemon-reexec
 mkdir -p ~/.config/systemd/user
 begin
-    printf "[Unit]\n"
-    printf "Description=Restart DBus after GNOME Session shutdown\n"
-    printf "Documentation=https://wiki.archlinux.org/title/Systemd/User\n"
-    printf "Wants=gnome-session-shutdown.target\n"
-    printf "After=gnome-session-shutdown.target\n"
-    printf "DefaultDependencies=no\n"
-    printf "\n"
-    printf "[Service]\n"
-    printf "Type=notify\n"
-    printf "Slice=-.slice\n"
-    printf "ExecStart=%s --restart-dbus\n" "$GSC"
-    printf "\n"
-    printf "[Install]\n"
-    printf "WantedBy=gnome-session-shutdown.target\n"
-end > ~/.config/systemd/user/gnome-session-restart-dbus.service
-
-# 4) Reload & enable (and start once)
+    printf "[Unit]\nDescription=Cleanup quickshell scopes before exit\nBefore=exit.target\n\n"
+    printf "[Service]\nType=simple\n"
+    printf "ExecStart=/usr/bin/sleep infinity\n"
+    printf "ExecStop=/usr/bin/bash -lc 'systemctl --user kill \"app-niri-qs-*.scope\" 2>/dev/null; pkill -TERM -x mpvpaper 2>/dev/null; sleep 0.3; pkill -KILL -x mpvpaper 2>/dev/null'\n"
+    printf "TimeoutStopSec=5s\nKillMode=mixed\n\n"
+    printf "[Install]\nWantedBy=default.target\n"
+end > ~/.config/systemd/user/qs-cleanup.service
 systemctl --user daemon-reload
-systemctl --user enable --now gnome-session-restart-dbus.service
-#END <--------------------------------------------------------------------------
-
+systemctl --user enable --now qs-cleanup.service
 
 
 #reboot your system
