@@ -22,7 +22,7 @@ separator = "#c4c6d0"
 
 [display]
 show_image = true
-image_path = "~/.config/hyprgreetr/pngs/Cachy_OS.png"
+image_path = "~/.config/hyprgreetr/pngs/niri_icon.png"
 prefer_kitty_graphics = true    # to see the rendered image, you need a terminal with "terminal graphics protocol" support like kitty, ghostty, iTerm2 etc.
 padding = 1
 show_border = false
@@ -33,8 +33,8 @@ border_color = "#415e91"
 [display.image_size]
 width = 30
 height = 14
-cell_width = 17   # Pixel pro Terminal-Zeichen (Breite) - anpassen für perfektes Seitenverhältnis
-cell_height = 24  # Pixel pro Terminal-Zeichen (Höhe) - anpassen für perfektes Seitenverhältnis
+cell_width = 17   # Pixels per terminal character (width) - adjust for perfect aspect ratio
+cell_height = 24  # Pixels per terminal character (height) - adjust for perfect aspect ratio
 
 [display.block_rendering]                      # use this if kitty_graphics is false
 block_style = "default"                        # Block character style: "default", "ascii", "braille", "custom"
