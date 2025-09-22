@@ -309,7 +309,7 @@ binds {
     Mod+Return hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
     Mod+Ctrl+Return hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     Mod+B hotkey-overlay-title="Open Browser: zen" { spawn "zen-browser"; }
-    //Mod+E hotkey-overlay-title="Open Explorer: dolphin" { spawn "dolphin"; }
+    //Mod+Ctrl+E hotkey-overlay-title="Open Explorer: dolphin" { spawn "dolphin"; }
     Mod+E hotkey-overlay-title="Open Explorer: nautilus" { spawn "nautilus"; }    
     Super+Alt+L hotkey-overlay-title="Lock the Screen: hyprlock" { spawn "hyprlock"; }
 
