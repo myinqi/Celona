@@ -79,7 +79,7 @@
   "wallpaperOutputs": [
     "*"
   ],
-  "mpvpaperOptions": "--loop --no-audio --speed=0.90 --hwdec=auto-safe --gpu-context=wayland --really-quiet --framedrop=vo",
+  "mpvpaperOptions": "--loop --no-audio --speed=0.90 --hwdec=auto-safe --gpu-context=wayland --framedrop=vo",
   "wallpaperTool": "swww",
   "useNewSetupUI": true,
   "showBarvisualizer": true,

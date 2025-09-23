@@ -13,6 +13,40 @@ Item {
   height: parent ? parent.height : 0
   // Toggle for viewing release notes
   property bool showReleaseNotes: false
+  // Dynamic compositor version (Niri or Hyprland)
+  property string compositorName: ""
+  property string compositorVersion: ""
+  readonly property string compositorLabel: (compositorName && compositorName.length ? (compositorName + " Version:") : "Compositor Version:")
+
+  // Detect active compositor and fetch version once
+  Process {
+    id: compositorVersionProc
+    running: true
+    command: ["bash","-lc",
+      // Prefer the active session process, then fall back to installed binaries
+      "if pgrep -x niri >/dev/null 2>&1; then echo NAME=Niri; niri --version 2>/dev/null | head -n1; exit 0; fi; " +
+      "if pgrep -x Hyprland >/dev/null 2>&1; then echo NAME=Hyprland; (hyprctl -v 2>/dev/null || Hyprland -v 2>/dev/null) | head -n1; exit 0; fi; " +
+      "if command -v niri >/dev/null 2>&1; then echo NAME=Niri; niri --version 2>/dev/null | head -n1; exit 0; fi; " +
+      "if command -v hyprctl >/dev/null 2>&1; then echo NAME=Hyprland; hyprctl -v 2>/dev/null | head -n1; exit 0; fi; " +
+      "if command -v Hyprland >/dev/null 2>&1; then echo NAME=Hyprland; Hyprland -v 2>/dev/null | head -n1; exit 0; fi; " +
+      "echo NAME=Unknown; echo __MISSING__"
+    ]
+    stdout: SplitParser {
+      onRead: (data) => {
+        const line = String(data).trim()
+        if (line.startsWith("NAME=")) {
+          page.compositorName = line.slice(5)
+          return
+        }
+        if (line === '__MISSING__') {
+          page.compositorVersion = 'not found'
+          compositorVersionProc.running = false
+          return
+        }
+        if (line.length) page.compositorVersion = line
+      }
+    }
+  }
 
   ColumnLayout {
     anchors.fill: parent
@@ -48,6 +82,24 @@ Item {
           id: contentCol
           width: parent.width
           spacing: 10
+
+          // Compositor Version row (Niri or Hyprland)
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            Label {
+              text: "Wayland compositor:"
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
+            }
+            Item { Layout.fillWidth: true }
+            Text {
+              text: page.compositorVersion
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: "monospace"
+            }
+          }
 
           // Row aligned and styled similar to WallpapersPage's "Animated Wallpaper:" row
           RowLayout {
