@@ -67,6 +67,37 @@ Singleton {
     }
   }
 
+  // Periodic enforcer: ensure at most one watcher of each kind
+  Timer {
+    id: playerCtlEnforcer
+    interval: 2000
+    repeat: true
+    running: true
+    onTriggered: {
+      if (playerCtlEnforceProc.running) return
+      playerCtlEnforceProc.running = true
+    }
+  }
+  Process {
+    id: playerCtlEnforceProc
+    running: false
+    command: ["bash","-lc",
+      "sc=$(pgrep -u '$USER' -f 'playerctl -F status' | wc -l); mc=$(pgrep -u '$USER' -f 'playerctl metadata --follow' | wc -l); " +
+      "if [ \"$sc\" -gt 1 ] || [ \"$mc\" -gt 1 ]; then " +
+      "  pkill -u '$USER' -f 'playerctl -F status' 2>/dev/null || true; " +
+      "  pkill -u '$USER' -f 'playerctl metadata --follow' 2>/dev/null || true; " +
+      "  echo TRIM; else echo OK; fi"
+    ]
+    stdout: SplitParser { onRead: (data) => {
+      const s = String(data).trim()
+      if (s === 'TRIM') {
+        // After trimming, ensure our singletons are restarted
+        if (!playerStatusProc.running) playerStatusProc.running = true
+        if (!playerNowProc.running) playerNowProc.running = true
+      }
+    } }
+  }
+
   // Convert an absolute path under $HOME to a tilde path (~/...), leave others as-is
   function toTildePath(p) {
     try {
@@ -408,6 +439,69 @@ Singleton {
     repeat: true
     running: true
     onTriggered: { if (!playerPresenceProc.running) playerPresenceProc.running = true }
+  }
+
+  // --- Singleton playerctl watchers ---
+  // Public globals to consume in UI instead of spawning their own -F watchers
+  property string playerStatus: ""         // "Playing" | "Paused" | "Stopped" | ""
+  property string playerNowPlaying: ""     // title — artist (may be empty)
+  property bool _playerctlFollowRequested: false
+
+  // Note: no cleanup process here; we keep a single always-on watcher of each kind.
+
+  // Follow player status (single instance)
+  Process {
+    id: playerStatusProc
+    running: true
+    command: ["bash","-lc",
+      "if command -v playerctl >/dev/null 2>&1; then playerctl -F status; else echo __PLAYERCTL_MISSING__; fi"
+    ]
+    stdout: SplitParser {
+      onRead: (data) => {
+        const line = String(data).trim()
+        if (line === '__PLAYERCTL_MISSING__') { playerStatusProc.running = false; return }
+        if (line === 'Playing' || line === 'Paused' || line === 'Stopped') {
+          Globals.playerStatus = line
+        }
+      }
+    }
+    onRunningChanged: { if (!running) playerStatusRestart.start() }
+  }
+  Timer { id: playerStatusRestart; interval: 800; repeat: false; onTriggered: { if (!playerStatusProc.running) playerStatusProc.running = true } }
+
+  // Follow now playing metadata (single instance)
+  Process {
+    id: playerNowProc
+    running: true
+    command: ["bash","-lc",
+      "if command -v playerctl >/dev/null 2>&1; then playerctl metadata --follow --format '{{title}} — {{artist}}'; else echo __PLAYERCTL_MISSING__; fi"
+    ]
+    stdout: SplitParser {
+      onRead: (data) => {
+        const line = String(data).trim()
+        if (line === '__PLAYERCTL_MISSING__') { playerNowProc.running = false; Globals.playerNowPlaying = ''; return }
+        // playerctl sometimes emits empty lines on state changes -> keep last non-empty or clear
+        Globals.playerNowPlaying = line
+      }
+    }
+    onRunningChanged: { if (!running) playerNowRestart.start() }
+  }
+  Timer { id: playerNowRestart; interval: 800; repeat: false; onTriggered: { if (!playerNowProc.running) playerNowProc.running = true } }
+
+  // Coordinator: only clear globals when no player; watchers are always on
+  Timer {
+    id: playerFollowCoordinator
+    interval: 500
+    repeat: true
+    running: true
+    onTriggered: {
+      try {
+        if (!Globals.hasActivePlayer) {
+          if (Globals.playerStatus !== '') Globals.playerStatus = ''
+          if (Globals.playerNowPlaying !== '') Globals.playerNowPlaying = ''
+        }
+      } catch (e) { /* no-op */ }
+    }
   }
 
   // --- Audio activity (PipeWire/Pulse via pactl) ---

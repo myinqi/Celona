@@ -125,8 +125,9 @@ BarBlock {
         property var values: new Array(bars).fill(0)
         property bool cavaAvailable: true
         property string errorText: ""
-        property string nowPlaying: ""
-        property bool isPlaying: false
+        // Bind to global singleton playerctl state
+        property string nowPlaying: String(Globals.playerNowPlaying || "")
+        property bool isPlaying: (Globals.playerStatus === 'Playing')
         // desired bar visuals
         property int _targetBarWidth: 6
         property int _targetSpacing: 2
@@ -332,13 +333,9 @@ BarBlock {
                 if (vizWindow.bars !== desired) vizWindow.bars = desired
                 vizWindow.values = new Array(vizWindow.bars).fill(0)
                 vizProc.running = true
-                nowProc.running = true
-                statusProc.running = true
             } else {
                 if (Globals.popupContext && Globals.popupContext.popup === vizWindow) Globals.popupContext.popup = null
                 vizProc.running = false
-                nowProc.running = false
-                statusProc.running = false
             }
         }
 
@@ -437,48 +434,7 @@ BarBlock {
             stderr: SplitParser { onRead: data => console.log(`[Sound] viz stderr: ${String(data)}`) }
         }
 
-        Process {
-            id: nowProc
-            running: false
-            command: ["sh", "-c",
-                `if command -v playerctl >/dev/null 2>&1; then \\
-                   playerctl metadata --follow --format '{{title}} — {{artist}}'; \\
-                 else \\
-                   echo '__PLAYERCTL_MISSING__'; \\
-                 fi`
-            ]
-            stdout: SplitParser {
-                onRead: data => {
-                    const line = String(data).trim()
-                    if (line === '__PLAYERCTL_MISSING__') { vizWindow.nowPlaying = ''; nowProc.running = false; return }
-                    // playerctl prints empty lines on state changes; ignore to keep last value or clear
-                    vizWindow.nowPlaying = line
-                }
-            }
-            stderr: SplitParser { onRead: data => console.log(`[Sound] now stderr: ${String(data)}`) }
-        }
-
-        // Follow player status to toggle play/pause icon dynamically
-        Process {
-            id: statusProc
-            running: false
-            command: ["sh", "-c",
-                `if command -v playerctl >/dev/null 2>&1; then \\
-                   playerctl -F status; \\
-                 else \\
-                   echo '__PLAYERCTL_MISSING__'; \\
-                 fi`
-            ]
-            stdout: SplitParser {
-                onRead: data => {
-                    const line = String(data).trim()
-                    if (line === '__PLAYERCTL_MISSING__') { statusProc.running = false; return }
-                    if (line === 'Playing') vizWindow.isPlaying = true
-                    else if (line === 'Paused' || line === 'Stopped') vizWindow.isPlaying = false
-                }
-            }
-            stderr: SplitParser { onRead: data => console.log(`[Sound] status stderr: ${String(data)}`) }
-        }
+        // Player status and metadata are provided by Globals singleton watchers
 
         // Media control processes (playerctl)
         Process { id: prevProc; running: false; command: ["sh","-c","playerctl previous || true"]; onRunningChanged: if (!running) {} }

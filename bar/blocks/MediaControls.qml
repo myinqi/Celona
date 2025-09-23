@@ -7,8 +7,8 @@ import "root:/"
 
 BarBlock {
   id: root
-  // Only show when module is enabled and a media player is present (local check)
-  visible: Globals.showMediaControls && root.hasPlayer
+  // Only show when module is enabled and a media player is present (global check)
+  visible: Globals.showMediaControls && Globals.hasActivePlayer
 
   // keep compact
   leftPadding: 0
@@ -16,15 +16,13 @@ BarBlock {
   // Let child buttons receive clicks (do not consume at BarBlock level)
   passClicks: true
 
-  // expose state for play/pause icon
-  property bool isPlaying: false
-  // local presence flag so visibility doesn't depend on Globals polling
-  property bool hasPlayer: false
+  // expose state for play/pause icon via Globals
+  property bool isPlaying: (Globals.playerStatus === 'Playing')
 
   content: Row {
     id: mediaCtl
     // As an extra safety, hide the inner content when no player is present
-    visible: root.hasPlayer
+    visible: Globals.hasActivePlayer
     spacing: 2
     anchors.verticalCenter: parent.verticalCenter
     // Match Barvisualizer bar color (adaptive via visualizerBarColorEffective)
@@ -41,31 +39,7 @@ BarBlock {
       MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: prevProc.running = true }
     }
 
-  // Lightweight player presence watcher (not tied to visibility)
-  Process {
-    id: presenceProc
-    running: true
-    command: ["bash","-lc",
-      "if ! command -v playerctl >/dev/null 2>&1; then " +
-      "  while true; do echo __NONE__; sleep 10; done; " +
-      "else " +
-      "  while true; do " +
-      "    if playerctl -a status 2>/dev/null | grep -Eq 'Playing|Paused'; then echo __HAS__; else echo __NONE__; fi; " +
-      "    sleep 1; " +
-      "  done; " +
-      "fi"
-    ]
-    stdout: SplitParser { onRead: data => {
-      const s = String(data).trim();
-      const v = (s === '__HAS__');
-      if (root.hasPlayer !== v) {
-        root.hasPlayer = v;
-        Globals.hasActivePlayer = v;
-        console.log(`[MediaControls] presence: ${v ? 'HAS' : 'NONE'}`)
-      }
-    } }
-    stderr: SplitParser { onRead: _ => {} }
-  }
+  // Presence driven by Globals.hasActivePlayer (polled centrally in Globals)
 
   // Hover tooltip under the bar like other modules
   PopupWindow {
@@ -132,27 +106,7 @@ BarBlock {
     }
   }
 
-  // Follow player status to toggle play/pause icon dynamically
-  Process {
-    id: statusProc
-    running: root.visible
-    command: ["sh", "-c",
-      `if command -v playerctl >/dev/null 2>&1; then \\
-         playerctl -F status; \\
-       else \\
-         echo '__PLAYERCTL_MISSING__'; \\
-       fi`
-    ]
-    stdout: SplitParser {
-      onRead: data => {
-        const line = String(data).trim()
-        if (line === '__PLAYERCTL_MISSING__') { statusProc.running = false; return }
-        if (line === 'Playing') root.isPlaying = true
-        else if (line === 'Paused' || line === 'Stopped') root.isPlaying = false
-      }
-    }
-    stderr: SplitParser { onRead: data => console.log(`[MediaControls] status stderr: ${String(data)}`) }
-  }
+  // Play/pause state via Globals.playerStatus; no local -F watcher needed
 
   // Media control processes (playerctl)
   Process { id: prevProc; running: false; command: ["sh","-c","playerctl previous || true"] }
