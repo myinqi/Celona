@@ -10,4 +10,5 @@ release_notes: |-
   - Rework of WindowSelector module
   - New functions in fuzzel (differnt pickers added, just open fuzzel and type "picker")
   - New WallpapersPage with more customization options
-  - Improvements on mpvpaper and playerctl implementation (less memory usage, less child processes)
+  - Improvements on mpvpaper and playerctl implementation (no child processes)
+  - Time Module: Timer function implemented with notification after end.
