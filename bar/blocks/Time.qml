@@ -22,6 +22,8 @@ BarBlock {
   // Icon name for notifications (freedesktop icon theme name or absolute path)
   // Examples: 'alarm-symbolic', 'alarm', 'alarm-clock', 'appointment-new', 'preferences-system-time', 'clock'
   property string notifyIcon: "alarm-symbolic"
+  // Last used duration in seconds (used when user presses Start with 00:00)
+  property int lastDurationSec: 0
   property string remainingText: {
     const s = Math.max(0, remainingSec|0)
     const hh = Math.floor(s/3600)
@@ -47,16 +49,26 @@ BarBlock {
     } catch (e) { return 0 }
   }
   function startTimer() {
-    const secs = Math.max(0, (timerHours|0) * 3600 + (timerMinutes|0) * 60)
+    var secs = Math.max(0, (timerHours|0) * 3600 + (timerMinutes|0) * 60)
+    if (secs <= 0 && (lastDurationSec|0) > 0) {
+      // Use the last duration if no time is set
+      secs = (lastDurationSec|0)
+    }
     if (secs <= 0) return
-    // Remember the originally set duration as human-readable text for the notification
-    const hh = (timerHours|0)
-    const mm = (timerMinutes|0)
+    // Build human-readable text from the duration actually used (secs)
+    var hh = (timerHours|0)
+    var mm = (timerMinutes|0)
+    if (hh === 0 && mm === 0) {
+      // Derive from secs when starting via lastDurationSec
+      hh = Math.floor(secs/3600)
+      mm = Math.floor((secs%3600)/60)
+    }
     const hhText = hh > 0 ? (hh + ' hour' + (hh === 1 ? '' : 's')) : ''
     const mmText = mm > 0 ? (mm + ' minute' + (mm === 1 ? '' : 's')) : ''
     originalDurationText = hh > 0 && mm > 0 ? (hhText + ' ' + mmText) : (hh > 0 ? hhText : mmText)
     remainingSec = secs
     timerRunning = true
+    lastDurationSec = secs
   }
   function stopTimer() {
     // Pause: only toggle the state flag. Do NOT write tickTimer.running directly,
@@ -251,6 +263,7 @@ BarBlock {
           Column {
             spacing: 2
             Text {
+              id: hoursHeader
               text: "hh"
               width: 28
               horizontalAlignment: Text.AlignHCenter
@@ -259,7 +272,7 @@ BarBlock {
               font.pixelSize: Globals.mainFontSize
             }
             Button {
-              text: "▲"; width: 28; height: 22
+              text: "▲"; width: 28; height: 27
               onClicked: timeBlock.incHour()
               contentItem: Text {
                 anchors.fill: parent
@@ -271,11 +284,11 @@ BarBlock {
               background: Rectangle { radius: 4; color: "transparent"; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             }
             Rectangle {
-              width: 32; height: 28; color: "transparent"
+              width: 32; height: 27; color: "transparent"
               Text { anchors.centerIn: parent; text: timeBlock.z2(timeBlock.timerHours); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: 16 }
             }
             Button {
-              text: "▼"; width: 28; height: 22
+              text: "▼"; width: 28; height: 27
               onClicked: timeBlock.decHour()
               contentItem: Text {
                 anchors.fill: parent
@@ -287,11 +300,12 @@ BarBlock {
               background: Rectangle { radius: 4; color: "transparent"; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             }
           }
-          Text { text: ":"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          Text { text: ""; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           // Minutes control
           Column {
             spacing: 2
             Text {
+              id: minutesHeader
               text: "mm"
               width: 28
               horizontalAlignment: Text.AlignHCenter
@@ -300,7 +314,7 @@ BarBlock {
               font.pixelSize: Globals.mainFontSize
             }
             Button {
-              text: "▲"; width: 28; height: 22
+              text: "▲"; width: 28; height: 27
               onClicked: timeBlock.incMinute()
               contentItem: Text {
                 anchors.fill: parent
@@ -312,11 +326,11 @@ BarBlock {
               background: Rectangle { radius: 4; color: "transparent"; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             }
             Rectangle {
-              width: 32; height: 28; color: "transparent"
+              width: 32; height: 27; color: "transparent"
               Text { anchors.centerIn: parent; text: timeBlock.z2(timeBlock.timerMinutes); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: 16 }
             }
             Button {
-              text: "▼"; width: 28; height: 22
+              text: "▼"; width: 28; height: 27
               onClicked: timeBlock.decMinute()
               contentItem: Text {
                 anchors.fill: parent
@@ -329,58 +343,71 @@ BarBlock {
             }
           }
           Item { Layout.fillWidth: true }
+          // Right-side control column with three slots aligned to ▲ / value / ▼ rows
           Column {
-            spacing: 4
-            // Single toggle button: Start -> running, Pause -> pause, Resume -> resume
-            Button {
-              id: startPauseBtn
-              width: 70
-              text: timeBlock.timerRunning ? "Pause" : (timeBlock.remainingSec > 0 ? "Resume" : "Start")
-              onClicked: {
-                if (timeBlock.timerRunning) {
-                  // Pause
-                  timeBlock.stopTimer()
-                } else if (timeBlock.remainingSec > 0) {
-                  // Resume
-                  timeBlock.resumeTimer()
-                } else {
-                  // Start new
-                  timeBlock.startTimer()
+            spacing: 2
+            // Header spacer to align with 'hh/mm' labels on the left
+            Item { width: 70; height: Math.max(hoursHeader.implicitHeight, minutesHeader.implicitHeight) }
+            // Match the left columns' spacing between header and up-arrows
+            Item { width: 70; height: 2 }
+            // Top slot (align with up-arrow row)
+            Item {
+              width: 70; height: 27
+              Button {
+                id: startPauseBtn
+                anchors.fill: parent
+                text: timeBlock.timerRunning ? "Pause" : (timeBlock.remainingSec > 0 ? "Resume" : "Start")
+                onClicked: {
+                  if (timeBlock.timerRunning) {
+                    // Pause
+                    timeBlock.stopTimer()
+                  } else if (timeBlock.remainingSec > 0) {
+                    // Resume
+                    timeBlock.resumeTimer()
+                  } else {
+                    // Start new
+                    timeBlock.startTimer()
+                  }
                 }
+                contentItem: Text {
+                  anchors.fill: parent
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                  text: parent.text
+                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                  font.family: Globals.mainFontFamily
+                  font.pixelSize: Globals.mainFontSize
+                }
+                background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
               }
-              contentItem: Text {
-                anchors.fill: parent
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: parent.text
-                color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                font.family: Globals.mainFontFamily
-                font.pixelSize: Globals.mainFontSize
-              }
-              background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             }
-            // Reset appears only while running
-            Button {
-              id: resetBtn
-              width: 70
-              visible: timeBlock.timerRunning
-              text: "Reset"
-              onClicked: {
-                timeBlock.timerRunning = false
-                timeBlock.remainingSec = 0
-                timeBlock.timerHours = 0
-                timeBlock.timerMinutes = 0
-              }
-              contentItem: Text {
+            // Middle slot (align with value row) – intentionally empty to keep alignment
+            Item { width: 70; height: 27 }
+            // Bottom slot (align with down-arrow row)
+            Item {
+              width: 70; height: 27
+              Button {
+                id: resetBtn
                 anchors.fill: parent
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                text: parent.text
-                color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                font.family: Globals.mainFontFamily
-                font.pixelSize: Globals.mainFontSize
+                visible: timeBlock.timerRunning
+                text: "Reset"
+                onClicked: {
+                  timeBlock.timerRunning = false
+                  timeBlock.remainingSec = 0
+                  timeBlock.timerHours = 0
+                  timeBlock.timerMinutes = 0
+                }
+                contentItem: Text {
+                  anchors.fill: parent
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                  text: parent.text
+                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                  font.family: Globals.mainFontFamily
+                  font.pixelSize: Globals.mainFontSize
+                }
+                background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
               }
-              background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             }
           }
         }
@@ -423,12 +450,11 @@ BarBlock {
     repeat: true
     running: timeBlock.timerRunning
     onTriggered: {
-      if (!timeBlock.timerRunning) { running = false; return }
+      if (!timeBlock.timerRunning) { return }
       const next = Math.max(0, (timeBlock.remainingSec|0) - 1)
       timeBlock.remainingSec = next
       if (next <= 0) {
         timeBlock.timerRunning = false
-        running = false
         // Set dynamic notification text with the originally set duration
         notifyProc.command = [
           "bash","-lc",
