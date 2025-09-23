@@ -200,7 +200,7 @@ Item {
           }
           TextField {
             id: mpvOptsField
-            Layout.preferredWidth: 349
+            Layout.preferredWidth: 516
             //Layout.fillWidth: true
             text: String(Globals.mpvpaperOptions || "")
             placeholderText: "--loop --no-audio"

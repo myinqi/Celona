@@ -1750,19 +1750,60 @@ Singleton {
     const vid = String(wallpaperAnimatedPath || "").trim()
     const outs = Array.isArray(wallpaperOutputs) ? wallpaperOutputs : []
     if (!vid || outs.length === 0) return
-    const opts = String(mpvpaperOptions || "").trim()
-    // Build a small bash script: kill existing mpvpaper, then start one per output
-    let script = "set -e\n" +
-                 "pkill -x mpvpaper 2>/dev/null || true\n" +
-                 "sleep 0.2\n" +
+    // Use mpv options as entered by the user, but write them to a temp mpv config file and include it
+    let opts = String(mpvpaperOptions || "").trim()
+    // Build a robust bash script:
+    // - stop any user systemd unit named mpvpaper if present
+    // - kill all user mpvpaper processes and wait until gone
+    // - start exactly one instance for '*' or one per unique output otherwise
+    let script = "" +
+                 "# Stop any user unit explicitly named mpvpaper and any unit that runs mpvpaper\n" +
+                 "(systemctl --user stop mpvpaper.service >/dev/null 2>&1 || true)\n" +
+                 "for u in $(systemctl --user list-units --type=service --all --no-legend | awk '{print $1}'); do\n" +
+                 "  es=$(systemctl --user show -p ExecStart $u 2>/dev/null | sed 's/^ExecStart=//');\n" +
+                 "  echo \"$es\" | grep -q mpvpaper && systemctl --user stop $u >/dev/null 2>&1 || true;\n" +
+                 "done\n" +
+                 "pkill -x -u \"$USER\" mpvpaper 2>/dev/null || true\n" +
+                 "for i in $(seq 1 30); do pgrep -x -u \"$USER\" mpvpaper >/dev/null 2>&1 || break; sleep 0.1; done\n" +
+                 "pgrep -x -u \"$USER\" mpvpaper >/dev/null 2>&1 && pkill -9 -x -u \"$USER\" mpvpaper 2>/dev/null || true\n" +
                  "vid=\"" + vid.replace(/"/g, '\\"') + "\"\n" +
                  "if [ \"${vid#~/}\" != \"$vid\" ]; then vid=\"$HOME/${vid#~/}\"; fi\n" +
-                 "opts=\"" + opts.replace(/"/g, '\\"') + "\"\n"
+                 // Build a dedicated mpv options file and include it to avoid quoting issues
+                 "OPTS=\"" + opts.replace(/\"/g, '\\\"') + "\"\n" +
+                 "OPTS_FILE=\"$HOME/.cache/celona/mpvpaper.conf\"\n" +
+                 "mkdir -p \"$(dirname \"$OPTS_FILE\")\" >/dev/null 2>&1 || true\n" +
+                 "printf '' > \"$OPTS_FILE\"\n" +
+                 "if [ -n \"$OPTS\" ]; then\n" +
+                 "  set -- $OPTS\n" +
+                 "  for t in \"$@\"; do t=\"${t#--}\"; echo \"$t\" >> \"$OPTS_FILE\"; done\n" +
+                 "fi\n" +
+                 "oarg=\"-o include=\$OPTS_FILE \"\n"
+    // Deduplicate outputs and handle '*'
+    let uniqueOuts = []
     for (let i = 0; i < outs.length; i++) {
-      const o = String(outs[i])
+      const o = String(outs[i] || "").trim()
       if (!o) continue
-      script += "nohup mpvpaper -o \"$opts\" \"" + o.replace(/"/g, '\\"') + "\" \"$vid\" >/dev/null 2>&1 &\n"
+      if (uniqueOuts.indexOf(o) === -1) uniqueOuts.push(o)
     }
+    let expected = 0
+    if (uniqueOuts.length === 1 && uniqueOuts[0] === '*') {
+      expected = 1
+      script += "nohup mpvpaper $oarg '*' \"$vid\" >/dev/null 2>&1 &\n"
+    } else {
+      expected = uniqueOuts.length
+      for (let i = 0; i < uniqueOuts.length; i++) {
+        const o = String(uniqueOuts[i])
+        script += "nohup mpvpaper $oarg \"" + o.replace(/"/g, '\\"') + "\" \"$vid\" >/dev/null 2>&1 &\n"
+      }
+    }
+    // Post-start enforcement: trim extra instances beyond expected
+    script += "sleep 0.3\n" +
+              "pids=($(pgrep -x -u \"$USER\" mpvpaper || true))\n" +
+              "if [ ${#pids[@]} -gt " + String(expected) + " ]; then\n" +
+              "  # Keep the newest expected PIDs, kill the rest\n" +
+              "  to_kill=$(printf '%s\n' ${pids[@]} | sort -n | head -n $((${#pids[@]}-" + String(expected) + ")) )\n" +
+              "  for k in $to_kill; do kill -TERM $k 2>/dev/null || true; done\n" +
+              "fi\n"
     if (wpProc.running) {
       Globals._wpQueuedScript = script
     } else {
@@ -1778,9 +1819,11 @@ Singleton {
     const imgAbs = (img.startsWith("~/") && Globals.homeReady) ? (Globals.homeDir + img.slice(1)) : img
     const outs = Array.isArray(wallpaperOutputs) ? wallpaperOutputs : []
     const tool = String(wallpaperTool || "swww").trim()
-    // Always stop mpvpaper
-    let script = "pkill -x mpvpaper 2>/dev/null || true\n" +
-                 "sleep 0.2\n"
+    // Always stop mpvpaper and wait for exit
+    let script = "(systemctl --user stop mpvpaper.service >/dev/null 2>&1 || true)\n" +
+                 "pkill -x -u \"$USER\" mpvpaper 2>/dev/null || true\n" +
+                 "for i in $(seq 1 30); do pgrep -x -u \"$USER\" mpvpaper >/dev/null 2>&1 || break; sleep 0.1; done\n" +
+                 "pgrep -x -u \"$USER\" mpvpaper >/dev/null 2>&1 && pkill -9 -x -u \"$USER\" mpvpaper 2>/dev/null || true\n"
     // Proceed if we have an image
     if (img) {
       if (tool === "swww") {
