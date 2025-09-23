@@ -6,6 +6,7 @@ import Quickshell.Io
 import "../"
 import "../utils" as Utils
 import "root:/"
+import Qt5Compat.GraphicalEffects
 
 BarBlock {
   id: root
@@ -35,12 +36,21 @@ BarBlock {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.horizontalCenterOffset: root.iconXOffset
     anchors.verticalCenterOffset: root.iconYOffset
+    // Render original SVG into an offscreen source
     Image {
+      id: iconImg
       anchors.fill: parent
       fillMode: Image.PreserveAspectFit
       source: root.iconSource
       smooth: true
       antialiasing: true
+      visible: false // hidden; ColorOverlay displays the tinted result
+    }
+    // Apply a color overlay to tint the icon to the active border color
+    ColorOverlay {
+      anchors.fill: iconImg
+      source: iconImg
+      color: Globals.barBorderColor || "#00bee7"
     }
   }
 
