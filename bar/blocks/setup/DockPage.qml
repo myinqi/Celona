@@ -40,20 +40,16 @@ Item {
       Flickable {
         id: flick
         anchors.fill: parent
-        anchors.leftMargin: 8
-        anchors.topMargin: 8
-        anchors.bottomMargin: 8
-        anchors.rightMargin: 8
+        anchors.margins: 8
         clip: true
         contentWidth: flick.width
         contentHeight: editor.childrenRect.height
-        // Hide vertical scrollbar for current menu scope
-        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
+        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
         ColumnLayout {
           id: editor
-          width: flick.width
           spacing: 12
+          width: flick.width
 
           // Row: ShowDock
           RowLayout {
@@ -190,154 +186,98 @@ Item {
           // Dock items editor
           Rectangle {
             Layout.fillWidth: true
+            // Ensure this section contributes to total content height
+            implicitHeight: dockItemsContainer.implicitHeight
             radius: 6
             color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
             border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
-            border.width: 1
-
+            border.width: 0
             ColumnLayout {
+              id: dockItemsContainer
               anchors.fill: parent
               anchors.margins: 8
+              // Expose content height
+              implicitHeight: childrenRect.height
               spacing: 8
 
               RowLayout {
                 Layout.fillWidth: true
+                Layout.bottomMargin: 16
+                Layout.rightMargin: 20
                 Label { text: "Dock Items:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.bold: true; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+                // Flexible spacer pushes the button to the right edge
                 Item { Layout.fillWidth: true }
-                Text {
-                  text: "New items must be defined in the config.json file."
-                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-                  font.family: Globals.mainFontFamily
-                  font.pixelSize: Globals.mainFontSize
-                  horizontalAlignment: Text.AlignRight
-                  wrapMode: Text.WordWrap
+                Button {
+                  id: addDockItemBtn
+                  text: "new dock item"
+                  onClicked: {
+                    try {
+                      const arr = Array.isArray(Globals.dockItems) ? Globals.dockItems.slice(0) : []
+                      arr.push({
+                        label: "new label",
+                        cmd: "set your command here",
+                        icon: "~/.config/quickshell/Celona/bar/assets/dock icons/celona_sample.png",
+                        iconSizeRatio: 0.55,
+                        iconOffsetYPx: -8
+                      })
+                      Globals.dockItems = arr
+                      save()
+                    } catch (e) {
+                      console.warn("Failed to add dock item:", e)
+                    }
+                  }
+                  leftPadding: 12
+                  rightPadding: 12
+                  contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                  background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
                 }
               }
 
-              ListView {
-                id: items
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                // Model is an index array to decouple from the dockItems object identity
-                model: (Array.isArray(Globals.dockItems)
-                        ? Globals.dockItems.map(function(_, i) { return i })
-                        : [])
-                // Avoid aggressive reuse while we mutate the array during edits
-                reuseItems: false
-                delegate: Rectangle {
-                  width: ListView.view.width
-                  height: 130
-                  radius: 6
-                  color: "transparent"
-                  border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
-                  border.width: 1
-                  // Access item by index to avoid model/object binding loops
-                  property int idx: modelData
-                  property var itemRef: (Array.isArray(Globals.dockItems) && idx < Globals.dockItems.length) ? Globals.dockItems[idx] : ({})
-
-                  ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 6
-
+              // Simple read-only list (labels only) using Column for robust sizing in Flickable
+              Column {
+                id: dockList
+                width: flick.width
+                spacing: 6
+                Repeater {
+                  // Show items in reverse order (last in config first on screen)
+                  model: (Array.isArray(Globals.dockItems) ? Globals.dockItems.slice().reverse() : [])
+                  delegate: Rectangle {
+                    //width: dockList.width
+                    height: 36
+                    width: 200
+                    radius: 6
+                    color: "transparent"
+                    border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+                    border.width: 1
                     RowLayout {
-                      Layout.fillWidth: true
+                      anchors.fill: parent
+                      anchors.margins: 6
                       spacing: 8
-                      Label { text: "Label"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-                      TextField {
-                        Layout.fillWidth: true
-                        text: String(itemRef.label||"")
-                        onTextEdited: {
-                          if (itemRef.label !== text) {
-                            itemRef.label = text; touchDockItems(); save()
-                          }
-                        }
-                      }
-                      Button { text: "Remove"; onClicked: {
-                        const arr = Globals.dockItems ? Globals.dockItems.slice(0) : []
-                        arr.splice(idx, 1)
-                        Globals.dockItems = arr
-                        save()
-                      }}
-                    }
-
-                    RowLayout {
-                      Layout.fillWidth: true
-                      spacing: 8
-                      Label { text: "Command"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-                      TextField {
-                        Layout.fillWidth: true
-                        text: String(itemRef.cmd||"")
-                        onTextEdited: {
-                          if (itemRef.cmd !== text) {
-                            itemRef.cmd = text; touchDockItems(); save()
-                          }
-                        }
-                      }
-                    }
-
-                    RowLayout {
-                      Layout.fillWidth: true
-                      spacing: 8
-                      Label { text: "Icon"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-                      TextField {
-                        id: iconField
-                        Layout.fillWidth: true
-                        text: String(itemRef.icon||"")
-                        onTextEdited: {
-                          if (itemRef.icon !== text) {
-                            itemRef.icon = text; touchDockItems(); save()
-                          }
-                        }
-                      }
-                      Button { text: "Browse..."; onClicked: iconDialog.open() }
-                    }
-
-                    RowLayout {
-                      Layout.fillWidth: true
-                      spacing: 8
-                      Label { text: "Size Ratio"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-                      Slider { from: 0.1; to: 1.0; stepSize: 0.01; value: Number(itemRef.iconSizeRatio||0.55); Layout.fillWidth: true; onMoved: { itemRef.iconSizeRatio = Number(value.toFixed(2)); touchDockItems(); save() } }
-                      Text { text: String((itemRef.iconSizeRatio||0.55).toFixed(2)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
-                      Item { width: 20; Layout.preferredWidth: 20 }
-                    }
-
-                    RowLayout {
-                      Layout.fillWidth: true
-                      spacing: 8
-                      Label { text: "Offset Y"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 70; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-                      Slider { from: -24; to: 24; stepSize: 1; value: Number(itemRef.iconOffsetYPx||0); Layout.fillWidth: true; onMoved: { itemRef.iconOffsetYPx = Math.round(value); touchDockItems(); save() } }
-                      Text { text: String(Math.round(itemRef.iconOffsetYPx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
-                      Item { width: 20; Layout.preferredWidth: 20 }
-                    }
-
-                  }
-
-                  // File dialog per delegate
-                  Platform.FileDialog {
-                    id: iconDialog
-                    title: "Choose icon (PNG)"
-                    nameFilters: ["Images (*.png *.jpg *.jpeg *.webp *.bmp *.gif)", "All files (*)"]
-                    folder: (String(iconField.text||"").startsWith("/"))
-                              ? "file://" + String(iconField.text).substring(0, String(iconField.text).lastIndexOf("/"))
-                              : "file://" + Platform.StandardPaths.writableLocation(Platform.StandardPaths.PicturesLocation)
-                    onAccepted: {
-                      const list = files && files.length ? files : (file ? [file] : [])
-                      if (list.length > 0) {
-                        const p = list[0].toString().replace("file://", "")
-                        itemRef.icon = p
-                        iconField.text = p
-                        touchDockItems(); save()
+                      Text {
+                        text: String(modelData && modelData.label ? modelData.label : "(no label)")
+                        color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                        font.family: Globals.mainFontFamily
+                        font.pixelSize: Globals.mainFontSize
+                        elide: Text.ElideRight
                       }
                     }
                   }
+                }
+                // Placeholder when empty
+                Text {
+                  visible: !(Array.isArray(Globals.dockItems) && Globals.dockItems.length > 0)
+                  text: "No Dock items defined in config.json"
+                  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                  font.family: Globals.mainFontFamily
+                  font.pixelSize: Globals.mainFontSize
                 }
               }
             }
           }
 
-          // Spacer
-          Item { Layout.fillHeight: true }
+          // Bottom spacer to allow last item to scroll fully into view
+          Item { width: 1; height: 24 }
+
         }
       }
     }

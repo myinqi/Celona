@@ -83,9 +83,9 @@
   "wallpaperTool": "swww",
   "useNewSetupUI": true,
   "showBarvisualizer": true,
-  "ShowDock": false,
+  "ShowDock": true,
   "DockPositionHorizontal": "left",
-  "DockPositionVertical": "top",
+  "DockPositionVertical": "bottom",
   "DockIconBorderPx": 2,
   "DockIconRadius": 10,
   "DockIconSizePx": 64,
@@ -110,6 +110,13 @@
       "label": "Browser",
       "cmd": "zen-browser",
       "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/zen-browser.png",
+      "iconSizeRatio": 0.55,
+      "iconOffsetYPx": -8
+    },
+    {
+      "label": "new label",
+      "cmd": "set your command here",
+      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/celona_sample.png",
       "iconSizeRatio": 0.55,
       "iconOffsetYPx": -8
     }
