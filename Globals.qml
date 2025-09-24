@@ -1599,6 +1599,11 @@ Singleton {
 
   // Save current theme to file
   function saveTheme() {
+    // If a save is already running, queue a follow-up save with the latest state
+    if (saveThemeProc && saveThemeProc.running) {
+      _saveQueued = true
+      return
+    }
     const obj = {
       // Layout
       barPosition,
@@ -1702,6 +1707,8 @@ Singleton {
     const json = JSON.stringify(obj, null, 2)
     // Avoid complex shell escaping by writing base64 and decoding
     const b64 = Qt.btoa(json)
+    // Mark dock save in progress to pause dock watcher applying file while saving
+    Globals.dockSaveInProgress = true
     saveThemeProc.command = [
       "bash", "-lc",
       "mkdir -p ~/.config/quickshell/Celona && printf '%s' '" + b64 + "' | base64 -d > " + themeFile
@@ -1804,7 +1811,41 @@ Singleton {
     onLoadFailed: (error) => { /* ignore (Cava may not be installed) */ }
   }
 
-  Process { id: saveThemeProc; running: false }
+  Process {
+    id: saveThemeProc
+    running: false
+    onRunningChanged: if (!running) {
+      // Align watcher hash with our just-saved state and clear the guard
+      try {
+        const subset = {
+          ShowDock: Globals.showDock,
+          DockPositionHorizontal: Globals.dockPositionHorizontal,
+          DockPositionVertical: Globals.dockPositionVertical,
+          DockIconBorderPx: Globals.dockIconBorderPx,
+          DockIconRadius: Globals.dockIconRadius,
+          DockIconSizePx: Globals.dockIconSizePx,
+          DockIconLabel: Globals.dockIconLabel,
+          DockIconSpacing: Globals.dockIconSpacing,
+          DockIconBGColor: Globals.dockIconBGColor,
+          DockIconBorderColor: Globals.dockIconBorderColor,
+          DockIconLabelTextColor: Globals.dockIconLabelColor,
+          AllowDockIconMovement: Globals.allowDockIconMovement,
+          AutoHide: (Globals.dockLayerPosition === "autohide"),
+          DockLayerPosition: Globals.dockLayerPosition,
+          DockAutoHideInDurationMs: Globals.dockAutoHideInDurationMs,
+          DockAutoHideOutDurationMs: Globals.dockAutoHideOutDurationMs,
+          DockItems: Globals.dockItems
+        }
+        Globals._dockConfigHash = Qt.md5(JSON.stringify(subset))
+      } catch (e) { /* no-op */ }
+      Globals.dockSaveInProgress = false
+      // If another save was queued while we were writing, perform it now with the latest state
+      if (Globals._saveQueued) {
+        Globals._saveQueued = false
+        Globals.saveTheme()
+      }
+    }
+  }
   // Writer for Niri config updates
   Process { id: niriSaveProc; running: false }
   // Writer for Ghostty theme updates
@@ -1825,6 +1866,8 @@ Singleton {
   // --- Wallpaper control processes ---
   // Single process used for wallpaper commands; we queue when busy
   property string _wpQueuedScript: ""
+  // Queue for theme saves if a previous save is still running
+  property bool _saveQueued: false
   Process {
     id: wpProc
     running: false
@@ -2142,6 +2185,8 @@ Singleton {
   // Only applies Dock-related keys to avoid side effects.
   // Detect changes using a reduced JSON subset hash.
   property string _dockConfigHash: ""
+  // When true, a config save is in-flight; the watcher should not apply file changes in this window
+  property bool dockSaveInProgress: false
   // Buffer for base64 read of theme file
   property string _dockBuf: ""
   Process {
@@ -2153,6 +2198,8 @@ Singleton {
       onRead: (data) => { Globals._dockBuf += String(data) }
     }
     onRunningChanged: if (!running) {
+      // If we are in the middle of saving, skip applying to avoid racing overwrites
+      if (Globals.dockSaveInProgress) { Globals._dockBuf = ""; return }
       if (Globals._dockBuf && Globals._dockBuf.length) {
         try {
           const jsonText = Qt.atob(Globals._dockBuf)

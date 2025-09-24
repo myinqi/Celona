@@ -90,7 +90,7 @@
   "DockIconRadius": 10,
   "DockIconSizePx": 64,
   "DockIconLabel": true,
-  "DockIconSpacing": 0,
+  "DockIconSpacing": 2,
   "DockIconBGColor": "#ff141318",
   "DockIconBorderColor": "#ff5f5791",
   "DockIconLabelTextColor": "#ffe5e1e9",
@@ -114,8 +114,15 @@
       "iconOffsetYPx": -8
     },
     {
+      "label": "Calc",
+      "cmd": "kcalc",
+      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/calculator.png",
+      "iconSizeRatio": 0.55,
+      "iconOffsetYPx": -8
+    },
+    {
       "label": "new label",
-      "cmd": "set your command here",
+      "cmd": "command",
       "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/celona_sample.png",
       "iconSizeRatio": 0.55,
       "iconOffsetYPx": -8
