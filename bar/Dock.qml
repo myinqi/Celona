@@ -10,6 +10,20 @@ import "root:/"
 PanelWindow {
   id: root
   color: "transparent"
+  // Ensure the window follows implicit size immediately when content changes
+  width: implicitWidth
+  height: implicitHeight
+  // Ensure a proper layout pass right after creation
+  Component.onCompleted: {
+    root.__layoutEpoch++
+    Qt.callLater(function() { root.__layoutEpoch++ })
+    // Also schedule a slightly later nudge in case globals load async
+    Qt.callLater(function() { __layoutBurstA.restart(); __layoutBurstB.restart() })
+  }
+  // When the window becomes visible or dimensions become valid, bump layout once more
+  onVisibleChanged: if (visible) { __layoutEpoch++; Qt.callLater(function(){ __layoutEpoch++ }) }
+  onWidthChanged:  if (width  > 0) { __layoutEpoch++ }
+  onHeightChanged: if (height > 0) { __layoutEpoch++ }
   // Resolve icon path: absolute/file URLs pass-through; relative -> root:/ prefix
   // Also percent-encode spaces to avoid QML URL loading issues
   function resolveIconPath(p) {
@@ -32,18 +46,52 @@ PanelWindow {
   property bool __bgIsLight: (0.2126*__dockBg.r + 0.7152*__dockBg.g + 0.0722*__dockBg.b) > 0.5
   property color __markerColor: __bgIsLight ? Qt.rgba(0,0,0,0.65) : Qt.rgba(1,1,1,0.65)
 
+  // Force layout recalculation when dock items change (prevents temporary distortion
+  // until the next hover/expand). We bump an epoch counter and reference it in
+  // geometry bindings to ensure re-evaluation on add/remove.
+  property int __layoutEpoch: 0
+  // Normalize vertical position: treat 'center' as 'top' (option removed)
+  property string __vPos: (Globals.dockPositionVertical === "center" ? "top" : Globals.dockPositionVertical)
+  // Short burst timers to re-bump layout after rapid sequences of changes
+  Timer { id: __layoutBurstA; interval: 60; repeat: false; onTriggered: root.__layoutEpoch++ }
+  Timer { id: __layoutBurstB; interval: 180; repeat: false; onTriggered: root.__layoutEpoch++ }
+  Timer { id: __layoutBurstC; interval: 350; repeat: false; onTriggered: root.__layoutEpoch++ }
+  Connections {
+    target: Globals
+    function onDockItemsChanged() {
+      // Bump immediately and once again on next tick to catch any late-binding updates
+      __layoutEpoch++
+      Qt.callLater(function() { __layoutEpoch++ })
+      // If there is a rapid burst of changes, re-bump shortly after to ensure final geometry
+      __layoutBurstA.restart(); __layoutBurstB.restart(); __layoutBurstC.restart()
+    }
+    function onShowDockChanged() { __layoutEpoch++; Qt.callLater(function(){ __layoutEpoch++ }) }
+    function onDockIconSizePxChanged() { __layoutEpoch++; Qt.callLater(function(){ __layoutEpoch++ }) }
+    function onDockIconSpacingChanged() { __layoutEpoch++ }
+    function onDockPositionVerticalChanged() { __layoutEpoch++; root.__vPos = (Globals.dockPositionVertical === "center" ? "top" : Globals.dockPositionVertical) }
+    function onDockPositionHorizontalChanged() { __layoutEpoch++ }
+  }
+
   // Autohide mode
   property bool __autoHide: Globals.dockLayerPosition === "autohide"
   property bool __expanded: false
   // While collapsing, keep content visible for fade/size animation
   property bool __collapsing: false
+  // Expected height from model count to avoid initial squashing before delegates settle
+  function __dockCount() { return (Array.isArray(Globals.dockItems) ? Globals.dockItems.length : 0) }
+  function __expectedContentHeight() {
+    const n = __dockCount()
+    const h = Math.max(0, n) * Math.max(1, Globals.dockIconSizePx)
+    const gaps = Math.max(0, n - 1) * Math.max(0, Globals.dockIconSpacing)
+    return h + gaps
+  }
   // Visibility
   visible: Globals.showDock && Array.isArray(Globals.dockItems)
 
   // Geometry/Anchors per config (screen is set by instantiator)
   anchors {
-    top: Globals.dockPositionVertical !== "bottom"
-    bottom: Globals.dockPositionVertical !== "top"
+    top: root.__vPos !== "bottom"
+    bottom: root.__vPos !== "top"
     left: Globals.dockPositionHorizontal === "left"
     right: Globals.dockPositionHorizontal === "right"
   }
@@ -51,8 +99,8 @@ PanelWindow {
   // When autohide is active and not expanded, keep a 1px invisible trigger strip via implicitWidth
   implicitWidth: (__autoHide && !__expanded)
                   ? 1
-                  : Math.max(Globals.dockIconSizePx + 16, 56)
-  implicitHeight: col.implicitHeight + 16
+                  : (Math.max(Globals.dockIconSizePx + 16, 56) + 0*root.__layoutEpoch)
+  implicitHeight: Math.max(col.implicitHeight, __expectedContentHeight()) + 16 + 0*root.__layoutEpoch
 
   // Expand on enter, collapse after short delay on leave
   Timer {
@@ -90,41 +138,49 @@ PanelWindow {
       }
     }
     contentWidth: width
-    contentHeight: col.implicitHeight
+    contentHeight: Math.max(col.implicitHeight, root.__expectedContentHeight()) + 0*root.__layoutEpoch
     interactive: false
 
     // Content frame to precisely scope hover detection to the visible dock area
     Item {
       id: contentFrame
-      x: 0
-      width: flick.width
-      height: col.implicitHeight
-      // Position via y to support true center alignment (reserves space when centered)
-      y: Globals.dockPositionVertical === "center"
-         ? Math.max(8, Math.floor((flick.height - height) / 2))
-         : (Globals.dockPositionVertical === "bottom"
-            ? Math.max(8, flick.height - height - 8)
-            : 8)
+      anchors.left: parent.left
+      anchors.right: parent.right
+      // Use anchors instead of y-math so geometry is correct immediately on reload
+      anchors.top:    root.__vPos === "top" ? parent.top : undefined
+      anchors.bottom: root.__vPos === "bottom" ? parent.bottom : undefined
+      anchors.verticalCenter: undefined
+      anchors.margins: 8
+      width: flick.width + 0*root.__layoutEpoch
+      height: Math.max(col.implicitHeight, root.__expectedContentHeight()) + 0*root.__layoutEpoch
 
       Column {
         id: col
         x: 0
-        width: contentFrame.width
-        spacing: Globals.dockIconSpacing
-        anchors.margins: (root.__autoHide && !root.__expanded) ? 0 : 8
+        width: contentFrame.width + 0*root.__layoutEpoch
+        spacing: Globals.dockIconSpacing + 0*root.__layoutEpoch
+        anchors.margins: (root.__autoHide && !root.__expanded) ? 0 : (8 + 0*root.__layoutEpoch)
+        Component.onCompleted: { root.__layoutEpoch++; __layoutBurstA.restart(); __layoutBurstB.restart(); __layoutBurstC.restart() }
 
         Repeater {
         id: reps
-        model: Globals.dockItems
+        // Use a sliced copy so the model instance changes on each mutation,
+        // forcing a full delegate rebuild and avoiding transient distortion
+        model: (Array.isArray(Globals.dockItems) ? Globals.dockItems.slice(0) : [])
+        onCountChanged: { root.__layoutEpoch++; __layoutBurstA.restart(); __layoutBurstB.restart() }
+        onItemAdded: (item, index) => { root.__layoutEpoch++; __layoutBurstA.restart(); __layoutBurstB.restart() }
+        onItemRemoved: (index, item) => { root.__layoutEpoch++; __layoutBurstA.restart(); __layoutBurstB.restart() }
         delegate: Item {
           id: delegateRoot
-          width: col.width
-          height: Globals.dockIconSizePx
+          width: col.width + 0*root.__layoutEpoch
+          height: Globals.dockIconSizePx + 0*root.__layoutEpoch
           property int myIndex: index
           // drag state helpers
           property real pressX: 0
           property real pressY: 0
           property bool didDrag: false
+          // Fallback hover tracker at delegate level (helps in autohide right after expand)
+          HoverHandler { id: hoverDelegate }
 
           Rectangle {
             id: iconRect
@@ -134,6 +190,8 @@ PanelWindow {
             border.width: Math.max(0, Globals.dockIconBorderPx)
             border.color: Globals.dockIconBorderColor
             anchors.horizontalCenter: parent.horizontalCenter
+            // Track hover independent of MouseArea enabled state (helps in autohide)
+            HoverHandler { id: hoverHandler }
 
             // Optional centered PNG icon
             Image {
@@ -156,6 +214,18 @@ PanelWindow {
                                                    : 0.55)
               width: Math.floor(parent.width * __ratio)
               height: Math.floor(parent.height * __ratio)
+            }
+
+            // Hover highlight overlay
+            Rectangle {
+              anchors.fill: parent
+              radius: iconRect.radius
+              color: (Globals.barBorderColor && Globals.barBorderColor.length) ? Globals.barBorderColor : Globals.dockIconBorderColor
+              opacity: (((!root.__autoHide) || root.__expanded) && (hoverHandler.hovered || hoverDelegate.hovered || dragArea.containsMouse)) ? 0.20 : 0.0
+              visible: opacity > 0
+              z: 5
+              border.width: 0
+              Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
             }
 
             MouseArea {
@@ -266,15 +336,19 @@ PanelWindow {
 
         }
 
-      // Hover watcher for autohide: collapse when mouse leaves the visible dock area
-      MouseArea {
-        anchors.fill: parent
-        visible: root.__autoHide && root.__expanded
-        enabled: visible
-        hoverEnabled: true
-        acceptedButtons: Qt.NoButton
-        onEntered: { hideTimer.stop(); collapseDone.stop(); root.__collapsing = false }
-        onExited: hideTimer.restart()
+      // Hover watcher for autohide using HoverHandler (does not block child hover)
+      HoverHandler {
+        id: expandedHover
+        enabled: root.__autoHide && root.__expanded
+        onHoveredChanged: {
+          if (hovered) {
+            hideTimer.stop();
+            collapseDone.stop();
+            root.__collapsing = false;
+          } else {
+            hideTimer.restart();
+          }
+        }
       }
     }
 

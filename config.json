@@ -85,17 +85,17 @@
   "showBarvisualizer": true,
   "ShowDock": true,
   "DockPositionHorizontal": "right",
-  "DockPositionVertical": "top",
+  "DockPositionVertical": "bottom",
   "DockIconBorderPx": 2,
   "DockIconRadius": 10,
   "DockIconSizePx": 64,
   "DockIconLabel": true,
-  "DockIconSpacing": 2,
+  "DockIconSpacing": 1,
   "DockIconBGColor": "#ff141318",
   "DockIconBorderColor": "#ff5f5791",
   "DockIconLabelTextColor": "#ffe5e1e9",
   "AllowDockIconMovement": true,
-  "AutoHide": false,
+  "AutoHide": true,
   "DockAutoHideInDurationMs": 120,
   "DockAutoHideOutDurationMs": 120,
   "DockItems": [
@@ -117,13 +117,6 @@
       "label": "Calc",
       "cmd": "kcalc",
       "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/calculator.png",
-      "iconSizeRatio": 0.55,
-      "iconOffsetYPx": -8
-    },
-    {
-      "label": "Code",
-      "cmd": "windsurf",
-      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/vscode.png",
       "iconSizeRatio": 0.55,
       "iconOffsetYPx": -8
     }

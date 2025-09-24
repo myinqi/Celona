@@ -117,7 +117,7 @@ Item {
             Label { text: "Vertical"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             ComboBox {
               id: posV
-              model: ["top", "center", "bottom"]
+              model: ["top", "bottom"]
               currentIndex: Math.max(0, model.indexOf(Globals.dockPositionVertical || "top"))
               onActivated: { Globals.dockPositionVertical = model[currentIndex]; save() }
             }

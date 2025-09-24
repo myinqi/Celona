@@ -1,4 +1,4 @@
-version: "1.3 (Luna)"
+version: "1.4 (Luna)"
 release_notes: |-
   - New Setup window as a regular WM-managed window (better input & WM rule integration)
   - Theme editor: editable color fields with theme-aware styling
@@ -12,3 +12,4 @@ release_notes: |-
   - New WallpapersPage with more customization options
   - Improvements on mpvpaper and playerctl implementation (no child processes)
   - Time Module: Timer function implemented with notification after end.
+  - DockPage: Dock items now can be added, removed and edited.
