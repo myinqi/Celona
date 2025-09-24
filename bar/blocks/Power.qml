@@ -135,11 +135,8 @@ BarBlock {
 
     MouseArea {
       anchors.fill: parent
-      hoverEnabled: true
-      onExited: { if (!containsMouse) closeTimer.start() }
-      onEntered: closeTimer.stop()
-
-      Timer { id: closeTimer; interval: 500; onTriggered: menuWindow.visible = false }
+      // Keep popup open until user toggles or another popup opens
+      hoverEnabled: false
 
       Rectangle {
         anchors.fill: parent
@@ -178,8 +175,8 @@ BarBlock {
 
                 Text {
                   text: modelData.icon
-                  color: Globals.moduleIconColor !== "" ? Globals.moduleIconColor : (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
-                  font.family: "Symbols Nerd Font Mono"
+                  color: Globals.hoverHighlightColor !== "" ? Globals.hoverHighlightColor : "#6c7086"
+                  font.family: Globals.mainFontFamily
                   font.pixelSize: Globals.mainFontSize
                   verticalAlignment: Text.AlignVCenter
                 }

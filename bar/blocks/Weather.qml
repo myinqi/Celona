@@ -177,15 +177,15 @@ BarBlock {
           font.pixelSize: Globals.mainFontSize
           elide: Text.ElideRight
         }
-        Text {
-          visible: !root.loading && (root.population && root.population.length > 0)
-          text: `Population: ${root.population}`
-          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-          font.family: Globals.mainFontFamily
-          font.pixelSize: Globals.mainFontSize
-          wrapMode: Text.NoWrap
-          elide: Text.ElideRight
-        }
+        //Text {
+        //  visible: !root.loading && (root.population && root.population.length > 0)
+        //  text: `Population: ${root.population}`
+        //  color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+        //  font.family: Globals.mainFontFamily
+        //  font.pixelSize: Globals.mainFontSize
+        //  wrapMode: Text.NoWrap
+        //  elide: Text.ElideRight
+        //}
         Text {
           text: root.loading ? "Loading…" : `${root.description}`
           color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
@@ -210,11 +210,11 @@ BarBlock {
         Item { height: 6; width: 1 }
         Text {
           visible: root.forecast && root.forecast.length > 0
-          text: "Forecast"
-          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+          text: "Forecast:"
+          color: Globals.hoverHighlightColor !== "" ? Globals.hoverHighlightColor : "#6c7086"
           font.family: Globals.mainFontFamily
           font.pixelSize: Globals.mainFontSize
-          font.bold: true
+          font.bold: false
         }
         Text {
           visible: !root.loading && (!root.forecast || root.forecast.length === 0)
@@ -232,7 +232,7 @@ BarBlock {
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
               font.family: Globals.mainFontFamily
               font.pixelSize: Globals.mainFontSize
-              width: 80
+              width: 100
               wrapMode: Text.NoWrap
               elide: Text.ElideNone
             }

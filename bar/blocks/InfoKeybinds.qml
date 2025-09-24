@@ -700,7 +700,11 @@ BarBlock {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton
-        onEntered: { tipWindow.visible = true }
+        onEntered: {
+            // Do not show tooltip if any popup is open (global or our own sheet)
+            if ((Globals.popupContext && Globals.popupContext.popup) || sheetWindow.visible) return;
+            tipWindow.visible = true
+        }
         onExited: tipWindow.visible = false
         onClicked: (mouse) => {
             if (mouse.button === Qt.LeftButton) {
