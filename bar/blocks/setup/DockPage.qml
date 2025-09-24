@@ -177,7 +177,7 @@ Item {
             Layout.fillWidth: true
             spacing: 10
             Label { text: "Icon Size (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 330; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-            Slider { from: 32; to: 128; stepSize: 1; value: Number(Globals.dockIconSizePx||64); Layout.preferredWidth: 220; onMoved: { Globals.dockIconSizePx = Math.round(value); save() } }
+            Slider { from: 48; to: 128; stepSize: 16; value: Number(Globals.dockIconSizePx||64); Layout.preferredWidth: 220; onMoved: { Globals.dockIconSizePx = Math.round(value); save() } }
             Text { text: String(Math.round(Globals.dockIconSizePx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
@@ -193,7 +193,7 @@ Item {
             Layout.fillWidth: true
             spacing: 10
             Label { text: "Icon Border (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 330; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-            Slider { from: 0; to: 6; stepSize: 1; value: Number(Globals.dockIconBorderPx||1); Layout.preferredWidth: 220; onMoved: { Globals.dockIconBorderPx = Math.round(value); save() } }
+            Slider { from: 0; to: 4; stepSize: 1; value: Number(Globals.dockIconBorderPx||1); Layout.preferredWidth: 220; onMoved: { Globals.dockIconBorderPx = Math.round(value); save() } }
             Text { text: String(Math.round(Globals.dockIconBorderPx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
@@ -201,7 +201,7 @@ Item {
             Layout.fillWidth: true
             spacing: 10
             Label { text: "Icon Spacing"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 330; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-            Slider { from: 0; to: 24; stepSize: 1; value: Number(Globals.dockIconSpacing||0); Layout.preferredWidth: 220; onMoved: { Globals.dockIconSpacing = Math.round(value); save() } }
+            Slider { from: 0; to: 10; stepSize: 1; value: Number(Globals.dockIconSpacing||0); Layout.preferredWidth: 220; onMoved: { Globals.dockIconSpacing = Math.round(value); save() } }
             Text { text: String(Math.round(Globals.dockIconSpacing||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }

@@ -15,6 +15,7 @@ PanelWindow {
   height: implicitHeight
   // Ensure a proper layout pass right after creation
   Component.onCompleted: {
+    root.__updateCachedContentHeight()
     root.__layoutEpoch++
     Qt.callLater(function() { root.__layoutEpoch++ })
     // Also schedule a slightly later nudge in case globals load async
@@ -53,22 +54,61 @@ PanelWindow {
   // Normalize vertical position: treat 'center' as 'top' (option removed)
   property string __vPos: (Globals.dockPositionVertical === "center" ? "top" : Globals.dockPositionVertical)
   // Short burst timers to re-bump layout after rapid sequences of changes
-  Timer { id: __layoutBurstA; interval: 60; repeat: false; onTriggered: root.__layoutEpoch++ }
+  Timer { id: __layoutBurstA; interval: 30; repeat: false; onTriggered: root.__layoutEpoch++ }
   Timer { id: __layoutBurstB; interval: 180; repeat: false; onTriggered: root.__layoutEpoch++ }
   Timer { id: __layoutBurstC; interval: 350; repeat: false; onTriggered: root.__layoutEpoch++ }
+  // Timer to re-anchor to bottom after item deletions settle (bottom mode only)
+  Timer { id: __bottomAnchorFix; interval: 100; repeat: false; onTriggered: { 
+    if (root.__vPos === "bottom") {
+      root.__updateCachedContentHeight();
+      root.__layoutEpoch++;
+      // Force immediate re-evaluation of contentY binding
+      Qt.callLater(function() { root.__layoutEpoch++ });
+    }
+  } }
+  // Additional timer for visual stability after item changes
+  Timer { id: __visualStabilizer; interval: 150; repeat: false; onTriggered: { root.__updateCachedContentHeight(); root.__layoutEpoch++ } }
+  // Force immediate geometry update on mouse enter to fix visual glitches
+  function forceLayoutRefresh() {
+    root.__updateCachedContentHeight()
+    root.__layoutEpoch++
+    Qt.callLater(function() { root.__layoutEpoch++ })
+  }
   Connections {
     target: Globals
     function onDockItemsChanged() {
-      // Bump immediately and once again on next tick to catch any late-binding updates
+      // Update cached height first, then bump layout
+      root.__updateCachedContentHeight()
       __layoutEpoch++
       Qt.callLater(function() { __layoutEpoch++ })
       // If there is a rapid burst of changes, re-bump shortly after to ensure final geometry
       __layoutBurstA.restart(); __layoutBurstB.restart(); __layoutBurstC.restart()
     }
     function onShowDockChanged() { __layoutEpoch++; Qt.callLater(function(){ __layoutEpoch++ }) }
-    function onDockIconSizePxChanged() { __layoutEpoch++; Qt.callLater(function(){ __layoutEpoch++ }) }
-    function onDockIconSpacingChanged() { __layoutEpoch++ }
-    function onDockPositionVerticalChanged() { __layoutEpoch++; root.__vPos = (Globals.dockPositionVertical === "center" ? "top" : Globals.dockPositionVertical) }
+    function onDockIconSizePxChanged() { 
+      root.__updateCachedContentHeight()
+      __layoutEpoch++; 
+      Qt.callLater(function(){ __layoutEpoch++ }) 
+    }
+    function onDockIconSpacingChanged() { 
+      root.__updateCachedContentHeight()
+      __layoutEpoch++ 
+    }
+    function onDockPositionVerticalChanged() {
+      __layoutEpoch++
+      root.__vPos = (Globals.dockPositionVertical === "center" ? "top" : Globals.dockPositionVertical)
+      // Force complete reset when switching to bottom mode
+      root.__updateCachedContentHeight()
+      Qt.callLater(function() { 
+        root.__updateCachedContentHeight();
+        root.__layoutEpoch++;
+        if (root.__vPos === "bottom") {
+          // Multiple correction cycles for bottom mode
+          __bottomAnchorFix.restart();
+          Qt.callLater(function() { __bottomAnchorFix.restart(); });
+        }
+      });
+    }
     function onDockPositionHorizontalChanged() { __layoutEpoch++ }
   }
 
@@ -79,19 +119,26 @@ PanelWindow {
   property bool __collapsing: false
   // Expected height from model count to avoid initial squashing before delegates settle
   function __dockCount() { return (Array.isArray(Globals.dockItems) ? Globals.dockItems.length : 0) }
-  function __expectedContentHeight() {
+  // Cache the expected content height to avoid excessive recalculations
+  property int __cachedContentHeight: 0
+  function __updateCachedContentHeight() {
     const n = __dockCount()
     const h = Math.max(0, n) * Math.max(1, Globals.dockIconSizePx)
     const gaps = Math.max(0, n - 1) * Math.max(0, Globals.dockIconSpacing)
-    return h + gaps
+    __cachedContentHeight = h + gaps
+    console.log("[Dock] updateCachedContentHeight: items=" + n + " iconSize=" + Globals.dockIconSizePx + " spacing=" + Globals.dockIconSpacing + " total=" + __cachedContentHeight)
+    console.log("[Dock] window height=" + root.height + " implicitHeight=" + root.implicitHeight + " flick.height=" + flick.height + " vPos=" + root.__vPos)
+  }
+  function __expectedContentHeight() {
+    return __cachedContentHeight
   }
   // Visibility
   visible: Globals.showDock && Array.isArray(Globals.dockItems)
 
   // Geometry/Anchors per config (screen is set by instantiator)
   anchors {
-    top: root.__vPos !== "bottom"
-    bottom: root.__vPos !== "top"
+    top: root.__vPos === "top"
+    bottom: root.__vPos === "bottom"
     left: Globals.dockPositionHorizontal === "left"
     right: Globals.dockPositionHorizontal === "right"
   }
@@ -100,7 +147,9 @@ PanelWindow {
   implicitWidth: (__autoHide && !__expanded)
                   ? 1
                   : (Math.max(Globals.dockIconSizePx + 16, 56) + 0*root.__layoutEpoch)
-  implicitHeight: Math.max(col.implicitHeight, __expectedContentHeight()) + 16 + 0*root.__layoutEpoch
+  // Use expected content height for stable sizing during transitions
+  // Add extra safety margin for bottom mode to prevent complete disappearance
+  implicitHeight: Math.max(__expectedContentHeight() + 16, 32) + 0*root.__layoutEpoch
 
   // Expand on enter, collapse after short delay on leave
   Timer {
@@ -138,7 +187,12 @@ PanelWindow {
       }
     }
     contentWidth: width
-    contentHeight: Math.max(col.implicitHeight, root.__expectedContentHeight()) + 0*root.__layoutEpoch
+    // Use expected content height for stable scrolling with safety minimum
+    contentHeight: Math.max(root.__expectedContentHeight(), 32) + 0*root.__layoutEpoch
+    // Keep viewport aligned to show all content properly
+    contentY: (root.__vPos === "bottom")
+                ? Math.max(0, flick.contentHeight - flick.height + 0*root.__layoutEpoch)
+                : 0
     interactive: false
 
     // Content frame to precisely scope hover detection to the visible dock area
@@ -146,20 +200,23 @@ PanelWindow {
       id: contentFrame
       anchors.left: parent.left
       anchors.right: parent.right
-      // Use anchors instead of y-math so geometry is correct immediately on reload
-      anchors.top:    root.__vPos === "top" ? parent.top : undefined
-      anchors.bottom: root.__vPos === "bottom" ? parent.bottom : undefined
-      anchors.verticalCenter: undefined
-      anchors.margins: 8
-      width: flick.width + 0*root.__layoutEpoch
-      height: Math.max(col.implicitHeight, root.__expectedContentHeight()) + 0*root.__layoutEpoch
+      // Position content frame at the correct location within the scrollable area
+      y: (root.__vPos === "bottom") 
+          ? Math.max(0, flick.contentHeight - Math.max(root.__expectedContentHeight(), 32))
+          : 0
+      anchors.margins: 0
+      // Fixed width to match column width
+      width: Math.max(Globals.dockIconSizePx + 16, 56)
+      // Use expected content height for stable sizing during item changes with safety minimum
+      height: Math.max(root.__expectedContentHeight(), 32) + 0*root.__layoutEpoch
 
       Column {
         id: col
         x: 0
-        width: contentFrame.width + 0*root.__layoutEpoch
-        spacing: Globals.dockIconSpacing + 0*root.__layoutEpoch
-        anchors.margins: (root.__autoHide && !root.__expanded) ? 0 : (8 + 0*root.__layoutEpoch)
+        // Fixed width to prevent layout races
+        width: Math.max(Globals.dockIconSizePx + 16, 56)
+        spacing: Globals.dockIconSpacing
+        anchors.margins: (root.__autoHide && !root.__expanded) ? 0 : 8
         Component.onCompleted: { root.__layoutEpoch++; __layoutBurstA.restart(); __layoutBurstB.restart(); __layoutBurstC.restart() }
 
         Repeater {
@@ -167,13 +224,42 @@ PanelWindow {
         // Use a sliced copy so the model instance changes on each mutation,
         // forcing a full delegate rebuild and avoiding transient distortion
         model: (Array.isArray(Globals.dockItems) ? Globals.dockItems.slice(0) : [])
-        onCountChanged: { root.__layoutEpoch++; __layoutBurstA.restart(); __layoutBurstB.restart() }
-        onItemAdded: (item, index) => { root.__layoutEpoch++; __layoutBurstA.restart(); __layoutBurstB.restart() }
-        onItemRemoved: (index, item) => { root.__layoutEpoch++; __layoutBurstA.restart(); __layoutBurstB.restart() }
+        onCountChanged: { root.__layoutEpoch++; __layoutBurstA.restart(); __layoutBurstB.restart(); __layoutBurstC.restart() }
+        onItemAdded: (item, index) => { 
+          // Update cache immediately when items change
+          root.__updateCachedContentHeight();
+          root.__layoutEpoch++; 
+          __layoutBurstA.restart(); 
+          __layoutBurstB.restart(); 
+          __layoutBurstC.restart();
+          // Extra stabilization for visual consistency
+          __visualStabilizer.restart();
+          // Force immediate refresh to prevent visual glitches
+          Qt.callLater(root.forceLayoutRefresh);
+        }
+        onItemRemoved: (index, item) => { 
+          // Update cache immediately when items change
+          root.__updateCachedContentHeight();
+          root.__layoutEpoch++; 
+          __layoutBurstA.restart(); 
+          __layoutBurstB.restart(); 
+          __layoutBurstC.restart();
+          // Re-anchor to bottom after removal settles (critical for bottom mode)
+          __bottomAnchorFix.restart();
+          // Extra stabilization for visual consistency
+          __visualStabilizer.restart();
+          // Force immediate refresh to prevent visual glitches
+          Qt.callLater(root.forceLayoutRefresh);
+          // Additional bottom anchor fix for problematic deletions
+          if (root.__vPos === "bottom") {
+            Qt.callLater(function() { __bottomAnchorFix.restart(); });
+          }
+        }
         delegate: Item {
           id: delegateRoot
-          width: col.width + 0*root.__layoutEpoch
-          height: Globals.dockIconSizePx + 0*root.__layoutEpoch
+          // Fixed sizes to prevent layout races and visual glitches
+          width: Math.max(Globals.dockIconSizePx + 16, 56)
+          height: Globals.dockIconSizePx
           property int myIndex: index
           // drag state helpers
           property real pressX: 0
@@ -345,6 +431,8 @@ PanelWindow {
             hideTimer.stop();
             collapseDone.stop();
             root.__collapsing = false;
+            // Force layout refresh on hover to fix visual glitches
+            root.forceLayoutRefresh();
           } else {
             hideTimer.restart();
           }
@@ -374,7 +462,14 @@ PanelWindow {
     enabled: visible
     hoverEnabled: true
     acceptedButtons: Qt.NoButton
-    onEntered: { root.__expanded = true; hideTimer.stop(); collapseDone.stop(); root.__collapsing = false }
+    onEntered: { 
+      root.__expanded = true; 
+      hideTimer.stop(); 
+      collapseDone.stop(); 
+      root.__collapsing = false;
+      // Force layout refresh on expand to fix visual glitches
+      root.forceLayoutRefresh();
+    }
   }
 
   // Subtle animation for expand/collapse using implicitWidth
