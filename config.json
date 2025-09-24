@@ -84,8 +84,8 @@
   "useNewSetupUI": true,
   "showBarvisualizer": true,
   "ShowDock": true,
-  "DockPositionHorizontal": "left",
-  "DockPositionVertical": "bottom",
+  "DockPositionHorizontal": "right",
+  "DockPositionVertical": "top",
   "DockIconBorderPx": 2,
   "DockIconRadius": 10,
   "DockIconSizePx": 64,
@@ -121,9 +121,9 @@
       "iconOffsetYPx": -8
     },
     {
-      "label": "new label",
-      "cmd": "command",
-      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/celona_sample.png",
+      "label": "Code",
+      "cmd": "windsurf",
+      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/vscode.png",
       "iconSizeRatio": 0.55,
       "iconOffsetYPx": -8
     }

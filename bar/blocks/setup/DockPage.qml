@@ -14,11 +14,13 @@ Item {
 
   // Header column horizontal fine-tuning (in pixels)
   // Adjust these to shift header labels horizontally over their columns
-  property int headerLabelDx: 0
-  property int headerCmdDx: 20
-  property int headerIconDx: 0
-  property int headerRatioDx: 0
+  property int headerLabelDx: 35
+  property int headerCmdDx: 50
+  property int headerIconDx: -80
+  property int headerRatioDx: -36
   property int headerOffsetYDx: 0
+  // Uniform gap between inline controls (px)
+  property int colGap: 8
 
   function save() { Globals.saveTheme() }
   // Avoid unnecessary reassignments that can recreate delegates; we mutate in place and then save
@@ -228,7 +230,10 @@ Item {
             ColumnLayout {
               id: dockItemsContainer
               anchors.fill: parent
-              anchors.margins: 8
+              anchors.leftMargin: 8
+              anchors.rightMargin: 8
+              anchors.topMargin: 8
+              anchors.bottomMargin: 8
               // Expose content height
               implicitHeight: childrenRect.height
               spacing: 8
@@ -271,29 +276,30 @@ Item {
                 Layout.fillWidth: true
                 spacing: 0
                 // Keep widths aligned with editor fields
-                Label { text: "label"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 92; Layout.leftMargin: page.headerLabelDx; Layout.rightMargin: 20 }
-                Label { text: "cmd"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 140; Layout.leftMargin: page.headerCmdDx; Layout.rightMargin: 20 }
-                Label { text: "icon"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 34; Layout.leftMargin: page.headerIconDx; Layout.rightMargin: 20 }
-                Label { text: "ratio"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 50; Layout.leftMargin: page.headerRatioDx; Layout.rightMargin: 20 }
-                Label { text: "offsetY"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 35; Layout.leftMargin: page.headerOffsetYDx; Layout.rightMargin: 20 }
+                Label { text: "label"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 92; Layout.leftMargin: page.headerLabelDx; Layout.rightMargin: page.colGap }
+                Label { text: "run command"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 230; Layout.leftMargin: page.headerCmdDx; Layout.rightMargin: page.colGap }
+                Label { text: "icon"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 30; Layout.leftMargin: page.headerIconDx; Layout.rightMargin: page.colGap }
+                Label { text: "ratio"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 50; Layout.leftMargin: page.headerRatioDx; Layout.rightMargin: page.colGap }
+                Label { text: "+-Y"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Math.max(10, Globals.mainFontSize - 2); Layout.preferredWidth: 35; Layout.leftMargin: page.headerOffsetYDx; Layout.rightMargin: page.colGap }
                 Item { Layout.fillWidth: true }
               }
 
               // Simple editable list (five fields per item) using Column
               Column {
                 id: dockList
-                width: flick.width
+                width: dockItemsContainer.width
                 spacing: 6
                 Repeater {
                   // Show items in reverse order (last in config first on screen)
                   model: (Array.isArray(Globals.dockItems) ? Globals.dockItems.slice().reverse() : [])
                   delegate: Rectangle {
+                    // Use full width; container provides side margins so the border is fully visible
                     width: dockList.width
                     height: 44
                     radius: 6
                     color: "transparent"
                     border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
-                    border.width: 1
+                    border.width: 0
                     // Map reversed view index back to real array index
                     property int realIdx: (Array.isArray(Globals.dockItems) ? (Globals.dockItems.length - 1 - index) : -1)
                     // Keep desired icon to re-assert if watcher rolls back
@@ -315,6 +321,10 @@ Item {
                     // Retry savers to avoid race if save process is busy; re-assert pending icon if needed
                     Timer { id: saveRetry; interval: 250; repeat: false; onTriggered: doRetrySave() }
                     Timer { id: saveRetry2; interval: 800; repeat: false; onTriggered: doRetrySave() }
+                    // Dedicated retries to ensure deletes persist to config even if a save is in-flight
+                    Timer { id: saveRetryDelete; interval: 350; repeat: false; onTriggered: Globals.saveTheme() }
+                    Timer { id: saveRetryDelete2; interval: 900; repeat: false; onTriggered: Globals.saveTheme() }
+                    Timer { id: saveRetryDelete3; interval: 1400; repeat: false; onTriggered: Globals.saveTheme() }
                     RowLayout {
                       anchors.fill: parent
                       anchors.margins: 6
@@ -322,7 +332,7 @@ Item {
                       // label
                       TextField {
                         Layout.preferredWidth: 92
-                        Layout.rightMargin: 20
+                        Layout.rightMargin: page.colGap
                         placeholderText: "label"
                         text: (realIdx >= 0 && Globals.dockItems[realIdx] && Globals.dockItems[realIdx].label) ? String(Globals.dockItems[realIdx].label) : ""
                         ToolTip {
@@ -350,7 +360,7 @@ Item {
                       // cmd
                       TextField {
                         Layout.preferredWidth: 230
-                        Layout.rightMargin: 20
+                        Layout.rightMargin: page.colGap
                         placeholderText: "cmd"
                         text: (realIdx >= 0 && Globals.dockItems[realIdx] && Globals.dockItems[realIdx].cmd) ? String(Globals.dockItems[realIdx].cmd) : ""
                         ToolTip {
@@ -378,7 +388,7 @@ Item {
                       // icon preview (clickable to browse)
                       Rectangle {
                         width: 30; height: 30; radius: 4
-                        Layout.rightMargin: 20
+                        Layout.rightMargin: page.colGap
                         color: "transparent"
                         border.width: 1
                         border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
@@ -477,7 +487,7 @@ Item {
                       // iconSizeRatio
                       TextField {
                         Layout.preferredWidth: 50
-                        Layout.rightMargin: 20
+                        Layout.rightMargin: page.colGap
                         placeholderText: "ratio"
                         text: (realIdx >= 0 && Globals.dockItems[realIdx] && Globals.dockItems[realIdx].iconSizeRatio !== undefined)
                               ? String(Globals.dockItems[realIdx].iconSizeRatio)
@@ -510,7 +520,7 @@ Item {
                       // iconOffsetYPx
                       TextField {
                         Layout.preferredWidth: 35
-                        Layout.rightMargin: 20
+                        Layout.rightMargin: page.colGap
                         placeholderText: "offsetY"
                         text: (realIdx >= 0 && Globals.dockItems[realIdx] && Globals.dockItems[realIdx].iconOffsetYPx !== undefined)
                               ? String(Globals.dockItems[realIdx].iconOffsetYPx)
@@ -547,10 +557,28 @@ Item {
                         leftPadding: 8; rightPadding: 8
                         onClicked: {
                           if (realIdx >= 0 && Array.isArray(Globals.dockItems)) {
+                            console.log('[DockPage] delete click realIdx', realIdx, 'lenBefore', Globals.dockItems.length)
                             const arr = Globals.dockItems.slice(0)
                             arr.splice(realIdx, 1)
                             Globals.dockItems = arr
-                            syncDockHash(); save(); if (saveRetry) saveRetry.restart(); if (saveRetry2) saveRetry2.restart()
+                            console.log('[DockPage] lenAfter', Globals.dockItems.length)
+                            if (typeof touchDockItems === 'function') touchDockItems()
+                            // Recompute dock subset hash inline (avoid referencing outer page scope)
+                            try {
+                              const subset = {
+                                ShowDock: Globals.showDock,
+                                DockPositionHorizontal: Globals.dockPositionHorizontal,
+                                DockPositionVertical: Globals.dockPositionVertical,
+                                DockLayerPosition: Globals.dockLayerPosition,
+                                DockAutoHideInDurationMs: Globals.dockAutoHideInDurationMs,
+                                DockAutoHideOutDurationMs: Globals.dockAutoHideOutDurationMs,
+                                DockItems: Globals.dockItems
+                              }
+                              Globals._dockConfigHash = Qt.md5(JSON.stringify(subset))
+                            } catch (e) { /* no-op */ }
+                            // Save now, save again next tick, and schedule retries
+                            Globals.saveTheme(); Qt.callLater(Globals.saveTheme);
+                            if (saveRetryDelete) saveRetryDelete.restart(); if (saveRetryDelete2) saveRetryDelete2.restart(); if (saveRetryDelete3) saveRetryDelete3.restart()
                           }
                         }
                         contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
