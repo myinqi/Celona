@@ -174,6 +174,7 @@ Item {
             spacing: 10
             Label {
               text: "Main Font:"
+              Layout.preferredWidth: 150
               color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
               font.family: Globals.mainFontFamily
               font.pixelSize: Globals.mainFontSize
@@ -182,17 +183,14 @@ Item {
               id: mainFontField
               Layout.fillWidth: true
               text: String(Globals.mainFontFamily || "JetBrains Mono Nerd Font")
-            }
-            Button {
-              id: applyFontBtn
-              text: "apply"
-              enabled: mainFontField.text && mainFontField.text.trim().length > 0
-              onClicked: {
-                Globals.mainFontFamily = mainFontField.text.trim()
-                Globals.saveTheme()
+              // Commit on Enter / editing finished
+              onEditingFinished: {
+                const v = String(text).trim()
+                if (v && v !== Globals.mainFontFamily) {
+                  Globals.mainFontFamily = v
+                  Globals.saveTheme()
+                }
               }
-              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-              background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
             }
             Button {
               id: resetFontBtn
@@ -209,7 +207,7 @@ Item {
 
           // (moved) Live preview for main font appears below the size slider
 
-          // Tooltip font size configuration
+          // Main font size configuration
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
@@ -238,6 +236,88 @@ Item {
               Layout.preferredWidth: 28
               // Keep this label size fixed so it doesn't jump while sliding
               font.pixelSize: 12
+            }
+          }
+
+          // Weather Location (immediately persisted)
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            Label {
+              text: "Weather Location:"
+              Layout.preferredWidth: 150
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
+            }
+            TextField {
+              id: weatherLocationField
+              Layout.fillWidth: true
+              text: String(Globals.weatherLocation || "")
+              placeholderText: "90587, Obermichelbach, DE"
+              onEditingFinished: {
+                const v = String(text).trim()
+                if (v !== Globals.weatherLocation) {
+                  Globals.weatherLocation = v
+                  Globals.saveTheme()
+                }
+              }
+            }
+          }
+
+          // Weather Unit (C/F)
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            Label {
+              text: "Weather Unit:"
+              Layout.preferredWidth: 150
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
+            }
+            ComboBox {
+              id: weatherUnitCombo
+              model: ["C", "F"]
+              implicitWidth: 50
+              Component.onCompleted: {
+                const cur = String(Globals.weatherUnit || "C")
+                const idx = model.indexOf(cur)
+                weatherUnitCombo.currentIndex = (idx >= 0) ? idx : 0
+              }
+              onActivated: (index) => {
+                const v = String(model[index])
+                if (v !== Globals.weatherUnit) {
+                  Globals.weatherUnit = v
+                  Globals.saveTheme()
+                }
+              }
+            }
+          }
+
+          // Keybinds Path (immediately persisted)
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            Label {
+              text: "Keybinds Path:"
+              Layout.preferredWidth: 150
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
+            }
+            TextField {
+              id: keybindsPathField
+              Layout.fillWidth: true
+              text: String(Globals.keybindsPath || "")
+              placeholderText: "~/.config/niri/config.kdl"
+              onEditingFinished: {
+                const v = String(text).trim()
+                if (v !== Globals.keybindsPath) {
+                  Globals.keybindsPath = v
+                  Globals.saveTheme()
+                }
+              }
             }
           }
 

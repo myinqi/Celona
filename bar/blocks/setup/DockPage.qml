@@ -115,12 +115,12 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Autohide In (ms)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+            Label { text: "Autohide In (ms)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 330; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Slider {
               id: inDur
               from: 0; to: 1000; stepSize: 10
               value: Number(Globals.dockAutoHideInDurationMs || 100)
-              Layout.fillWidth: true
+              Layout.preferredWidth: 220
               onMoved: { Globals.dockAutoHideInDurationMs = Math.round(value); save() }
             }
             Text { text: String(Math.round(inDur.value)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
@@ -129,12 +129,12 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Autohide Out (ms)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+            Label { text: "Autohide Out (ms)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 330; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Slider {
               id: outDur
               from: 0; to: 1500; stepSize: 10
               value: Number(Globals.dockAutoHideOutDurationMs || 300)
-              Layout.fillWidth: true
+              Layout.preferredWidth: 220
               onMoved: { Globals.dockAutoHideOutDurationMs = Math.round(value); save() }
             }
             Text { text: String(Math.round(outDur.value)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
@@ -145,32 +145,32 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Icon Size (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-            Slider { from: 32; to: 128; stepSize: 1; value: Number(Globals.dockIconSizePx||64); Layout.fillWidth: true; onMoved: { Globals.dockIconSizePx = Math.round(value); save() } }
+            Label { text: "Icon Size (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 330; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+            Slider { from: 32; to: 128; stepSize: 1; value: Number(Globals.dockIconSizePx||64); Layout.preferredWidth: 220; onMoved: { Globals.dockIconSizePx = Math.round(value); save() } }
             Text { text: String(Math.round(Globals.dockIconSizePx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Icon Radius"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-            Slider { from: 0; to: 32; stepSize: 1; value: Number(Globals.dockIconRadius||10); Layout.fillWidth: true; onMoved: { Globals.dockIconRadius = Math.round(value); save() } }
+            Label { text: "Icon Radius"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 330; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+            Slider { from: 0; to: 32; stepSize: 1; value: Number(Globals.dockIconRadius||10); Layout.preferredWidth: 220; onMoved: { Globals.dockIconRadius = Math.round(value); save() } }
             Text { text: String(Math.round(Globals.dockIconRadius||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Icon Border (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-            Slider { from: 0; to: 6; stepSize: 1; value: Number(Globals.dockIconBorderPx||1); Layout.fillWidth: true; onMoved: { Globals.dockIconBorderPx = Math.round(value); save() } }
+            Label { text: "Icon Border (px)"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 330; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+            Slider { from: 0; to: 6; stepSize: 1; value: Number(Globals.dockIconBorderPx||1); Layout.preferredWidth: 220; onMoved: { Globals.dockIconBorderPx = Math.round(value); save() } }
             Text { text: String(Math.round(Globals.dockIconBorderPx||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            Label { text: "Icon Spacing"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 140; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-            Slider { from: 0; to: 24; stepSize: 1; value: Number(Globals.dockIconSpacing||0); Layout.fillWidth: true; onMoved: { Globals.dockIconSpacing = Math.round(value); save() } }
+            Label { text: "Icon Spacing"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 330; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+            Slider { from: 0; to: 24; stepSize: 1; value: Number(Globals.dockIconSpacing||0); Layout.preferredWidth: 220; onMoved: { Globals.dockIconSpacing = Math.round(value); save() } }
             Text { text: String(Math.round(Globals.dockIconSpacing||0)); color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             Item { width: 20; Layout.preferredWidth: 20 }
           }
