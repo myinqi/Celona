@@ -58,8 +58,13 @@ output "DP-3" { // check your outputs with "niri msg outputs" doku: https://vari
     transform "normal" // normal, 90, 180, 270, flipped, flipped-90, flipped-180 and flipped-270. Transform allows to rotate the output counter-clockwise, valid values are:
     //position x=1280 y=0
     // colors, both on_primary_fixed_variant from matugen
-    background-color "#473f77"
-    backdrop-color "#473f77"
+    background-color "#5f5791"
+    backdrop-color "#5f5791"
+    /*hot-corners {
+        //off
+        //top-left
+        bottom-left
+    }*/
 }
 
 // Layout
@@ -261,6 +266,87 @@ window-rule {
 }
 
 window-rule {
+    match title=r#"^Steam$"#
+    open-floating true
+    default-column-width { fixed 1300; }
+    default-window-height { fixed 900; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+window-rule {
+    match title=r#"^Steam-Einstellungen$"#
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+window-rule {
+    match title=r#"^Steam Settings$"#
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+window-rule {
+    match title=r#"^Freundesliste$"#
+    open-floating true
+    default-column-width { fixed 400; }
+    default-window-height { fixed 800; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+window-rule {
+    match title=r#"^Friends List$"#
+    open-floating true
+    default-column-width { fixed 400; }
+    default-window-height { fixed 800; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+window-rule {
+    match title=r#"^Steam-fremdes Spiel hinzufügen$"#
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+window-rule {
+    match title=r#"^Add Non-Steam Game$"#
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+window-rule {
+    match title=r#"^Octopi$"#
+    open-floating true
+    default-column-width { fixed 1300; }
+    default-window-height { fixed 900; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+window-rule {
+    match title=r#"^CachyOS Hello$"#
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+    draw-border-with-background false
+    clip-to-geometry true
+}
+
+window-rule {
     match title=r#"^KCalc$"#
     open-floating true
     draw-border-with-background false
@@ -309,7 +395,7 @@ binds {
     Mod+Return hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
     Mod+Ctrl+Return hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     Mod+B hotkey-overlay-title="Open Browser: zen" { spawn "zen-browser"; }
-    //Mod+Ctrl+E hotkey-overlay-title="Open Explorer: dolphin" { spawn "dolphin"; }
+    Mod+Ctrl+E hotkey-overlay-title="Open Explorer: dolphin" { spawn "dolphin"; }
     Mod+E hotkey-overlay-title="Open Explorer: nautilus" { spawn "nautilus"; }    
     Super+Alt+L hotkey-overlay-title="Lock the Screen: hyprlock" { spawn "hyprlock"; }
 
