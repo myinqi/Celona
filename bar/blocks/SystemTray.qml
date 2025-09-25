@@ -66,8 +66,9 @@ RowLayout {
       }
       return
     }
-    const allHidden = candidates.every(id => hiddenIds.indexOf(id) !== -1)
-    if (allHidden) {
+    const allHiddenByList = candidates.every(id => hiddenIds.indexOf(id) !== -1)
+    const currentlyHidden = root.hideNmApplet || allHiddenByList
+    if (currentlyHidden) {
       // Unhide: remove candidates from hiddenIds
       root.hiddenIds = hiddenIds.filter(id => candidates.indexOf(id) === -1)
       root.hideNmApplet = false
