@@ -60,7 +60,7 @@ PanelWindow {
   }
   Timer {
     id: cmdScanTimer
-    interval: 800
+    interval: Globals.dockIndicatorPsScanIntervalMs
     repeat: true
     running: (Globals.showDock && Globals.showDockRunningIndicator)
     onTriggered: {
@@ -99,22 +99,20 @@ PanelWindow {
   Process {
     id: cmdScanProc
     running: false
-    stdout: SplitParser {
-      onRead: (data) => {
-        try {
-          const txt = String(data || "")
-          const lines = txt.split(/\r?\n/)
-          for (let i=0;i<lines.length;i++) {
-            const s = lines[i].trim(); if (!s) continue
-            const m = s.match(/^(RUN|OFF):(.*)$/)
-            if (!m) continue
-            const isRun = (m[1] === 'RUN')
-            const tok = (m[2] || '').trim()
-            root.__cmdSetPut(tok, isRun)
-          }
-        } catch (e) {}
-      }
-    }
+    stdout: SplitParser { onRead: (data) => {
+      try {
+        const txt = String(data || "")
+        const lines = txt.split(/\r?\n/)
+        for (let i=0;i<lines.length;i++) {
+          const s = lines[i].trim(); if (!s) continue
+          const m = s.match(/^(RUN|OFF):(.*)$/)
+          if (!m) continue
+          const isRun = (m[1] === 'RUN')
+          const tok = (m[2] || '').trim()
+          root.__cmdSetPut(tok, isRun)
+        }
+      } catch (e) {}
+    }}
   }
   // When the window becomes visible or dimensions become valid, bump layout once more
   onVisibleChanged: if (visible) { __layoutEpoch++; Qt.callLater(function(){ __layoutEpoch++ }) }
@@ -195,7 +193,7 @@ PanelWindow {
   // Periodically refresh running windows list via compositor
   Timer {
     id: runningRefresh
-    interval: 1000
+    interval: Globals.dockIndicatorCompositorIntervalMs
     repeat: true
     running: Globals.showDockRunningIndicator
     onTriggered: {
@@ -512,7 +510,7 @@ PanelWindow {
                     if (p.startsWith("-")) continue
                     tok = p; break
                   }
-                  if (!tok.length) tok = parts[0] || ""
+                  if (!tok) tok = parts[0] || ""
                   const base = tok.lastIndexOf('/') >= 0 ? tok.substring(tok.lastIndexOf('/')+1) : tok
                   // Escape regex special chars and wrap in word boundaries
                   const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -521,10 +519,10 @@ PanelWindow {
               }
               // Debounce to avoid flicker: keep RUN for a grace window after last detection
               property double __lastRunMs: 0
-              property int __graceMs: 1000
+              property int __graceMs: Globals.dockIndicatorGraceMs
               // Additional hysteresis: require several consecutive misses before turning OFF
               property int __missCount: 0
-              property int __missThreshold: 1
+              property int __missThreshold: Globals.dockIndicatorMissThreshold
               function checkNow() {
                 try {
                   const toks = root.__tokensFromCmd(modelData && modelData.cmd)
@@ -549,7 +547,7 @@ PanelWindow {
               // Poll occasionally; cheap and isolated per delegate
               Timer {
                 id: runPoll
-                interval: 900
+                interval: Globals.dockIndicatorCheckIntervalMs
                 repeat: true
                 running: Globals.showDockRunningIndicator
                 onTriggered: {

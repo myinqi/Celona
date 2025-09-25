@@ -644,6 +644,14 @@ Singleton {
   property bool allowDockIconMovement: false
   // Show a running indicator dot on icons with active processes
   property bool showDockRunningIndicator: true
+  // Running indicator matching settings (global, configurable later via UI)
+  // Intervals (ms)
+  property int dockIndicatorCompositorIntervalMs: 1000   // refresh niri/hypr clients
+  property int dockIndicatorPsScanIntervalMs: 1000       // ps/pgrep batch scan
+  property int dockIndicatorCheckIntervalMs: 900         // per-delegate re-eval
+  // Hysteresis
+  property int dockIndicatorGraceMs: 1500                // keep RUN after last hit
+  property int dockIndicatorMissThreshold: 1             // misses before OFF
 
   // --- Matugen colors handling ---
   // Helper: convert rgba(r,g,b,a) or #RRGGBB to #AARRGGBB
