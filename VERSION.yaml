@@ -1,4 +1,4 @@
-version: "1.4 (Luna)"
+version: "1.5 (Luna)"
 release_notes: |-
   - New Setup window as a regular WM-managed window (better input & WM rule integration)
   - Theme editor: editable color fields with theme-aware styling
@@ -14,3 +14,4 @@ release_notes: |-
   - Time Module: Timer function implemented with notification after end
   - DockPage: Dock items now can be added, removed and edited
   - LayoutPage: added adjustments for workspace button and bar border
+  - Running Apps indicator for the dock items

@@ -484,12 +484,12 @@ PanelWindow {
             // Toggle visibility globally via Globals.showDockRunningIndicator
             Rectangle {
               id: runningDot
-              width: 8; height: 8
-              radius: 4
+              width: 10; height: 10
+              radius: 5
               anchors.left: parent.left
               anchors.top: parent.top
-              anchors.leftMargin: 4
-              anchors.topMargin: 4
+              anchors.leftMargin: 5
+              anchors.topMargin: 5
               color: (Globals.barBorderColor && Globals.barBorderColor.length) ? Globals.barBorderColor : Globals.dockIconBorderColor
               // Show only when enabled and a matching process is detected
               visible: Globals.showDockRunningIndicator && (__runningState === "RUN")
