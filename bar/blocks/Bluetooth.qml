@@ -8,6 +8,7 @@ import "root:/"
 
 BarBlock {
   id: root
+  signal toggleBluetoothAppletRequested()
 
   // State
   property bool hasController: false
@@ -33,23 +34,27 @@ BarBlock {
     // Use padEnd so shorter labels like "on" become "on "
     property string status3: status && status.length ? String(status).padEnd(3, " ") : ""
     symbolText: "" + (status3.length ? (" " + status3) : "")
-    symbolSpacing: 1
   }
 
   // Click/hover
   MouseArea {
     anchors.fill: parent
     hoverEnabled: true
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
     onEntered: {
       if (!Globals.popupContext || !Globals.popupContext.popup) {
         tipWindow.visible = true
       }
     }
     onExited: tipWindow.visible = false
-    onClicked: {
-      // Open Bluetooth manager
-      openProc.command = ["sh", "-c", "blueman-manager >/dev/null 2>&1 & disown || true"]
-      openProc.running = true
+    onClicked: (ev) => {
+      if (ev.button === Qt.RightButton) {
+        root.toggleBluetoothAppletRequested()
+      } else if (ev.button === Qt.LeftButton) {
+        // Open Bluetooth adapters dialog
+        openProc.command = ["sh", "-c", "blueman-adapters >/dev/null 2>&1 & disown || true"]
+        openProc.running = true
+      }
     }
   }
 
@@ -87,7 +92,7 @@ BarBlock {
         id: tipLabel
         anchors.fill: parent
         anchors.margins: 10
-        text: "Bluetooth Manager"
+        text: "Left: Bluetooth adapters\nRight: Toggle tray applet"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#ffffff"
         font.family: Globals.mainFontFamily
         font.pixelSize: Globals.mainFontSize
@@ -126,7 +131,7 @@ BarBlock {
     }
   }
 
-  // Launch blueman-manager
+  // Launch helper process (adapters/manager)
   Process { id: openProc; running: false; command: ["sh", "-c", "true"] }
 
   // Poll

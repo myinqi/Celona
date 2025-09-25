@@ -162,6 +162,7 @@ BarBlock {
         Text { visible: root.connType === "wifi"; text: "SSID: " + root.ssid; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
         Text { visible: root.connType === "wifi"; text: "Signal: " + (root.signal >= 0 ? root.signal + "%" : "-"); color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
         Text { text: "IP: " + root.ip4; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+        Text { text: "Right: Toggle network applet"; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
       }
     }
   }

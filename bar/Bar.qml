@@ -182,7 +182,7 @@ Scope {
             Component { id: sSystemTray; Blocks.SystemTray { visible: Globals.showSystemTray } }
             Component { id: sUpdates; Blocks.Updates { visible: Globals.showUpdates } }
             Component { id: sNetwork; Blocks.Network { visible: Globals.showNetwork; onToggleNmAppletRequested: if (staticRight.systemTrayRef) staticRight.systemTrayRef.toggleNetworkApplet() } }
-            Component { id: sBluetooth; Blocks.Bluetooth { visible: Globals.showBluetooth } }
+            Component { id: sBluetooth; Blocks.Bluetooth { visible: Globals.showBluetooth; onToggleBluetoothAppletRequested: if (staticRight.systemTrayRef) staticRight.systemTrayRef.toggleBluetoothApplet() } }
             Component { id: sCPU; Blocks.CPU { visible: Globals.showCPU } }
             Component { id: sGPU; Blocks.GPU { visible: Globals.showGPU } }
             Component { id: sMemory; Blocks.Memory { visible: Globals.showMemory } }
@@ -297,7 +297,7 @@ Scope {
             Component { id: cSystemTray; Blocks.SystemTray { visible: Globals.showSystemTray } }
             Component { id: cUpdates; Blocks.Updates { visible: Globals.showUpdates } }
             Component { id: cNetwork; Blocks.Network { visible: Globals.showNetwork; onToggleNmAppletRequested: if (dynamicRight.systemTrayRef) dynamicRight.systemTrayRef.toggleNetworkApplet() } }
-            Component { id: cBluetooth; Blocks.Bluetooth { visible: Globals.showBluetooth } }
+            Component { id: cBluetooth; Blocks.Bluetooth { visible: Globals.showBluetooth; onToggleBluetoothAppletRequested: if (dynamicRight.systemTrayRef) dynamicRight.systemTrayRef.toggleBluetoothApplet() } }
             Component { id: cCPU; Blocks.CPU { visible: Globals.showCPU } }
             Component { id: cGPU; Blocks.GPU { visible: Globals.showGPU } }
             Component { id: cMemory; Blocks.Memory { visible: Globals.showMemory } }

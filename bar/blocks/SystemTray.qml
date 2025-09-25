@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
+import Quickshell.Io
 import Quickshell.Services.SystemTray
 import Qt5Compat.GraphicalEffects
 import "root:/"
@@ -14,6 +15,8 @@ RowLayout {
 
   // Toggle to hide NetworkManager applet from tray (default hidden on startup)
   property bool hideNmApplet: true
+  // Toggle to hide Bluetooth applet (blueman) from tray
+  property bool hideBtApplet: false
   // Generic list of tray item IDs to hide
   property var hiddenIds: []
 
@@ -30,6 +33,23 @@ RowLayout {
       const looksLikeNm = idL.includes("nm-applet") || idL.includes("plasma-nm") || idL.includes("network") || idL === "nm" || idL.startsWith("nm-") || idL.includes("networkmanager")
       const looksLikeNetwork = tipL === "nm-applet" || tipL.includes("nm-applet") || tipL.includes("network") || tipL.includes("netzwerk") || tipL.includes("wifi") || tipL.includes("wlan") || tipL.includes("ethernet") || tipL.includes("wired") || tipL.includes("kabelgebunden") || tipL.includes("verbunden") || tipL.includes("verbindung") || tipL.includes("networkmanager")
       if (looksLikeNm || looksLikeNetwork) ids.push(id)
+    }
+    return ids
+  }
+
+  // Heuristic: find Bluetooth-related tray items (blueman-applet, bluez, bluetooth)
+  function candidateBluetoothIds() {
+    const items = [...SystemTray.items.values]
+    const ids = []
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i]
+      const id = it.id || ""
+      const tip = (it.tooltipTitle || "")
+      const idL = id.toLowerCase()
+      const tipL = tip.toLowerCase()
+      const looksLikeBt = idL.includes("blueman") || idL.includes("bluetooth") || idL.includes("bluez")
+      const looksLikeBtTip = tipL.includes("blueman") || tipL.includes("bluetooth") || tipL.includes("bluez")
+      if (looksLikeBt || looksLikeBtTip) ids.push(id)
     }
     return ids
   }
@@ -62,15 +82,59 @@ RowLayout {
     }
   }
 
+  // Toggle Bluetooth applet visibility using heuristic candidates.
+  function toggleBluetoothApplet() {
+    const candidates = candidateBluetoothIds()
+    if (candidates.length === 0) {
+      // Try to start blueman-applet and retry shortly
+      console.log("[SystemTray] No bluetooth tray candidates; attempting to start blueman-applet and retry…")
+      btAppletProc.command = ["sh", "-c", "pgrep -x blueman-applet >/dev/null 2>&1 || (blueman-applet >/dev/null 2>&1 & disown) ; echo ok"]
+      btAppletProc.running = true
+      btRetryTimer.restart()
+      return
+    }
+    const allHiddenByList = candidates.every(id => hiddenIds.indexOf(id) !== -1)
+    const currentlyHidden = root.hideBtApplet || allHiddenByList
+    if (currentlyHidden) {
+      // Unhide
+      root.hiddenIds = hiddenIds.filter(id => candidates.indexOf(id) === -1)
+      root.hideBtApplet = false
+      console.log("[SystemTray] Unhid bluetooth tray ids:", JSON.stringify(candidates))
+    } else {
+      // Hide
+      const set = new Set(hiddenIds)
+      candidates.forEach(id => set.add(id))
+      root.hiddenIds = Array.from(set)
+      root.hideBtApplet = true
+      console.log("[SystemTray] Hid bluetooth tray ids:", JSON.stringify(candidates))
+    }
+  }
+
+  // --- Helpers to start blueman-applet and retry toggle ---
+  Process {
+    id: btAppletProc
+    running: false
+    command: ["sh", "-c", "true"]
+  }
+  Timer {
+    id: btRetryTimer
+    interval: 800
+    repeat: false
+    onTriggered: toggleBluetoothApplet()
+  }
+
   Repeater {
     model: ScriptModel {
       values: {[...SystemTray.items.values]
         .filter((item) => {
-          const hideNm = root.hideNmApplet && (item.id === "nm-applet" || item.id.indexOf("nm") === 0)
-          const hiddenByList = Array.isArray(root.hiddenIds) && root.hiddenIds.indexOf(item.id) !== -1
-          return (!hideNm && !hiddenByList
-               && item.id != "spotify-client"
-               && item.id != "chrome_status_icon_1")
+          const id = item.id || ""
+          const idL = id.toLowerCase()
+          const hideNm = root.hideNmApplet && (id === "nm-applet" || idL.indexOf("nm") === 0 || idL.includes("network"))
+          const hideBt = root.hideBtApplet && (idL.includes("blueman") || idL.includes("bluetooth") || idL.includes("bluez"))
+          const hiddenByList = Array.isArray(root.hiddenIds) && root.hiddenIds.indexOf(id) !== -1
+          return (!hideNm && !hideBt && !hiddenByList
+               && id !== "spotify-client"
+               && id !== "chrome_status_icon_1")
         })
       }
     }
