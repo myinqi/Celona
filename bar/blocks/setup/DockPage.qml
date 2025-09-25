@@ -34,7 +34,8 @@ Item {
         DockLayerPosition: Globals.dockLayerPosition,
         DockAutoHideInDurationMs: Globals.dockAutoHideInDurationMs,
         DockAutoHideOutDurationMs: Globals.dockAutoHideOutDurationMs,
-        DockItems: Globals.dockItems
+        DockItems: Globals.dockItems,
+        DockShowRunningIndicator: Globals.showDockRunningIndicator
       }
 
       Globals._dockConfigHash = Qt.md5(JSON.stringify(subset))
@@ -206,12 +207,15 @@ Item {
             Item { width: 20; Layout.preferredWidth: 20 }
           }
 
-          // Row: Labels + movement
+          // Row: Labels + running indicator + movement
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
             Label { text: "Show Labels"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; Layout.preferredWidth: 110; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Switch { checked: Globals.dockIconLabel; onToggled: { Globals.dockIconLabel = checked; save() } }
+            Item { Layout.fillWidth: true }
+            Label { text: "Running Indicator"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+            Switch { checked: Globals.showDockRunningIndicator; onToggled: { Globals.showDockRunningIndicator = checked; save() } }
             Item { Layout.fillWidth: true }
             Label { text: "Allow Reorder"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
             Switch { checked: Globals.allowDockIconMovement; onToggled: { Globals.allowDockIconMovement = checked; save() } }

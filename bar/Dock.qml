@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import "root:/"
+import "./utils" as Utils
 
 // New rectangle-based Dock using Globals.* config-only
 PanelWindow {
@@ -20,6 +21,100 @@ PanelWindow {
     Qt.callLater(function() { root.__layoutEpoch++ })
     // Also schedule a slightly later nudge in case globals load async
     Qt.callLater(function() { __layoutBurstA.restart(); __layoutBurstB.restart() })
+  }
+  Process {
+    id: electronScanProc
+    running: false
+    stdout: SplitParser { onRead: (data) => { try { root.__electronHasWindsurf = (String(data||"").indexOf('YES') >= 0) } catch (e) { root.__electronHasWindsurf = false } } }
+  }
+
+  // ps-based detection across all configured Dock items (centralized)
+  // Maintains a set of tokens found running via `ps -C <token>`
+  property var __runningCmdSet: ({})
+  // Global flag: any electron process points to windsurf app
+  property bool __electronHasWindsurf: false
+  function __cmdSetClear() { __runningCmdSet = ({}) }
+  function __cmdSetPut(tok, isRun) {
+    try {
+      const k = String(tok||"").toLowerCase(); if (!k) return
+      if (isRun) __runningCmdSet[k] = true; else delete __runningCmdSet[k]
+    } catch (e) {}
+  }
+  function __cmdAnyRunning(tokOrArr) {
+    try {
+      const arr = Array.isArray(tokOrArr) ? tokOrArr : [String(tokOrArr||"").toLowerCase()]
+      for (let j=0;j<arr.length;j++) {
+        const t = arr[j]; if (!t) continue
+        if (__runningCmdSet[t]) return true
+      }
+      const keys = Object.keys(__runningCmdSet)
+      for (let i=0;i<keys.length;i++) {
+        const k = keys[i]
+        for (let j=0;j<arr.length;j++) {
+          const t = arr[j]
+          if (k.indexOf(t) >= 0 || t.indexOf(k) >= 0) return true
+        }
+      }
+      return false
+    } catch (e) { return false }
+  }
+  Timer {
+    id: cmdScanTimer
+    interval: 800
+    repeat: true
+    running: (Globals.showDock && Globals.showDockRunningIndicator)
+    onTriggered: {
+      try {
+        const items = (Array.isArray(Globals.dockItems) ? Globals.dockItems : [])
+        const seen = {}
+        const toks = []
+        for (let i=0;i<items.length;i++) {
+          const it = items[i] || {}
+          const arr = root.__tokensFromCmd(it.cmd)
+          for (let k=0;k<arr.length;k++) {
+            const tok = arr[k]
+            if (tok && !seen[tok]) { seen[tok] = true; toks.push(tok) }
+          }
+        }
+        if (toks.length === 0) { root.__cmdSetClear(); return }
+        const joined = toks.map(t => t.replace(/'/g, "'\"'\"'"))
+        const list = joined.join(' ')
+        cmdScanProc.command = [
+          "bash","-lc",
+          "TOKENS=\"" + list + "\"; " +
+          "for t in $TOKENS; do if ps -o pid= -C \"$t\" >/dev/null 2>&1; then echo RUN:$t; else echo OFF:$t; fi; done"
+        ]
+        root.__cmdSetClear()
+        cmdScanProc.running = true
+        // Also scan electron variants globally for windsurf
+        electronScanProc.command = [
+          "bash","-lc",
+          "(ps -o args= -C electron -C electron34 -C electron32 2>/dev/null | grep -qi 'windsurf/resources/app' && echo YES) || echo NO"
+        ]
+        electronScanProc.running = true
+      } catch (e) { root.__cmdSetClear() }
+    }
+    Component.onCompleted: { if (running) Qt.callLater(() => onTriggered()) }
+  }
+  Process {
+    id: cmdScanProc
+    running: false
+    stdout: SplitParser {
+      onRead: (data) => {
+        try {
+          const txt = String(data || "")
+          const lines = txt.split(/\r?\n/)
+          for (let i=0;i<lines.length;i++) {
+            const s = lines[i].trim(); if (!s) continue
+            const m = s.match(/^(RUN|OFF):(.*)$/)
+            if (!m) continue
+            const isRun = (m[1] === 'RUN')
+            const tok = (m[2] || '').trim()
+            root.__cmdSetPut(tok, isRun)
+          }
+        } catch (e) {}
+      }
+    }
   }
   // When the window becomes visible or dimensions become valid, bump layout once more
   onVisibleChanged: if (visible) { __layoutEpoch++; Qt.callLater(function(){ __layoutEpoch++ }) }
@@ -46,6 +141,112 @@ PanelWindow {
   property color __dockBg: Globals.dockIconBGColor
   property bool __bgIsLight: (0.2126*__dockBg.r + 0.7152*__dockBg.g + 0.0722*__dockBg.b) > 0.5
   property color __markerColor: __bgIsLight ? Qt.rgba(0,0,0,0.65) : Qt.rgba(1,1,1,0.65)
+
+  // Compositor-based running detection (prefer this over process scanning)
+  readonly property bool isHyprland: Utils.CompositorUtils.isHyprland
+  readonly property bool isNiri: !isHyprland
+  // Lowercased set of running app identifiers (class/name/title substrings)
+  property var __runningAppSet: ({})
+  function __setAdd(v) { try { if (!v) return; const s = String(v).toLowerCase(); if (!__runningAppSet[s]) __runningAppSet[s] = true } catch (e) {} }
+  function __clearSet() { __runningAppSet = ({}) }
+  function __anyRunningMatch(token) {
+    try {
+      const t = String(token||"").toLowerCase(); if (!t) return false
+      // Fast exact hit
+      if (__runningAppSet[t]) return true
+      // Fallback: substring match across keys
+      const keys = Object.keys(__runningAppSet)
+      for (let i=0;i<keys.length;i++) { if (keys[i].indexOf(t) >= 0 || t.indexOf(keys[i]) >= 0) return true }
+      return false
+    } catch (e) { return false }
+  }
+  function __tokensFromCmd(cmd) {
+    try {
+      const out = []
+      const s = String(cmd||"").trim(); if (!s) return out
+      const parts = s.split(/\s+/)
+      let tok = ""
+      for (let i=0;i<parts.length;i++) {
+        const p = parts[i]
+        if (!p) continue
+        if (p.indexOf("=") >= 0 && p.indexOf("/") < 0) continue
+        if (p.startsWith("-")) continue
+        tok = p; break
+      }
+      if (!tok) tok = parts[0] || ""
+      const base = (tok.lastIndexOf('/') >= 0) ? tok.substring(tok.lastIndexOf('/')+1) : tok
+      const b = base.toLowerCase()
+      if (b) out.push(b)
+      // alternates: strip hyphens, strip common suffixes
+      const noDash = b.replace(/-/g, "")
+      if (noDash && out.indexOf(noDash) < 0) out.push(noDash)
+      if (b.endsWith("-browser")) {
+        const alt = b.replace(/-browser$/, "")
+        if (out.indexOf(alt) < 0) out.push(alt)
+        // Known packaging: zen-browser binary is zen-bin
+        if (b === "zen-browser" && out.indexOf("zen-bin") < 0) out.push("zen-bin")
+      }
+      // Known app: windsurf runs under electron
+      if (b === "windsurf") { if (out.indexOf("windsurf") < 0) out.push("windsurf") }
+      return out
+    } catch (e) { return [] }
+  }
+
+  // Periodically refresh running windows list via compositor
+  Timer {
+    id: runningRefresh
+    interval: 1000
+    repeat: true
+    running: Globals.showDockRunningIndicator
+    onTriggered: {
+      if (root.isHyprland) {
+        hyprWinProc.command = ["bash","-lc","hyprctl clients -j 2>/dev/null || true"]
+        hyprWinProc.running = true
+      } else {
+        niriWinProc.command = ["bash","-lc","niri msg -j windows 2>/dev/null || true"]
+        niriWinProc.running = true
+      }
+    }
+    Component.onCompleted: { if (running) Qt.callLater(() => onTriggered()) }
+  }
+  Process {
+    id: hyprWinProc
+    running: false
+    stdout: SplitParser { onRead: (data) => { hyprBuf += String(data) } }
+    property string hyprBuf: ""
+    onRunningChanged: if (!running) {
+      try {
+        const txt = String(hyprBuf||"").trim(); hyprBuf = ""; root.__clearSet()
+        if (txt) {
+          const arr = JSON.parse(txt)
+          for (let i=0;i<arr.length;i++) {
+            const c = arr[i] || {}
+            root.__setAdd(c.class||c.app||"")
+            root.__setAdd(c.title||"")
+          }
+        }
+      } catch (e) { root.__clearSet() }
+    }
+  }
+  Process {
+    id: niriWinProc
+    running: false
+    stdout: SplitParser { onRead: (data) => { niriBuf += String(data) } }
+    property string niriBuf: ""
+    onRunningChanged: if (!running) {
+      try {
+        const txt = String(niriBuf||"").trim(); niriBuf = ""; root.__clearSet()
+        if (txt && txt[0] === '[') {
+          const arr = JSON.parse(txt)
+          for (let i=0;i<arr.length;i++) {
+            const w = arr[i] || {}
+            root.__setAdd(w.app_id || w.class || "")
+            root.__setAdd(w.title || w.name || "")
+          }
+        }
+      } catch (e) { root.__clearSet() }
+    }
+  }
 
   // Force layout recalculation when dock items change (prevents temporary distortion
   // until the next hover/expand). We bump an epoch counter and reference it in
@@ -278,6 +479,101 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             // Track hover independent of MouseArea enabled state (helps in autohide)
             HoverHandler { id: hoverHandler }
+
+            // Small running indicator (bottom-right) when item's command has a running process
+            // Toggle visibility globally via Globals.showDockRunningIndicator
+            Rectangle {
+              id: runningDot
+              width: 8; height: 8
+              radius: 4
+              anchors.left: parent.left
+              anchors.top: parent.top
+              anchors.leftMargin: 4
+              anchors.topMargin: 4
+              color: (Globals.barBorderColor && Globals.barBorderColor.length) ? Globals.barBorderColor : Globals.dockIconBorderColor
+              // Show only when enabled and a matching process is detected
+              visible: Globals.showDockRunningIndicator && (__runningState === "RUN")
+              border.width: 1
+              border.color: Globals.dockIconBGColor
+              z: 10
+              property string __runningState: "OFF"
+              // Build a robust match pattern from cmd when processPattern is not provided
+              function __derivePattern(cmd) {
+                try {
+                  const s = String(cmd||"").trim()
+                  if (!s.length) return ""
+                  const parts = s.split(/\s+/)
+                  // pick first token that is not VAR= and not a dash-flag
+                  let tok = ""
+                  for (let i=0;i<parts.length;i++) {
+                    const p = parts[i]
+                    if (!p) continue
+                    if (p.indexOf("=") >= 0 && p.indexOf("/") < 0) continue
+                    if (p.startsWith("-")) continue
+                    tok = p; break
+                  }
+                  if (!tok.length) tok = parts[0] || ""
+                  const base = tok.lastIndexOf('/') >= 0 ? tok.substring(tok.lastIndexOf('/')+1) : tok
+                  // Escape regex special chars and wrap in word boundaries
+                  const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                  return esc.length ? "\\b" + esc + "\\b" : ""
+                } catch (e) { return "" }
+              }
+              // Debounce to avoid flicker: keep RUN for a grace window after last detection
+              property double __lastRunMs: 0
+              property int __graceMs: 1000
+              // Additional hysteresis: require several consecutive misses before turning OFF
+              property int __missCount: 0
+              property int __missThreshold: 1
+              function checkNow() {
+                try {
+                  const toks = root.__tokensFromCmd(modelData && modelData.cmd)
+                  const byCompositor = (toks.length && root.__anyRunningMatch(toks[0]))
+                  const byPs = (toks.length && root.__cmdAnyRunning(toks))
+                  const byElectron = (toks.indexOf("windsurf") >= 0) && root.__electronHasWindsurf
+                  if (byCompositor || byPs || byElectron) {
+                    runningDot.__lastRunMs = Date.now()
+                    runningDot.__missCount = 0
+                    runningDot.__runningState = "RUN"
+                  } else {
+                    const age = Date.now() - runningDot.__lastRunMs
+                    if (age < runningDot.__graceMs) {
+                      runningDot.__runningState = "RUN"
+                    } else {
+                      runningDot.__missCount++
+                      runningDot.__runningState = (runningDot.__missCount >= runningDot.__missThreshold) ? "OFF" : "RUN"
+                    }
+                  }
+                } catch (e) { runningDot.__runningState = "OFF" }
+              }
+              // Poll occasionally; cheap and isolated per delegate
+              Timer {
+                id: runPoll
+                interval: 900
+                repeat: true
+                running: Globals.showDockRunningIndicator
+                onTriggered: {
+                  runningDot.checkNow()
+                }
+                Component.onCompleted: {
+                  if (Globals.showDockRunningIndicator) {
+                    running = true
+                    // Fire an immediate check so the dot appears without waiting for the first interval
+                    runningDot.checkNow()
+                  }
+                }
+              }
+              // Removed per-delegate ps/pgrep polling to avoid flicker—use global scanners instead
+              Connections {
+                target: Globals
+                function onShowDockRunningIndicatorChanged() {
+                  runPoll.running = Globals.showDockRunningIndicator
+                  cmdScanTimer.running = (Globals.showDock && Globals.showDockRunningIndicator)
+                  if (runPoll.running) runningDot.checkNow()
+                }
+              }
+              // No per-delegate processes needed; compositor tracker updates run globally
+            }
 
             // Optional centered PNG icon
             Image {

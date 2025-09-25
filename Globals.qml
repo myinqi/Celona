@@ -642,6 +642,8 @@ Singleton {
   property string dockIconLabelColor: "#FFFFFF"
   // Behavior
   property bool allowDockIconMovement: false
+  // Show a running indicator dot on icons with active processes
+  property bool showDockRunningIndicator: true
 
   // --- Matugen colors handling ---
   // Helper: convert rgba(r,g,b,a) or #RRGGBB to #AARRGGBB
@@ -1593,6 +1595,8 @@ Singleton {
     if (obj.DockIconLabelTextColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelTextColor
     else if (obj.DockIconLabelColor !== undefined) Globals.dockIconLabelColor = obj.DockIconLabelColor
     if (obj.AllowDockIconMovement !== undefined) Globals.allowDockIconMovement = obj.AllowDockIconMovement
+    // New: running indicator toggle
+    if (obj.DockShowRunningIndicator !== undefined) Globals.showDockRunningIndicator = obj.DockShowRunningIndicator
     // Back-compat: accept DockLayerPosition ("on top"|"autohide")
     if (obj.DockLayerPosition !== undefined) Globals.dockLayerPosition = obj.DockLayerPosition
     // New: AutoHide boolean has priority if present
@@ -1723,6 +1727,7 @@ Singleton {
       AutoHide: (dockLayerPosition === "autohide"),
       DockAutoHideInDurationMs: dockAutoHideInDurationMs,
       DockAutoHideOutDurationMs: dockAutoHideOutDurationMs,
+      DockShowRunningIndicator: showDockRunningIndicator,      
       DockItems: dockItems
     }
     const json = JSON.stringify(obj, null, 2)
@@ -2261,6 +2266,7 @@ Singleton {
             if (subset.DockIconBorderColor !== undefined) Globals.dockIconBorderColor = subset.DockIconBorderColor
             if (subset.DockIconLabelTextColor !== undefined) Globals.dockIconLabelColor = subset.DockIconLabelTextColor
             if (subset.AllowDockIconMovement !== undefined) Globals.allowDockIconMovement = subset.AllowDockIconMovement
+            if (subset.DockShowRunningIndicator !== undefined) Globals.showDockRunningIndicator = subset.DockShowRunningIndicator
             // New boolean has priority; fallback to legacy string
             if (subset.AutoHide !== undefined) Globals.dockLayerPosition = (subset.AutoHide ? "autohide" : "on top")
             else if (subset.DockLayerPosition !== undefined) Globals.dockLayerPosition = subset.DockLayerPosition

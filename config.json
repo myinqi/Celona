@@ -104,6 +104,7 @@
   "AutoHide": false,
   "DockAutoHideInDurationMs": 120,
   "DockAutoHideOutDurationMs": 120,
+  "DockShowRunningIndicator": true,
   "DockItems": [
     {
       "label": "Terminal",
