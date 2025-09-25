@@ -304,6 +304,10 @@ Singleton {
   property int barEdgeMargin: 0
   // Horizontal side margins (px) to shorten the bar from left and right equally (0–10 typical)
   property int barSideMargin: 0
+  // Corner radius (px) for the bar background rectangle
+  property int barRadius: 11
+  // Border width (px) for the bar background rectangle
+  property int barBorderWidth: 2
   // When true, hide the full bar and only show the Setup gear window
   property bool barHidden: false
   // Hover highlight for blocks (e.g., Time)
@@ -1484,6 +1488,8 @@ Singleton {
     setIf("baseBarHeight")
     setIf("barEdgeMargin")
     setIf("barSideMargin")
+    setIf("barRadius")
+    setIf("barBorderWidth")
     setIf("barHidden")
     setIf("useMatugenColors")
     setIf("hoverHighlightColor")
@@ -1610,6 +1616,8 @@ Singleton {
       baseBarHeight,
       barEdgeMargin,
       barSideMargin,
+      barRadius,
+      barBorderWidth,
       barHidden,
       // Fonts
       mainFontFamily,

@@ -59,9 +59,9 @@ Scope {
         anchors.topMargin: (Globals.barPosition === "top" ? ((Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + 2) : 2)
         anchors.bottomMargin: (Globals.barPosition === "bottom" ? ((Globals.barEdgeMargin !== undefined ? Globals.barEdgeMargin : 0) + 2) : 2)
         color: Globals.barBgColor
-        radius: 11
+        radius: (Globals.barRadius !== undefined ? Globals.barRadius : 11)
         border.color: Globals.barBorderColor
-        border.width: 2
+        border.width: (Globals.barBorderWidth !== undefined ? Globals.barBorderWidth : 2)
 
         // Auto-save order when leaving reorder mode
         Connections {

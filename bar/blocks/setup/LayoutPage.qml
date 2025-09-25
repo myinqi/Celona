@@ -166,6 +166,70 @@ Item {
       }
     }
 
+    // Bar corner radius
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: 10
+      Label { text: "Bar Radius:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+      Item { Layout.fillWidth: true }
+      Text { id: barRadiusValue; text: String(Globals.barRadius !== undefined ? Globals.barRadius : 11) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+      Slider {
+        id: barRadiusSlider
+        from: 0; to: 20; stepSize: 1; wheelEnabled: true
+        Layout.preferredWidth: 180
+        value: Globals.barRadius !== undefined ? Globals.barRadius : 11
+        onMoved: {
+          const v = Math.round(value)
+          if (Globals.barRadius !== v) { Globals.barRadius = v; Globals.saveTheme() }
+        }
+        onValueChanged: barRadiusValue.text = String(Math.round(value)) + " px"
+        ToolTip {
+          id: radiusTip
+          visible: parent.hovered
+          text: "Corner radius of the bar"
+          contentItem: Text { text: radiusTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          background: Rectangle {
+            color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+            border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+            border.width: 1
+            radius: 6
+          }
+        }
+      }
+    }
+
+    // Bar border width
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: 10
+      Label { text: "Bar Border Width:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+      Item { Layout.fillWidth: true }
+      Text { id: barBorderWidthValue; text: String(Globals.barBorderWidth !== undefined ? Globals.barBorderWidth : 2) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+      Slider {
+        id: barBorderWidthSlider
+        from: 0; to: 4; stepSize: 1; wheelEnabled: true
+        Layout.preferredWidth: 180
+        value: Globals.barBorderWidth !== undefined ? Globals.barBorderWidth : 2
+        onMoved: {
+          const v = Math.round(value)
+          if (Globals.barBorderWidth !== v) { Globals.barBorderWidth = v; Globals.saveTheme() }
+        }
+        onValueChanged: barBorderWidthValue.text = String(Math.round(value)) + " px"
+        ToolTip {
+          id: borderWidthTip
+          visible: parent.hovered
+          text: "Width of the bar border"
+          contentItem: Text { text: borderWidthTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          background: Rectangle {
+            color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+            border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+            border.width: 1
+            radius: 6
+          }
+        }
+      }
+    }
+
     // Hide bar (game mode)
     RowLayout {
       Layout.fillWidth: true
