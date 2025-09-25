@@ -89,7 +89,7 @@
   "wallpaperTool": "swww",
   "useNewSetupUI": true,
   "showBarvisualizer": true,
-  "ShowDock": false,
+  "ShowDock": true,
   "DockPositionHorizontal": "right",
   "DockPositionVertical": "bottom",
   "DockIconBorderPx": 2,

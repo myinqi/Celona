@@ -11,5 +11,6 @@ release_notes: |-
   - New functions in fuzzel (differnt pickers added, just open fuzzel and type "picker")
   - New WallpapersPage with more customization options
   - Improvements on mpvpaper and playerctl implementation (no child processes)
-  - Time Module: Timer function implemented with notification after end.
-  - DockPage: Dock items now can be added, removed and edited.
+  - Time Module: Timer function implemented with notification after end
+  - DockPage: Dock items now can be added, removed and edited
+  - LayoutPage: added adjustments for workspace button and bar border
