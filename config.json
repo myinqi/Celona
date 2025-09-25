@@ -61,7 +61,7 @@
   "showSystemTray": true,
   "showUpdates": true,
   "showNetwork": true,
-  "showBluetooth": true,
+  "showBluetooth": false,
   "showCPU": false,
   "showGPU": false,
   "showMemory": false,

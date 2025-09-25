@@ -17,7 +17,12 @@ Item {
 
   Text {
     id: title
-    text: Utils.CompositorUtils.activeTitle
+    text: (function(){
+      const t = String(Utils.CompositorUtils.activeTitle || "").trim()
+      if (!t.length) return "Celona Desktop"
+      if (t.toLowerCase() === "null") return "Celona Desktop"
+      return t
+    })()
     color: root.color
     font.bold: root.bold
     font.pixelSize: root.pixelSize
