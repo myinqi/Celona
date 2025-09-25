@@ -323,6 +323,11 @@ Singleton {
   property string workspaceInactiveBg: "#00000000"
   property string workspaceInactiveBorder: "#00bee7"
   property string workspaceTextColor: "#FFFFFF"
+  // Workspace buttons appearance
+  property int workspaceButtonRadius: 8
+  property int workspaceButtonBorderWidth: 1
+  property int workspaceButtonWidth: 35
+  property int workspaceButtonHeight: 22
 
   // Tooltips (leave empty to fallback to component palette)
   property string tooltipBg: ""
@@ -1500,6 +1505,10 @@ Singleton {
     setIf("workspaceInactiveBg")
     setIf("workspaceInactiveBorder")
     setIf("workspaceTextColor")
+    setIf("workspaceButtonRadius")
+    setIf("workspaceButtonBorderWidth")
+    setIf("workspaceButtonWidth")
+    setIf("workspaceButtonHeight")
     setIf("tooltipBg")
     setIf("tooltipText")
     setIf("tooltipBorder")
@@ -1618,6 +1627,10 @@ Singleton {
       barSideMargin,
       barRadius,
       barBorderWidth,
+      workspaceButtonRadius,
+      workspaceButtonBorderWidth,
+      workspaceButtonWidth,
+      workspaceButtonHeight,
       barHidden,
       // Fonts
       mainFontFamily,

@@ -230,6 +230,134 @@ Item {
       }
     }
 
+    // Workspace Button Radius
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: 10
+      Label { text: "Workspace Button Radius:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+      Item { Layout.fillWidth: true }
+      Text { id: wsRadiusValue; text: String(Globals.workspaceButtonRadius !== undefined ? Globals.workspaceButtonRadius : 8) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+      Slider {
+        id: wsRadiusSlider
+        from: 0; to: 12; stepSize: 1; wheelEnabled: true
+        Layout.preferredWidth: 180
+        value: Globals.workspaceButtonRadius !== undefined ? Globals.workspaceButtonRadius : 8
+        onMoved: {
+          const v = Math.round(value)
+          if (Globals.workspaceButtonRadius !== v) { Globals.workspaceButtonRadius = v; Globals.saveTheme() }
+        }
+        onValueChanged: wsRadiusValue.text = String(Math.round(value)) + " px"
+        ToolTip {
+          id: wsRadiusTip
+          visible: parent.hovered
+          text: "Corner radius of workspace buttons"
+          contentItem: Text { text: wsRadiusTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          background: Rectangle {
+            color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+            border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+            border.width: 1
+            radius: 6
+          }
+        }
+      }
+    }
+
+    // Workspace Button Border Width
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: 10
+      Label { text: "Workspace Button Border Width:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+      Item { Layout.fillWidth: true }
+      Text { id: wsBorderWidthValue; text: String(Globals.workspaceButtonBorderWidth !== undefined ? Globals.workspaceButtonBorderWidth : 1) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+      Slider {
+        id: wsBorderWidthSlider
+        from: 0; to: 3; stepSize: 1; wheelEnabled: true
+        Layout.preferredWidth: 180
+        value: Globals.workspaceButtonBorderWidth !== undefined ? Globals.workspaceButtonBorderWidth : 1
+        onMoved: {
+          const v = Math.round(value)
+          if (Globals.workspaceButtonBorderWidth !== v) { Globals.workspaceButtonBorderWidth = v; Globals.saveTheme() }
+        }
+        onValueChanged: wsBorderWidthValue.text = String(Math.round(value)) + " px"
+        ToolTip {
+          id: wsBorderWidthTip
+          visible: parent.hovered
+          text: "Border width of workspace buttons"
+          contentItem: Text { text: wsBorderWidthTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          background: Rectangle {
+            color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+            border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+            border.width: 1
+            radius: 6
+          }
+        }
+      }
+    }
+
+    // Workspace Button Width
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: 10
+      Label { text: "Workspace Button Width:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+      Item { Layout.fillWidth: true }
+      Text { id: wsWidthValue; text: String(Globals.workspaceButtonWidth !== undefined ? Globals.workspaceButtonWidth : 35) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+      Slider {
+        id: wsWidthSlider
+        from: 24; to: 80; stepSize: 2; wheelEnabled: true
+        Layout.preferredWidth: 180
+        value: Globals.workspaceButtonWidth !== undefined ? Globals.workspaceButtonWidth : 35
+        onMoved: {
+          const v = Math.round(value)
+          if (Globals.workspaceButtonWidth !== v) { Globals.workspaceButtonWidth = v; Globals.saveTheme() }
+        }
+        onValueChanged: wsWidthValue.text = String(Math.round(value)) + " px"
+        ToolTip {
+          id: wsWidthTip
+          visible: parent.hovered
+          text: "Width of workspace buttons"
+          contentItem: Text { text: wsWidthTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          background: Rectangle {
+            color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+            border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+            border.width: 1
+            radius: 6
+          }
+        }
+      }
+    }
+
+    // Workspace Button Height
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: 10
+      Label { text: "Workspace Button Height:"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+      Item { Layout.fillWidth: true }
+      Text { id: wsHeightValue; text: String(Globals.workspaceButtonHeight !== undefined ? Globals.workspaceButtonHeight : 22) + " px"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize; Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
+      Slider {
+        id: wsHeightSlider
+        from: 18; to: 32; stepSize: 2; wheelEnabled: true
+        Layout.preferredWidth: 180
+        value: Globals.workspaceButtonHeight !== undefined ? Globals.workspaceButtonHeight : 22
+        onMoved: {
+          const v = Math.round(value)
+          if (Globals.workspaceButtonHeight !== v) { Globals.workspaceButtonHeight = v; Globals.saveTheme() }
+        }
+        onValueChanged: wsHeightValue.text = String(Math.round(value)) + " px"
+        ToolTip {
+          id: wsHeightTip
+          visible: parent.hovered
+          text: "Height of workspace buttons"
+          contentItem: Text { text: wsHeightTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+          background: Rectangle {
+            color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+            border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+            border.width: 1
+            radius: 6
+          }
+        }
+      }
+    }
+
     // Hide bar (game mode)
     RowLayout {
       Layout.fillWidth: true
@@ -273,8 +401,8 @@ Item {
           id: hideTip
           visible: hideBarChk.hovered
           text: hideBarChk.checked
-                ? "Game mode: Bar hidden (only gear icon). Modules are unloaded to save CPU and memory."
-                : "Bar visible"
+                ? "Bar visible"
+                : "Game mode: Bar hidden (only gear icon). Modules are unloaded to save CPU and memory."
           contentItem: Text { text: hideTip.text; color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
           background: Rectangle {
             color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase

@@ -23,12 +23,12 @@ Item {
       model: Utils.CompositorUtils.workspaces
 
       Rectangle {
-        width: 35
-        height: 22
-        radius: 8
+        width: (Globals.workspaceButtonWidth !== undefined ? Globals.workspaceButtonWidth : 35)
+        height: (Globals.workspaceButtonHeight !== undefined ? Globals.workspaceButtonHeight : 22)
+        radius: (Globals.workspaceButtonRadius !== undefined ? Globals.workspaceButtonRadius : 8)
         color: modelData.active ? root.activeColor : root.inactiveColor
         border.color: modelData.active ? root.activeBorder : root.inactiveBorder
-        border.width: 1
+        border.width: (Globals.workspaceButtonBorderWidth !== undefined ? Globals.workspaceButtonBorderWidth : 1)
 
         MouseArea {
           anchors.fill: parent
