@@ -210,7 +210,6 @@ tail -f /run/user/$(id -u)/quickshell/by-id/*/log.qslog
 
 ## known bugs:
 
-- if you manually modify your Niri config.kdl and then switch theme via Settings Window, your changes will be overwritten with the state from initial loading the bar. Solution: befor I can fix it: edit your config.kdl, then logout and log in. Your changes will be kept now if you switch theme. Anoying but works.
 - sometines (extremlly rare) if you apply now wallpapers the color of your niri borders will not be updated on the fly. Solution: switch theme from dark to light and back to trigger matugen.
 
 ## Credits

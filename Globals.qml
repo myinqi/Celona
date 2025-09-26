@@ -1271,7 +1271,19 @@ Singleton {
 
   // Update Niri colors (active/inactive) based on current theme values
   // Strategy: use barBorderColor as active (accent), hoverHighlightColor as inactive (neutral)
+  // Reload-before-patch: ensure we operate on the latest on-disk config to avoid overwriting user changes.
   function updateNiriColorsFromTheme() {
+    try {
+      const f = niriConfigFileAbs
+      if (!f || !niriView) return
+      // Always reload before patching to avoid stale snapshots after manual edits
+      try { niriView.reload() } catch (e) { /* ignore */ }
+      if (niriPatchTimer) niriPatchTimer.restart()
+    } catch (e) { /* ignore */ }
+  }
+
+  // Actual patch execution after reload debounce
+  function doPatchNiriColors() {
     try {
       const f = niriConfigFileAbs
       if (!f || !niriView) return
@@ -1284,16 +1296,12 @@ Singleton {
       function toRgb6(hex) {
         let s = String(hex).trim()
         if (!s.startsWith('#')) s = '#' + s
-        // #AARRGGBB -> #RRGGBB
-        if (s.length === 9) return '#' + s.slice(3)
-        // already #RRGGBB
-        if (s.length === 7) return s
+        if (s.length === 9) return '#' + s.slice(3) // #AARRGGBB -> #RRGGBB
+        if (s.length === 7) return s                // already #RRGGBB
         return s
       }
       const aHex = toRgb6(active)
       const iHex = toRgb6(inactive)
-      // Replace first occurrences; preserve indentation and original quote style
-      // Match forms like: active-color "#rrggbb", active-color '#rrggbb', with optional colon
       let out = text
       out = out.replace(/(^|\n)([\t ]*)active-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
         return pre + indent + "active-color " + q + aHex + q
@@ -1301,7 +1309,6 @@ Singleton {
       out = out.replace(/(^|\n)([\t ]*)inactive-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
         return pre + indent + "inactive-color " + q + iHex + q
       })
-      // Also update ring background colors to match the active color
       out = out.replace(/(^|\n)([\t ]*)background-color\s*:?\s*(["'])[^"']*\3/, function(m, pre, indent, q) {
         return pre + indent + "background-color " + q + aHex + q
       })
@@ -1786,6 +1793,14 @@ Singleton {
     path: niriConfigFileAbs
     onLoaded: { /* noop */ }
     onLoadFailed: (error) => { /* ignore (Niri may not be installed) */ }
+  }
+
+  // Debounce timer to apply Niri color patch after reload
+  Timer {
+    id: niriPatchTimer
+    interval: 400
+    repeat: false
+    onTriggered: doPatchNiriColors()
   }
 
   // Lightweight reader for Ghostty theme file
