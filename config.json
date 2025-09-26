@@ -100,7 +100,7 @@
   "DockIconBGColor": "#ff141318",
   "DockIconBorderColor": "#ff5f5791",
   "DockIconLabelTextColor": "#ffe5e1e9",
-  "AllowDockIconMovement": true,
+  "AllowDockIconMovement": false,
   "AutoHide": true,
   "DockAutoHideInDurationMs": 120,
   "DockAutoHideOutDurationMs": 120,

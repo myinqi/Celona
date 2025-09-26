@@ -16,7 +16,7 @@ RowLayout {
   // Toggle to hide NetworkManager applet from tray (default hidden on startup)
   property bool hideNmApplet: true
   // Toggle to hide Bluetooth applet (blueman) from tray
-  property bool hideBtApplet: false
+  property bool hideBtApplet: true
   // Generic list of tray item IDs to hide
   property var hiddenIds: []
 
