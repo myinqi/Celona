@@ -1,6 +1,6 @@
 // This config is in the KDL format: https://kdl.dev
 // https://github.com/YaLTeR/niri/wiki/Configuration:-Introduction
-
+// Celona Niri Configuration
 // Input
 
 input {
@@ -94,7 +94,7 @@ layout {
 
     focus-ring {
         // off     
-        width 2   // How many logical pixels the ring extends out from the windows.
+        width 3   // How many logical pixels the ring extends out from the windows.
         active-color "#5f5791"
         inactive-color "#484459"
         // active-gradient from="#80c8ff" to="#bbddff" angle=45
@@ -262,7 +262,7 @@ window-rule {
     default-column-width { fixed 900; }
     default-window-height { fixed 600; }
     draw-border-with-background false
-    clip-to-geometry true
+    clip-to-geometry true  
 }
 
 window-rule {
