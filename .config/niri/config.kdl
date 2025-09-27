@@ -406,6 +406,12 @@ binds {
     XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
     XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
 
+	// Playback control - requires playerctl
+	XF86AudioNext  allow-when-locked=true { spawn "playerctl" "next"; }
+	XF86AudioPause allow-when-locked=true { spawn "playerctl" "play-pause"; }
+	XF86AudioPlay  allow-when-locked=true { spawn "playerctl" "play-pause"; }
+	XF86AudioPrev  allow-when-locked=true { spawn "playerctl" "previous"; }
+
 	// Monitor brightness keys mapping for ddcutil (for all outputs or a single monitor)
 	XF86MonBrightnessUp allow-when-locked=true { spawn "~/.config/quickshell/Celona/scripts/monitor-brightness.sh" "+5" "all"; }
 	XF86MonBrightnessDown allow-when-locked=true { spawn "~/.config/quickshell/Celona/scripts/monitor-brightness.sh" "-5" "all"; }
