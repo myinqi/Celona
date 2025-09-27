@@ -154,6 +154,27 @@
       "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/octopi.png",
       "iconSizeRatio": 0.55,
       "iconOffsetYPx": -8
+    },
+    {
+      "label": "Resolve",
+      "cmd": "davinci-resolve",
+      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/davinci_resolve.png",
+      "iconSizeRatio": 0.6,
+      "iconOffsetYPx": -8
+    },
+    {
+      "label": "OBS",
+      "cmd": "obs",
+      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/obs_studio.png",
+      "iconSizeRatio": 0.55,
+      "iconOffsetYPx": -8
+    },
+    {
+      "label": "Gimp",
+      "cmd": "gimp",
+      "icon": "~/.config/quickshell/Celona/bar/assets/dock icons/gimp.png",
+      "iconSizeRatio": 0.55,
+      "iconOffsetYPx": -4
     }
   ]
 }
