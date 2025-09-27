@@ -50,6 +50,23 @@ BarBlock {
     }
   }
 
+  // Fallback: read from ddcutil if last_val is missing (e.g., after reboot)
+  Process {
+    id: readDdcProc
+    running: false
+    command: ["bash","-lc", 'ddcutil getvcp 10 2>/dev/null | sed -n "s/.*current value = *\\([0-9]\\+\\).*/\\1/p" | head -n1']
+    stdout: SplitParser {
+      onRead: (data) => {
+        const s = String(data).trim()
+        const n = parseInt(s)
+        if (!isNaN(n) && n >= 0 && n <= 100) {
+          label.percentVal = Math.round(n)
+          if (brightSlider) brightSlider.value = label.percentVal
+        }
+      }
+    }
+  }
+
   // Tooltip like other modules
   PopupWindow {
     id: tipWindow
@@ -246,5 +263,7 @@ BarBlock {
   // Kick an initial read to populate percent on startup
   Component.onCompleted: {
     if (!readPollProc.running) readPollProc.running = true
+    // After a short delay, if still unknown, try ddcutil as fallback
+    Qt.createQmlObject('import QtQuick; Timer { interval: 350; repeat: false; onTriggered: { if (label.percentVal < 0 && !readDdcProc.running) readDdcProc.running = true } }', root, 'InitFallback').start()
   }
 }
