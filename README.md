@@ -175,10 +175,10 @@ Modules register with a global popup context to ensure only one popup is visible
 
 ## Usage Tips
 
+- Check out the Settings page (gear icon in the left corner of the bar) to customize your Celona experience.
 - Hover and click bar modules to open their popups.
 - Use the Setup gear to adjust your personal settings.
 - Windowskey+G hides the bar, stops the animated background, and unloads all modules, use this feature for gaming or intensive fullscreen applications. Windowskey+G again shows the bar and restarts the animated background.
-- For the Keybinds module, set `keybindsPath` to your Hyprland or Niri configuration file. For Niri, pointing to `~/.config/niri/config.kdl` enables direct parsing from the `binds` block.
 
 ## Development
 

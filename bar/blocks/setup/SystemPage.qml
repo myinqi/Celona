@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
@@ -11,6 +12,16 @@ Item {
   // Size provided by parent SwipeView; avoid setting anchors to prevent conflicts
   width: parent ? parent.width : 0
   height: parent ? parent.height : 0
+  // When the page opens, refresh current avatar and clear any pending new selection
+  Component.onCompleted: {
+    try {
+      if (avatarRow) {
+        avatarRow._filePath = ""
+      }
+      if (newAvatar) newAvatar.source = ""
+      if (curAvatarProc) curAvatarProc.running = true
+    } catch (e) {}
+  }
   // Toggle for viewing release notes
   property bool showReleaseNotes: false
   // Dynamic compositor version (Niri or Hyprland)
@@ -317,6 +328,185 @@ Item {
                   Globals.keybindsPath = v
                   Globals.saveTheme()
                 }
+              }
+            }
+          }
+
+          // User Icon (browse + preview + apply via script)
+          RowLayout {
+            id: avatarRow
+            Layout.fillWidth: true
+            spacing: 10
+            // State
+            property string _user: ""
+            property string _filePath: ""
+            property string _currentPath: ""
+            // Detect current user once
+            Process {
+              id: whoamiProc
+              running: true
+              command: ["bash","-lc",
+                'u="$([ -x /usr/bin/id ] && /usr/bin/id -un 2>/dev/null)"; ' +
+                '[ -n "$u" ] || u="$([ -x /usr/bin/getent ] && [ -x /usr/bin/id ] && /usr/bin/getent passwd "$(/usr/bin/id -u 2>/dev/null)" 2>/dev/null | cut -d: -f1)"; ' +
+                '[ -n "$u" ] || u="$([ -x /usr/bin/printenv ] && /usr/bin/printenv USER 2>/dev/null)"; ' +
+                '[ -n "$u" ] || u="$([ -x /usr/bin/whoami ] && /usr/bin/whoami 2>/dev/null)"; ' +
+                '[ -n "$u" ] || u="$([ -x /usr/bin/basename ] && /usr/bin/basename "$HOME" 2>/dev/null)"; ' +
+                'printf "%s" "$u"'
+              ]
+              stdout: SplitParser { onRead: (data) => { const s = String(data).trim(); if (s.length) { avatarRow._user = s } } }
+            }
+            // Retry once shortly after load if user is still empty
+            Timer {
+              interval: 800
+              repeat: false
+              running: true
+              onTriggered: { if (!avatarRow._user || !avatarRow._user.length) whoamiProc.running = true }
+            }
+            // Second retry in rare cases
+            Timer {
+              interval: 1800
+              repeat: false
+              running: true
+              onTriggered: { if (!avatarRow._user || !avatarRow._user.length) whoamiProc.running = true }
+            }
+            // Probe current avatar path (~/.face or AccountsService icon)
+            Process {
+              id: curAvatarProc
+              running: true
+              command: ["bash","-lc",
+                'u="${USER:-$(id -un)}"; for f in "$HOME/.face" "$HOME/.face.icon" "/var/lib/AccountsService/icons/$u" "/usr/share/sddm/faces/$u.face.icon"; do [ -r "$f" ] && { printf "%s\n" "$f"; exit 0; }; done; uf="/var/lib/AccountsService/users/$u"; iconPath=""; if [ -r "$uf" ]; then while IFS= read -r line; do case "$line" in Icon=*) iconPath="${line#Icon=}"; break;; esac; done < "$uf"; fi; [ -n "$iconPath" ] && [ -r "$iconPath" ] && { printf "%s\n" "$iconPath"; exit 0; }; echo'
+              ]
+              stdout: SplitParser { onRead: (data) => { const s = String(data).trim(); if (s.length) { avatarRow._currentPath = s; curAvatar.source = Qt.resolvedUrl(s) } } }
+            }
+            Label {
+              text: "Change user icon:"
+              Layout.preferredWidth: 150
+              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
+            }
+            // Username (read-only, from $USER)
+            Label {
+              id: userText
+              Layout.preferredWidth: 150
+              text: (avatarRow._user && avatarRow._user.length) ? avatarRow._user : "unknown"
+              color: Globals.moduleValueColor !== "" ? Globals.moduleValueColor : (Globals.popupText !== "" ? Globals.popupText : "#FFFFFF")
+              font.family: Globals.mainFontFamily
+              font.pixelSize: Globals.mainFontSize
+              elide: Text.ElideRight
+              horizontalAlignment: Text.AlignLeft
+              verticalAlignment: Text.AlignVCenter
+              ToolTip.visible: false
+              ToolTip.text: text
+            }
+            // Current avatar next to username (left side)
+            Image {
+              id: curAvatar
+              source: ""
+              sourceSize.width: 32; sourceSize.height: 32
+              width: 32; height: 32
+              fillMode: Image.PreserveAspectFit
+              smooth: true; antialiasing: true
+              visible: !!source
+            }
+            Button {
+              id: browseBtn
+              text: "browse"
+              onClicked: fileDialog.open()
+              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+              background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
+              ToolTip {
+                id: browseTip
+                visible: parent.hovered
+                text: "Pick image for new user icon"
+                delay: 600
+                contentItem: Text {
+                  text: browseTip.text
+                  color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+                  font.family: Globals.mainFontFamily
+                  font.pixelSize: Globals.mainFontSize
+                }
+                background: Rectangle {
+                  color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                  border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                  border.width: 1
+                  radius: 6
+                }
+              }
+            }
+            // Preview: only the new selection on the right to avoid confusion
+            ColumnLayout {
+              spacing: 2
+              RowLayout {
+                spacing: 12
+                Image { id: newAvatar; source: avatarRow._filePath ? Qt.resolvedUrl(avatarRow._filePath) : ""; sourceSize.width: 48; sourceSize.height: 48; width: 48; height: 48; fillMode: Image.PreserveAspectFit; smooth: true; antialiasing: true; visible: !!source }
+              }
+              RowLayout {
+                spacing: 12
+                Label { text: "    new"; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.pixelSize: 10 }
+              }
+            }
+            // Apply button: always launch terminal using run-in-terminal.sh
+            Button {
+              id: applyAvatarBtn
+              text: "apply"
+              enabled: (String(avatarRow._user||"").length > 0 && String(avatarRow._filePath||"").length > 0)
+              onClicked: {
+                const u = String(avatarRow._user||"").trim()
+                const p = String(avatarRow._filePath||"").trim()
+                if (!u.length || !p.length) return
+                const runner = Qt.resolvedUrl("root:/scripts/run-in-terminal.sh")
+                const script = Qt.resolvedUrl("root:/scripts/change_avatar.sh")
+                openAvatarTerminal.command = [
+                  "bash", "-lc",
+                  "RUNNER=\"" + runner + "\"; RUNNER=${RUNNER#file://}; AVSH=\"" + script + "\"; AVSH=${AVSH#file://}; " +
+                  "sh \"$RUNNER\" sudo \"$AVSH\" '" + u + "' '" + p + "'"
+                ]
+                openAvatarTerminal.running = true
+              }
+              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
+              background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
+              ToolTip {
+                id: applyTip
+                visible: parent.hovered
+                text: "Open terminal and apply (sudo)"
+                delay: 600
+                contentItem: Text {
+                  text: applyTip.text
+                  color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+                  font.family: Globals.mainFontFamily
+                  font.pixelSize: Globals.mainFontSize
+                }
+                background: Rectangle {
+                  color: Globals.tooltipBg !== "" ? Globals.tooltipBg : palette.active.toolTipBase
+                  border.color: Globals.tooltipBorder !== "" ? Globals.tooltipBorder : palette.active.light
+                  border.width: 1
+                  radius: 6
+                }
+              }
+            }
+            // File dialog (images)
+            FileDialog {
+              id: fileDialog
+              title: "Choose an avatar image"
+              nameFilters: ["Images (*.png *.jpg *.jpeg *.webp *.svg *.gif *.bmp)"]
+              onAccepted: {
+                try {
+                  const url = String(selectedFile)
+                  let path = url
+                  if (url.startsWith("file://")) path = url.replace(/^file:\/\//, "")
+                  avatarRow._filePath = path
+                  newAvatar.source = Qt.resolvedUrl(path)
+                } catch (e) { /* ignore */ }
+              }
+            }
+            // Terminal runner and refresh (uses scripts/run-in-terminal.sh)
+            Process {
+              id: openAvatarTerminal
+              running: false
+              stdout: SplitParser { onRead: _ => {} }
+              onRunningChanged: if (!running) {
+                curAvatarProc.running = true
               }
             }
           }
