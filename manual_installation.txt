@@ -181,7 +181,7 @@ micro ~/.config/niri/config.kdl
 
 # on line 9 set your prefered keyboard layout again "us" "de" ...
 # on line 54 set your resolution and refresh rate. In my case mode "3440x1440@165.030" but yours is maybe "1920x1080@60.030"
-# on line 79 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
+# on line 84 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
 # save and exit Ctrl+S Ctrl+Q
 # if you cant to customize edit the hyprgreetr config -> micro ~/.config/hyprgreetr/config.toml
 

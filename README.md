@@ -1,33 +1,20 @@
 # Celona
-A customizable, modern status bar and desktop UI built with Quickshell and Qt/QML. Celona focuses on practical ergonomics, clean visuals, and tight integration with common Wayland environments such as Niri and Hyprland.
+Celona is a cohesive desktop experience for Wayland, built with Quickshell and Qt/QML. It combines a modern status bar, a powerful setup UI, and a growing suite of focused modules to streamline everyday workflows without getting in your way.
 
-Celona ships a collection of self-contained bar modules (blocks), a setup UI, and helper scripts to streamline daily workflows.
+Designed for practical ergonomics and clean visuals, Celona integrates tightly with Niri and Hyprland, provides a theming pipeline with Matugen (auto-palette from your wallpaper), and includes sensible defaults with a single JSON configuration. Out of the box, you get self-contained bar modules, a customizable dock, wallpaper and theme pages, system setup pages (e.g. user icon/SDDM face), and helper scripts with robust terminal launching for privileged actions.
 
 ## Demo
 ![screenshot](https://github.com/myinqi/Celona/blob/main/demo/screenshot.png)
 
 ## Highlights
 
+- Build for CachyOS, Wayland, Niri or Hyprland
 - Minimal, readable design with keyboard-first workflows
 - Dynamic workspaces and window awareness (Niri, Hyprland)
 - Theme system with Matugen integration (auto-palette from wallpaper)
 - Light/Dark mode switching that also syncs external apps
-- Sensible defaults with a single JSON configuration file
+- Dock, Clipboard, Lockscreen, Wallpapers (static and animated) and more...
 - Extensible QML-based modules and clean code structure
-
-## Project Structure
-
-Key paths in this repository:
-
-- `shell.qml` – entry point for Quickshell
-- `bar/` – the status bar and its modules ("blocks")
-  - `blocks/` – individual modules (Clipboard, InfoKeybinds, WindowSelector, etc.)
-  - `blocks/setup/` – setup pages (Theme, Wallpapers, etc.)
-- `scripts/` – helper scripts used by modules and setup pages
-- `config.json` – primary configuration file for Celona
-- `colors.css` – Matugen-generated palette (auto-generated)
-- `Globals.qml` – project-wide state, theme handling, and integrations
-
 
 ## Installation (script installer)
 
@@ -36,9 +23,9 @@ Btrfs is recommended, but not needed. For Btrfs the installer creates a snapshot
 Fish shell configuration required!
 You can deselect the zsh configuration, we do not need it
 You can deselect the Firefox configuration, we use zen-browser with Celona
-After installation log into system and perform the next steps:
+After installation, log into system and perform the next steps:
 
-- The Celona repository must already exist at `~/.config/quickshell/Celona/`. So clone the repository first. 
+- The Celona repository must already exist at `~/.config/quickshell/Celona/`. So clone the repository like in the follwing step.
     ```
     mkdir -p ~/.config/quickshell
     git clone https://github.com/myinqi/Celona.git ~/.config/quickshell/Celona
@@ -47,11 +34,10 @@ After installation log into system and perform the next steps:
 - after installation reboot your system
 - final configuration of your hardware:
       micro ~/.config/niri/config.kdl
-      on line 9 set your prefered keyboard layout again "us" "de" ...
+      on line 9 set your prefered keyboard layout "us" "de" ...
       on line 54 set your resolution and refresh rate. In my case mode "3440x1440@165.030" but yours is maybe "1920x1080@60.030"
-      on line 79 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
-      save and exit Ctrl+S Ctrl+Q
-      if you cant to customize edit the hyprgreetr config -> micro ~/.config/hyprgreetr/config.toml
+      on line 84 set your max horizontal resulutions minus some pixels. I chosse -20 pixel
+      #save and exit
 
 ## Installation (manual, step by step)
 
@@ -59,7 +45,7 @@ After installation log into system and perform the next steps:
 
 2) Hyprland: also follow the detailed steps in the manual_installation.txt file (just add hyprland to line 65, you can have both niri and hyprland if you wish to switch between them)
 
-Important: the manual_installation.txt describes the installation for a fresh installation with CachyOS. If you have a different Linux distribution, you can follow the steps in the manual_installation.txt file, but you will need to install the dependencies yourself. 
+Important: the manual_installation.txt describes the installation for a fresh installation with CachyOS (no desktop environment installed). If you have a different Linux distribution, you can follow the steps in the manual_installation.txt file, but you will need to install the dependencies yourself. 
 
 ## Requirements
 
