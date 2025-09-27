@@ -35,7 +35,7 @@ BarBlock {
   content: BarText {
     mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
-    symbolSpacing: 2
+    symbolSpacing: 0
     symbolText: ` ${Datetime.time}`
   }
 

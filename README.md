@@ -136,6 +136,7 @@ The following modules live under `bar/blocks/`. Unless noted otherwise, each ite
 - `Barvisualizer.qml` — compact audio bar visualizer. Reacts to theme changes (`Globals.themeEpoch`) and uses the adaptive accent color `Globals.visualizerBarColorEffective` for proper contrast on light/dark themes. Tooltip shows "Now Playing" with a smooth ping‑pong marquee when the title is long.
 - `Battery.qml` — battery status and popup details.
 - `Bluetooth.qml` — Bluetooth indicator and quick actions (if supported on the system).
+- `Brightness.qml` — Brightness indicator and quick actions (if supported on the system).
 - `CPU.qml` — CPU usage indicator.
 - `Clipboard.qml` — clipboard history via `cliphist` and `wl-clipboard`; left‑click shows entries, right‑click offers management actions.
 - `Date.qml` — date display.

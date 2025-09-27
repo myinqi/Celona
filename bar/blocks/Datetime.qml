@@ -10,7 +10,8 @@ Singleton {
 
   Process {
     id: dateProc
-    command: ["date", "+%a %e %b|%T"]
+    command: ["date", "+%e.%b|%T"]  // only dd.mmm|hh:mm:ss
+    //command: ["date", "+%a %e %b|%T"] // with weekday ddd dd mmm|hh:mm:ss
     running: true
 
     stdout: SplitParser {
