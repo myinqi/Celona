@@ -164,7 +164,12 @@ if [[ "$ALL" -eq 1 ]]; then
     set_brightness_bus "$tgt" "$b" || echo "Warn: failed to set bus $b to $tgt" >&2
   done
   printf '%s' "$now_ns" > "$STATE_FILE"
-  # kein globaler LASTVAL_FILE update im ALL-Modus
+  # Update LASTVAL_FILE so UI reflects the last applied target across all
+  if [[ "$DELTA_MODE" -eq 1 ]]; then
+    printf '%s\n' "$tgt" > "$LASTVAL_FILE"
+  else
+    printf '%s\n' "$ABS_VAL" > "$LASTVAL_FILE"
+  fi
 else
   # Einzel-Display (Primary oder --bus)
   if [[ "$DELTA_MODE" -eq 1 ]]; then
