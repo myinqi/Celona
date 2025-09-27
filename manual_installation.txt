@@ -56,7 +56,7 @@ niri-session
 # in the secound terminal past the next commands ...
 
 ### Preperations ###
-sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp kcalc libadwaita adwaita-cursors adwaita-fonts adwaita-icon-theme adwaita-icon-theme-legacy gnome-themes-extra blueman
+sudo pacman -S --needed base-devel micro fuzzel git zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cliphist cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp kcalc libadwaita adwaita-cursors adwaita-fonts adwaita-icon-theme adwaita-icon-theme-legacy gnome-themes-extra blueman ddcutil
 sudo systemctl enable --now udisks2
 
 ### Polkit Agent with systemd ###
@@ -133,6 +133,24 @@ sudo rsync -a ~/.config/quickshell/Celona/.sddm_conf/celona.conf /usr/share/sddm
 sudo rsync -a ~/.config/quickshell/Celona/wallpapers/3440x1440/ /usr/share/sddm/themes/silent/backgrounds/
 sudo rsync -a ~/.config/quickshell/Celona/.environment/environment /etc/environment
 bash ~/.config/fuzzel/install-pickers.sh
+
+
+### Monitor Brightness ###
+sudo modprobe i2c-dev
+# Persist module at boot
+echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf > /dev/null
+# Write udev rule
+begin
+    echo 'ACTION=="add", KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"'
+end | sudo tee /etc/udev/rules.d/40-monitor-brightness.rules > /dev/null
+# Make sure the "i2c" group exists and add your user (run once)
+sudo groupadd -f i2c
+sudo gpasswd -a $USER i2c
+# Reload udev rules and trigger for i2c devices
+sudo udevadm control --reload
+sudo udevadm trigger --subsystem-match=i2c
+
+# Note: Re-login (or run `newgrp i2c`) so the new group membership takes effect
 
 
 ### fix "A stop job is running for User Manager for UID 1000" error on shutdown

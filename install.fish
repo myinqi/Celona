@@ -122,7 +122,7 @@ sudo pacman -S --needed --noconfirm xdg-desktop-portal-gnome; or die "failed ins
 
 # Core packages
 info "Installing core packages via pacman"
-set -l CORE_PKGS niri ghostty cliphist base-devel micro fuzzel zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp kcalc libadwaita adwaita-cursors adwaita-fonts adwaita-icon-theme adwaita-icon-theme-legacy gnome-themes-extra blueman
+set -l CORE_PKGS niri ghostty cliphist base-devel micro fuzzel zen-browser quickshell nautilus sddm gvfs udisks2 polkit polkit-gnome cava xwayland-satellite playerctl hyprlock haruna htop nvtop xdg-desktop-portal-gnome gnome-keyring swww nm-connection-editor network-manager-applet swaync ttf-jetbrains-mono-nerd gnome-text-editor kvantum kvantum-qt5 qt6ct qt5ct hyprpicker ttf-jetbrains-mono-nerd ttf-jetbrains-mono woff2-font-awesome otf-font-awesome rust gimp kcalc libadwaita adwaita-cursors adwaita-fonts adwaita-icon-theme adwaita-icon-theme-legacy gnome-themes-extra blueman ddcutil
 if test $DO_HYPR -eq 1
     set CORE_PKGS $CORE_PKGS hyprland
 end
@@ -225,14 +225,6 @@ if test -f ~/.config/fuzzel/install-pickers.sh
     bash ~/.config/fuzzel/install-pickers.sh; or warn "fuzzel pickers install failed"
 end
 
-# Snapper: re-enable timers post install, optionally create post snapshots
-if test $DO_BTRFS -eq 1
-    info "Re-enabling snapper timers"
-    sudo snapper -c home set-config TIMELINE_CREATE=no; or true
-    sudo systemctl enable --now snapper-timeline.timer; or warn "enable snapper-timeline failed"
-    sudo systemctl enable --now snapper-cleanup.timer; or warn "enable snapper-cleanup failed"
-end
-
 # Fix "A stop job is running for User Manager for UID 1000" error on shutdown
 info "Applying shutdown stop-job timeout and quickshell cleanup service"
 mkdir -p ~/.config/systemd/user.conf.d
@@ -249,6 +241,32 @@ begin
 end > ~/.config/systemd/user/qs-cleanup.service
 systemctl --user daemon-reload
 systemctl --user enable --now qs-cleanup.service
+
+
+### Monitor Brightness ###
+sudo modprobe i2c-dev; or warn "modprobe i2c-dev failed"
+# Persist module at boot
+echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf > /dev/null
+# Write udev rule
+begin
+    echo 'ACTION=="add", KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"'
+end | sudo tee /etc/udev/rules.d/40-monitor-brightness.rules > /dev/null
+# Make sure the "i2c" group exists and add your user (run once)
+sudo groupadd -f i2c; or true
+sudo gpasswd -a $USER i2c; or true
+# Reload udev rules and trigger for i2c devices
+sudo udevadm control --reload; or true
+sudo udevadm trigger --subsystem-match=i2c; or true
+
+
+# Snapper: re-enable timers post install, optionally create post snapshots
+if test $DO_BTRFS -eq 1
+    info "Re-enabling snapper timers"
+    sudo snapper -c home set-config TIMELINE_CREATE=no; or true
+    sudo systemctl enable --now snapper-timeline.timer; or warn "enable snapper-timeline failed"
+    sudo systemctl enable --now snapper-cleanup.timer; or warn "enable snapper-cleanup failed"
+end
+
 
 # Final hints
 set -l MSG "Installation complete. Notes:\n- Adjust ~/.config/niri/config.kdl (keyboard layout, resolution/refresh rate, max width).\n- Log out/in or reboot to apply SDDM/portals.\n- Customize ~/.config/hyprgreetr/config.toml.\n- Set a wallpaper and briefly toggle dark/light theme to trigger Matugen."

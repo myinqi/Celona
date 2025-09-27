@@ -399,12 +399,18 @@ binds {
     Mod+E hotkey-overlay-title="Open Explorer: nautilus" { spawn "nautilus"; }    
     Super+Alt+L hotkey-overlay-title="Lock the Screen: hyprlock" { spawn "hyprlock"; }
 
-    // Example volume keys mappings for PipeWire & WirePlumber.
+    // Volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
     XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-"; }
     XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
     XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
+
+	// Monitor brightness keys mapping for ddcutil (for all outputs or a single monitor)
+	XF86MonBrightnessUp allow-when-locked=true { spawn "~/.config/quickshell/Celona/scripts/monitor-brightness.sh" "+5" "all"; }
+	XF86MonBrightnessDown allow-when-locked=true { spawn "~/.config/quickshell/Celona/scripts/monitor-brightness.sh" "-5" "all"; }
+	//XF86MonBrightnessUp allow-when-locked=true { spawn "~/.config/quickshell/Celona/scripts/monitor-brightness.sh" "+5" "--bus" "6"; }
+	//XF86MonBrightnessDown allow-when-locked=true { spawn "~/.config/quickshell/Celona/scripts/monitor-brightness.sh" "-5" "--bus" "6"; }	
 
     // Open/close the Overview: a zoomed-out view of workspaces and windows.
     // You can also move the mouse into the top-left hot corner,
