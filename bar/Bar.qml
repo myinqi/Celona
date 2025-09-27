@@ -192,6 +192,7 @@ Scope {
             Component { id: sNotifications; Blocks.Notifications { visible: Globals.showNotifications } }
             Component { id: sWindowSelector; Blocks.WindowSelector { visible: Globals.showWindowSelector } }
             Component { id: sSound; Blocks.Sound { visible: Globals.showSound } }
+            Component { id: sBrightness; Blocks.Brightness { visible: Globals.showBrightness } }
             Component { id: sWeather; Blocks.Weather { visible: Globals.showWeather } }
             Component { id: sBattery; Blocks.Battery { visible: Globals.showBattery } }
             Component { id: sDate; Blocks.Date { visible: Globals.showDate } }
@@ -230,6 +231,7 @@ Scope {
                   modelData === "WindowSelector" ? sWindowSelector :
                   modelData === "Sound" ? sSound :
                   modelData === "Weather" ? sWeather :
+                  modelData === "Brightness" ? sBrightness :
                   modelData === "Battery" ? sBattery :
                   modelData === "Date" ? sDate :
                   modelData === "Time" ? sTime :
@@ -258,6 +260,7 @@ Scope {
                 case "WindowSelector": return Globals.showWindowSelector
                 case "Sound": return Globals.showSound
                 case "Weather": return Globals.showWeather
+                case "Brightness": return Globals.showBrightness
                 case "Battery": return Globals.showBattery
                 case "Date": return Globals.showDate
                 case "Time": return Globals.showTime
@@ -307,6 +310,7 @@ Scope {
             Component { id: cNotifications; Blocks.Notifications { visible: Globals.showNotifications } }
             Component { id: cWindowSelector; Blocks.WindowSelector { visible: Globals.showWindowSelector } }
             Component { id: cSound; Blocks.Sound { visible: Globals.showSound } }
+            Component { id: cBrightness; Blocks.Brightness { visible: Globals.showBrightness } }
             Component { id: cBattery; Blocks.Battery { visible: Globals.showBattery } }
             Component { id: cDate; Blocks.Date { visible: Globals.showDate } }
             Component { id: cTime; Blocks.Time { visible: Globals.showTime } }
@@ -328,6 +332,7 @@ Scope {
                 case "Keybinds": return Globals.showKeybinds
                 case "Notifications": return Globals.showNotifications
                 case "Sound": return Globals.showSound
+                case "Brightness": return Globals.showBrightness
                 case "Battery": return Globals.showBattery
                 case "Date": return Globals.showDate
                 case "Time": return Globals.showTime
@@ -455,6 +460,7 @@ Scope {
                     modWrap.modName === "Notifications" ? cNotifications :
                     modWrap.modName === "WindowSelector" ? cWindowSelector :
                     modWrap.modName === "Sound" ? cSound :
+                    modWrap.modName === "Brightness" ? cBrightness :
                     modWrap.modName === "Battery" ? cBattery :
                     modWrap.modName === "Date" ? cDate :
                     modWrap.modName === "Time" ? cTime :

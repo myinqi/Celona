@@ -364,10 +364,9 @@ Singleton {
   property bool showPowerProfiles: true
   property bool showClipboard: true
   property bool showNotifications: true
-  // New: Window selector (popup listing open windows)
   property bool showWindowSelector: true
   property bool showSound: true
-  // Keybinds cheatsheet
+  property bool showBrightness: true
   property bool showKeybinds: false
   property bool showBattery: true
   property bool showDate: true
@@ -397,7 +396,7 @@ Singleton {
   // Default matches current static order
   property var rightModulesOrder: [
     "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
-    "PowerProfiles","Clipboard","Keybinds","Notifications","WindowSelector","Sound","Battery","Date","Time","Power"
+    "PowerProfiles","Clipboard","Keybinds","Notifications","WindowSelector","Sound","Brightness","Battery","Date","Time","Power"
   ]
 
   // Window title
@@ -1439,6 +1438,7 @@ Singleton {
     showNotifications = true
     showWindowSelector = true
     showSound = true
+    showBrightness = true
     showBattery = true
     showDate = true
     showTime = true
@@ -1448,7 +1448,7 @@ Singleton {
     swapTitleAndWorkspaces = false
     rightModulesOrder = [
       "SystemTray","Updates","Network","Bluetooth","CPU","GPU","Memory",
-      "PowerProfiles","Battery","Clipboard","Notifications","WindowSelector","Sound","Weather",
+      "PowerProfiles","Battery","Clipboard","Notifications","WindowSelector","Sound","Brightness","Weather",
       "Date","Time","Keybinds","Power"
     ]
     // Window title
@@ -1563,6 +1563,7 @@ Singleton {
     setIf("showNotifications")
     setIf("showWindowSelector")
     setIf("showSound")
+    setIf("showBrightness")
     setIf("showKeybinds")
     setIf("showBattery")
     setIf("showDate")
@@ -1697,6 +1698,7 @@ Singleton {
       showNotifications: Globals.showNotifications,
       showWindowSelector: Globals.showWindowSelector,
       showSound: Globals.showSound,
+      showBrightness: Globals.showBrightness,
       showKeybinds: Globals.showKeybinds,
       showBattery: Globals.showBattery,
       showDate: Globals.showDate,
