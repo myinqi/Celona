@@ -39,12 +39,40 @@ BarBlock {
       MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: prevProc.running = true }
     }
 
-  // Presence driven by Globals.hasActivePlayer (polled centrally in Globals)
+    // play/pause (dynamic)
+    Item {
+      width: 28; height: 28
+      Text {
+        anchors.centerIn: parent
+        text: root.isPlaying ? "󰏤" : "󰐊"
+        font.family: "Symbols Nerd Font Mono"
+        color: mediaCtl.baseColor
+        font.pixelSize: 18
+      }
+      MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { toggleProc.running = true } }
+    }
+    
+    // next
+    Item {
+      width: 28; height: 28
+      Text { anchors.centerIn: parent; text: "󰒭"; font.family: "Symbols Nerd Font Mono"; color: mediaCtl.baseColor; font.pixelSize: 18 }
+      MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: nextProc.running = true }
+    }
+  }
+
+  // Hover area for tooltip
+  MouseArea {
+    anchors.fill: parent
+    hoverEnabled: true
+    acceptedButtons: Qt.NoButton
+    onEntered: tipWindow.visible = true
+    onExited: tipWindow.visible = false
+  }
 
   // Hover tooltip under the bar like other modules
   PopupWindow {
     id: tipWindow
-    visible: root.hasPlayer && root.mouseArea.containsMouse
+    visible: false
     implicitWidth: tipLabel.implicitWidth + 20
     implicitHeight: tipLabel.implicitHeight + 20
     color: "transparent"
@@ -74,35 +102,12 @@ BarBlock {
 
       Text {
         id: tipLabel
-        anchors.fill: parent
-        anchors.margins: 8
-        text: "prev / next"
+        anchors.centerIn: parent
+        text: "Media Controls"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         font.family: Globals.mainFontFamily
         font.pixelSize: Globals.mainFontSize
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        wrapMode: Text.NoWrap
       }
-    }
-  }
-    // play/pause (dynamic)
-    Item {
-      width: 28; height: 28
-      Text {
-        anchors.centerIn: parent
-        text: root.isPlaying ? "󰏤" : "󰐊"
-        font.family: "Symbols Nerd Font Mono"
-        color: mediaCtl.baseColor
-        font.pixelSize: 18
-      }
-      MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { toggleProc.running = true } }
-    }
-    // next
-    Item {
-      width: 28; height: 28
-      Text { anchors.centerIn: parent; text: "󰒭"; font.family: "Symbols Nerd Font Mono"; color: mediaCtl.baseColor; font.pixelSize: 18 }
-      MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: nextProc.running = true }
     }
   }
 

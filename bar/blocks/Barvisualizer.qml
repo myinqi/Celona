@@ -45,7 +45,7 @@ BarBlock {
                 anchors.centerIn: parent
                 mainFont: Globals.mainFontFamily
                 symbolFont: "Symbols Nerd Font Mono"
-                symbolText: ""
+                symbolText: ""
             }
 
             // Visibility controlled by Globals.hasAudioActivity (debounced). Optional debug:
@@ -66,6 +66,7 @@ BarBlock {
             height: 28
             color: "transparent"
             visible: root.active
+            clip: true
             
             // Error/missing cava message
             Text {
@@ -97,6 +98,62 @@ BarBlock {
                     }
                 }
             }
+            
+            // Scrolling track title overlay
+            Item {
+                id: scrollContainer
+                anchors.fill: parent
+                visible: root.nowPlaying !== "" && root.cavaAvailable
+                clip: true
+                
+                Text {
+                    id: trackTitle
+                    y: 1
+                    text: root.nowPlaying
+                    color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+                    font.family: Globals.mainFontFamily
+                    font.pixelSize: Globals.mainFontSize
+                    font.bold: false
+                    
+                    // Calculate if scrolling is needed
+                    property bool needsScroll: implicitWidth > scrollContainer.width
+                    
+                    // Scroll animation (runs once, then stays at start)
+                    SequentialAnimation {
+                        id: scrollAnim
+                        running: trackTitle.needsScroll && root.active
+                        loops: Animation.Infinite
+                        
+                        // Wait at start
+                        PauseAnimation { duration: 2000 }
+                        
+                        // Scroll to left
+                        NumberAnimation {
+                            target: trackTitle
+                            property: "x"
+                            from: 0
+                            to: -(trackTitle.implicitWidth - scrollContainer.width + 20)
+                            duration: trackTitle.implicitWidth * 30
+                            easing.type: Easing.Linear
+                        }
+                        
+                        // Wait at end
+                        PauseAnimation { duration: 3000 }
+                        
+                        // Smooth scroll back to start
+                        NumberAnimation {
+                            target: trackTitle
+                            property: "x"
+                            to: 0
+                            duration: 1000
+                            easing.type: Easing.InOutQuad
+                        }
+                    }
+                    
+                    // Static position when no scroll needed or after animation completed
+                    x: trackTitle.needsScroll && scrollAnim.running ? trackTitle.x : (trackTitle.needsScroll ? 0 : (scrollContainer.width - implicitWidth) / 2)
+                }
+            }
         }
     }
 
@@ -113,11 +170,8 @@ BarBlock {
     PopupWindow {
         id: tipWindow
         visible: false
-        // Dynamic width: fit content for short titles, cap for long titles, then marquee scroll
-        // Clamp to [minW, maxW]
-        implicitWidth: Math.min(360, Math.max(140, marqueeText.implicitWidth + 20))
-        // Height follows content text
-        implicitHeight: marqueeText.implicitHeight + 20
+        implicitWidth: tipLabel.implicitWidth + 20
+        implicitHeight: tipLabel.implicitHeight + 20
         color: "transparent"
 
         anchor {
@@ -143,58 +197,14 @@ BarBlock {
             border.width: 1
             radius: 8
 
-            // Marquee viewport
-            Item {
-                id: marqueeViewport
-                anchors.fill: parent
-                anchors.margins: 10
-                clip: true
-
-                // Scrolling text
-                Text {
-                    id: marqueeText
-                    text: root.nowPlaying
-                    color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
-                    font.family: Globals.mainFontFamily
-                    font.pixelSize: Globals.mainFontSize
-                    verticalAlignment: Text.AlignVCenter
-                    wrapMode: Text.NoWrap
-                    y: (marqueeViewport.height - height) / 2
-                    onTextChanged: {
-                        x = 0
-                        marqueeAnim.restart()
-                    }
-                }
-
-                // Animate only when needed and while visible (ping-pong without jump)
-                SequentialAnimation {
-                    id: marqueeAnim
-                    running: (marqueeText.implicitWidth > marqueeViewport.width) && tipWindow.visible
-                    loops: Animation.Infinite
-                    // configurable durations
-                    property int travel: Math.abs(marqueeViewport.width - marqueeText.implicitWidth)
-                    property int slideDuration: Math.max(1800, 25 * travel)
-                    PauseAnimation { duration: 600 }
-                    // forward to left (revealing tail)
-                    NumberAnimation {
-                        target: marqueeText
-                        property: "x"
-                        from: 0
-                        to: Math.min(0, marqueeViewport.width - marqueeText.implicitWidth)
-                        duration: marqueeAnim.slideDuration
-                        easing.type: Easing.Linear
-                    }
-                    PauseAnimation { duration: 500 }
-                    // backward to start (no jump)
-                    NumberAnimation {
-                        target: marqueeText
-                        property: "x"
-                        to: 0
-                        duration: marqueeAnim.slideDuration
-                        easing.type: Easing.Linear
-                    }
-                    onStopped: marqueeText.x = 0
-                }
+            // Simple centered text
+            Text {
+                id: tipLabel
+                anchors.centerIn: parent
+                text: "Barvisualizer"
+                color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
             }
         }
     }
