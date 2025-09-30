@@ -122,7 +122,7 @@ BarBlock {
                     SequentialAnimation {
                         id: scrollAnim
                         running: trackTitle.needsScroll && root.active
-                        loops: Animation.Infinite
+                        loops: 1     // or  -> Animation.Infinite
                         
                         // Wait at start
                         PauseAnimation { duration: 2000 }

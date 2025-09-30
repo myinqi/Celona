@@ -59,6 +59,7 @@
   "showCPU": false,
   "showGPU": false,
   "showMemory": false,
+  "showStorage": false,
   "showPowerProfiles": false,
   "showClipboard": true,
   "showNotifications": true,

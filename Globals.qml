@@ -1559,6 +1559,7 @@ Singleton {
     setIf("showCPU")
     setIf("showGPU")
     setIf("showMemory")
+    setIf("showStorage")
     setIf("showPowerProfiles")
     setIf("showClipboard")
     setIf("showNotifications")
@@ -1694,6 +1695,7 @@ Singleton {
       showCPU: Globals.showCPU,
       showGPU: Globals.showGPU,
       showMemory: Globals.showMemory,
+      showStorage: Globals.showStorage,
       showPowerProfiles: Globals.showPowerProfiles,
       showClipboard: Globals.showClipboard,
       showNotifications: Globals.showNotifications,
