@@ -1,4 +1,4 @@
-version: "1.6 (Luna)"
+version: "1.7 (Luna)"
 release_notes: |-
   - New Setup window as a regular WM-managed window (better input & WM rule integration)
   - Theme editor: editable color fields with theme-aware styling
@@ -16,3 +16,4 @@ release_notes: |-
   - LayoutPage: added adjustments for workspace button and bar border
   - Running Apps indicator for the dock items
   - Monitor Brightness: added support with keybinds and a module
+  - Storage module: added support for filesystem type and size info

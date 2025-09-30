@@ -361,6 +361,7 @@ Singleton {
   property bool showCPU: true
   property bool showGPU: true
   property bool showMemory: true
+  property bool showStorage: true
   property bool showPowerProfiles: true
   property bool showClipboard: true
   property bool showNotifications: true

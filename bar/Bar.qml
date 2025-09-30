@@ -186,6 +186,7 @@ Scope {
             Component { id: sCPU; Blocks.CPU { visible: Globals.showCPU } }
             Component { id: sGPU; Blocks.GPU { visible: Globals.showGPU } }
             Component { id: sMemory; Blocks.Memory { visible: Globals.showMemory } }
+            Component { id: sStorage; Blocks.Storage { visible: Globals.showStorage } }
             Component { id: sPowerProfiles; Blocks.PowerProfiles { visible: Globals.showPowerProfiles } }
             Component { id: sClipboard; Blocks.Clipboard { visible: Globals.showClipboard } }
             Component { id: sKeybinds; Blocks.InfoKeybinds { visible: Globals.showKeybinds } }
@@ -224,6 +225,7 @@ Scope {
                   modelData === "CPU" ? sCPU :
                   modelData === "GPU" ? sGPU :
                   modelData === "Memory" ? sMemory :
+                  modelData === "Storage" ? sStorage :
                   modelData === "PowerProfiles" ? sPowerProfiles :
                   modelData === "Clipboard" ? sClipboard :
                   modelData === "Keybinds" ? sKeybinds :
@@ -253,6 +255,7 @@ Scope {
                 case "CPU": return Globals.showCPU
                 case "GPU": return Globals.showGPU
                 case "Memory": return Globals.showMemory
+                case "Storage": return Globals.showStorage
                 case "PowerProfiles": return Globals.showPowerProfiles
                 case "Clipboard": return Globals.showClipboard
                 case "Keybinds": return Globals.showKeybinds
@@ -304,6 +307,7 @@ Scope {
             Component { id: cCPU; Blocks.CPU { visible: Globals.showCPU } }
             Component { id: cGPU; Blocks.GPU { visible: Globals.showGPU } }
             Component { id: cMemory; Blocks.Memory { visible: Globals.showMemory } }
+            Component { id: cStorage; Blocks.Storage { visible: Globals.showStorage } }
             Component { id: cPowerProfiles; Blocks.PowerProfiles { visible: Globals.showPowerProfiles } }
             Component { id: cClipboard; Blocks.Clipboard { visible: Globals.showClipboard } }
             Component { id: cKeybinds; Blocks.InfoKeybinds { visible: Globals.showKeybinds } }
@@ -327,6 +331,7 @@ Scope {
                 case "CPU": return Globals.showCPU
                 case "GPU": return Globals.showGPU
                 case "Memory": return Globals.showMemory
+                case "Storage": return Globals.showStorage
                 case "PowerProfiles": return Globals.showPowerProfiles
                 case "Clipboard": return Globals.showClipboard
                 case "Keybinds": return Globals.showKeybinds
@@ -454,6 +459,7 @@ Scope {
                     modWrap.modName === "CPU" ? cCPU :
                     modWrap.modName === "GPU" ? cGPU :
                     modWrap.modName === "Memory" ? cMemory :
+                    modWrap.modName === "Storage" ? cStorage :
                     modWrap.modName === "PowerProfiles" ? cPowerProfiles :
                     modWrap.modName === "Clipboard" ? cClipboard :
                     modWrap.modName === "Keybinds" ? cKeybinds :

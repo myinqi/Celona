@@ -137,6 +137,7 @@ The following modules live under `bar/blocks/`. Unless noted otherwise, each ite
 - `PowerProfiles.qml` — power profiles toggle/indicator, if available.
 - `Setup.qml` — entry to the setup dialog (gear icon) to manage theme and behavior.
 - `SetupDialog.qml` — wrapper dialog for setup pages.
+- `Storage.qml` — storage usage indicator.
 - `Sound.qml` — volume and sink/source controls with a popup. Includes an embedded Cava visualizer that robustly restarts on theme changes. Uses `Globals.visualizerBarColorEffective` for the bar color.
 - `SystemTray.qml` — system tray area for compatible tray icons.
 - `Time.qml` — time display.

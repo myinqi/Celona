@@ -69,7 +69,7 @@ Item {
       }
     }
 
-    // Module toggles list
+    // Module toggles list with scrollbar
     Rectangle {
       Layout.fillWidth: true
       Layout.fillHeight: true
@@ -77,13 +77,24 @@ Item {
       color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
       border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
       border.width: 1
-      ColumnLayout {
+      
+      Flickable {
+        id: flick
         anchors.fill: parent
         anchors.margins: 8
-        spacing: 4
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: 100
+        clip: true
+        contentWidth: flick.width
+        contentHeight: contentLayout.childrenRect.height
+        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOn }
+        
+        ColumnLayout {
+          id: contentLayout
+          spacing: 4
+          width: flick.width
+          
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: 100
 
           // Column 1:
           ColumnLayout {
@@ -102,6 +113,7 @@ Item {
             RowLayout { Layout.fillWidth: true; Label { text: "CPU"; Layout.preferredWidth: 120; color: Globals.popupText; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize } Item { width: 0 } Switch { checked: Globals.showCPU; onToggled: { Globals.showCPU = checked; Globals.saveTheme() } } }
             RowLayout { Layout.fillWidth: true; Label { text: "GPU"; Layout.preferredWidth: 120; color: Globals.popupText; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize } Item { width: 0 } Switch { checked: Globals.showGPU; onToggled: { Globals.showGPU = checked; Globals.saveTheme() } } }
             RowLayout { Layout.fillWidth: true; Label { text: "Memory"; Layout.preferredWidth: 120; color: Globals.popupText; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize } Item { width: 0 } Switch { checked: Globals.showMemory; onToggled: { Globals.showMemory = checked; Globals.saveTheme() } } }
+            RowLayout { Layout.fillWidth: true; Label { text: "Storage"; Layout.preferredWidth: 120; color: Globals.popupText; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize } Item { width: 0 } Switch { checked: Globals.showStorage; onToggled: { Globals.showStorage = checked; Globals.saveTheme() } } }
 
           }
 
@@ -124,6 +136,7 @@ Item {
             RowLayout { Layout.fillWidth: true; Label { text: "Power Profiles"; Layout.preferredWidth: 120; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize } Item { width: 0 } Switch { checked: Globals.showPowerProfiles; onToggled: { Globals.showPowerProfiles = checked; Globals.saveTheme() } } }
             
           }
+        }
         }
       }
     }
