@@ -143,7 +143,7 @@ The following modules live under `bar/blocks/`. Unless noted otherwise, each ite
 - `Time.qml` — time display.
 - `Updates.qml` — system/package update indicator.
 - `Weather.qml` — weather info (optional; requires network access and configuration).
-- `Welcome.qml` — welcome message and hints area.
+- `Welcome.qml` — displays the compositor icon (niri or hyprland) opens fuzzel and ghostty on left and right click.
 - `WindowSelector.qml` — lists open windows; supports Niri (`niri msg -j windows/workspaces`) and Hyprland. Dynamic height with a scrollbar; app glyphs and workspace numbers use the adaptive accent color. Focus actions call the corresponding compositor commands.
 - `WindowTitle.qml` — shows the active window title.
 - `Workspaces.qml` — workspace strip with active/inactive visuals.

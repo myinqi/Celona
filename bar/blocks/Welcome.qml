@@ -64,8 +64,11 @@ BarBlock {
 
     onClicked: (mouse) => {
       tipWindow.visible = false
-      // Unified behavior: on both Hyprland and Niri start fuzzel for left/right click
-      fuzzelProc.running = true
+      if (mouse.button === Qt.LeftButton) {
+        fuzzelProc.running = true
+      } else if (mouse.button === Qt.RightButton) {
+        ghosttyProc.running = true
+      }
     }
   }
 
@@ -105,7 +108,7 @@ BarBlock {
         id: tipLabel
         anchors.fill: parent
         anchors.margins: 10
-        text: "Left: Fuzzel\nRight: Fuzzel"
+        text: "Left: Fuzzel\nRight: Ghostty"
         color: Globals.tooltipText !== "" ? Globals.tooltipText : "#FFFFFF"
         font.family: Globals.mainFontFamily
         font.pixelSize: Globals.mainFontSize
@@ -116,10 +119,17 @@ BarBlock {
   }
 
 
-  // Niri: fuzzel launcher for both left/right clicks
+  // Left click: fuzzel launcher
   Process {
     id: fuzzelProc
     running: false
     command: ["bash", "-lc", "sleep 0.2; pkill fuzzel || fuzzel >/dev/null 2>&1 & disown || true"]
+  }
+
+  // Right click: open Ghostty terminal
+  Process {
+    id: ghosttyProc
+    running: false
+    command: ["bash", "-lc", "ghostty >/dev/null 2>&1 & disown || true"]
   }
 }
