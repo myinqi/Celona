@@ -270,27 +270,17 @@ BarBlock {
         }
     }
 
-    // Now playing info process
+    // Now playing info process (using --follow to avoid process leak)
     Process {
         id: nowProc
         running: root.visible
-        command: ["sh", "-c", 
-            "if command -v playerctl >/dev/null 2>&1; then " +
-            "while true; do playerctl metadata --format '{{ title }}' 2>/dev/null || echo ''; sleep 2; done; " +
-            "else echo '__PLAYERCTL_MISSING__'; fi"
-        ]
+        command: ["playerctl", "metadata", "--follow", "--format", "{{title}} — {{artist}}"]
         stdout: SplitParser {
             onRead: data => {
                 const line = String(data).trim()
-                if (line === '__PLAYERCTL_MISSING__') { 
-                    root.nowPlaying = ''
-                    nowProc.running = false
-                    return 
-                }
-                root.nowPlaying = line
+                if (line) root.nowPlaying = line
             }
         }
-        stderr: SplitParser { onRead: data => console.log(`[Barvisualizer] now stderr: ${String(data)}`) }
     }
 
     // Close tooltip on bar position change
