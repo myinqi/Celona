@@ -9,12 +9,12 @@ import "root:/"
 BarBlock {
   id: root
 
-  // Display: storage icon + free space percent of root partition
+  // Display: storage icon + used space percent of root partition
   content: BarText {
     mainFont: Globals.mainFontFamily
     symbolFont: "Symbols Nerd Font Mono"
     // Fixed-width percent (0-100) to prevent layout shifts: pad to 3 chars
-    property string percent3: String(Math.floor(rootFreePercent)).padStart(3, " ")
+    property string percent3: String(Math.floor(100 - rootFreePercent)).padStart(3, " ")
     symbolText: "󰋊 " + percent3 + "%"
   }
 
