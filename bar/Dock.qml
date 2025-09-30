@@ -207,14 +207,14 @@ PanelWindow {
     }
     Component.onCompleted: { if (running) Qt.callLater(() => onTriggered()) }
   }
+  property string __hyprBuf: ""
   Process {
     id: hyprWinProc
     running: false
-    stdout: SplitParser { onRead: (data) => { hyprBuf += String(data) } }
-    property string hyprBuf: ""
+    stdout: SplitParser { onRead: (data) => { root.__hyprBuf += String(data) } }
     onRunningChanged: if (!running) {
       try {
-        const txt = String(hyprBuf||"").trim(); hyprBuf = ""; root.__clearSet()
+        const txt = String(root.__hyprBuf||"").trim(); root.__hyprBuf = ""; root.__clearSet()
         if (txt) {
           const arr = JSON.parse(txt)
           for (let i=0;i<arr.length;i++) {
@@ -226,14 +226,14 @@ PanelWindow {
       } catch (e) { root.__clearSet() }
     }
   }
+  property string __niriBuf: ""
   Process {
     id: niriWinProc
     running: false
-    stdout: SplitParser { onRead: (data) => { niriBuf += String(data) } }
-    property string niriBuf: ""
+    stdout: SplitParser { onRead: (data) => { root.__niriBuf += String(data) } }
     onRunningChanged: if (!running) {
       try {
-        const txt = String(niriBuf||"").trim(); niriBuf = ""; root.__clearSet()
+        const txt = String(root.__niriBuf||"").trim(); root.__niriBuf = ""; root.__clearSet()
         if (txt && txt[0] === '[') {
           const arr = JSON.parse(txt)
           for (let i=0;i<arr.length;i++) {
