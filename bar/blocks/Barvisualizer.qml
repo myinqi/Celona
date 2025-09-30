@@ -45,15 +45,15 @@ BarBlock {
                 anchors.centerIn: parent
                 mainFont: Globals.mainFontFamily
                 symbolFont: "Symbols Nerd Font Mono"
-                symbolText: "♪"
+                symbolText: ""
             }
 
-    // Visibility controlled by Globals.hasAudioActivity (debounced). Optional debug:
-    onVisibleChanged: {
-        console.log(`[Barvisualizer] visible=${visible} active=${root.active} audio=${Globals.hasAudioActivity}`)
-        if (visible) restartVisualizer()
-        else vizProc.running = false
-    }
+            // Visibility controlled by Globals.hasAudioActivity (debounced). Optional debug:
+            onVisibleChanged: {
+                console.log(`[Barvisualizer] visible=${visible} active=${root.active} audio=${Globals.hasAudioActivity}`)
+                if (visible) restartVisualizer()
+                else vizProc.running = false
+            }
         }
         
         // Compact visualizer area (60px)
