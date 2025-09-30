@@ -151,26 +151,34 @@ Singleton {
   onBarBorderColorChanged: {
     if (useMatugenColors && hyprlandColorsDebounce) hyprlandColorsDebounce.restart()
   }
-  // React to Game Mode (barHidden) to manage animated wallpaper lifecycle
+  // React to Game Mode (barHidden) to manage animated wallpaper and dock lifecycle
   onBarHiddenChanged: {
     try {
       if (barHidden) {
-        // Entering Game Mode: capture current animated state once and disable animation
+        // Entering Game Mode: capture current animated wallpaper and dock state, then disable both
         if (!_wpGameModeActive) {
           _wpGameModeActive = true
           _wpHadAnimatedBeforeGameMode = wallpaperAnimatedEnabled
+          _wpHadDockBeforeGameMode = showDock
         }
         if (wallpaperAnimatedEnabled) {
           // Temporarily turn off animated wallpaper without persisting theme
           wallpaperAnimatedEnabled = false
           stopAnimatedAndSetStatic()
         }
+        if (showDock) {
+          // Temporarily hide dock without persisting theme
+          showDock = false
+        }
       } else {
-        // Leaving Game Mode: restore animated wallpaper only if it was previously on
+        // Leaving Game Mode: restore animated wallpaper and dock only if they were previously on
         if (_wpGameModeActive) {
           if (_wpHadAnimatedBeforeGameMode) {
             wallpaperAnimatedEnabled = true
             startAnimatedWallpaper()
+          }
+          if (_wpHadDockBeforeGameMode) {
+            showDock = true
           }
           _wpGameModeActive = false
         }
@@ -598,10 +606,11 @@ Singleton {
   // Touching this file toggles Game Mode without IPC
   readonly property string _gameModeToggleFile: (homeReady ? (homeDir + "/.config/quickshell/Celona/tmp/game_mode_toggle") : "")
 
-  // Remember animated wallpaper state across Game Mode (barHidden)
+  // Remember animated wallpaper and dock state across Game Mode (barHidden)
   // These are transient (not persisted) and only used to restore on exit from Game Mode
   property bool _wpGameModeActive: false
   property bool _wpHadAnimatedBeforeGameMode: false
+  property bool _wpHadDockBeforeGameMode: false
 
   // Dock settings
   // Vertical dock position on screen edge: "left" or "right"
