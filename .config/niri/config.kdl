@@ -398,6 +398,7 @@ binds {
     Mod+Ctrl+E hotkey-overlay-title="Open Explorer: dolphin" { spawn "dolphin"; }
     Mod+E hotkey-overlay-title="Open Explorer: nautilus" { spawn "nautilus"; }    
     Super+Alt+L hotkey-overlay-title="Lock the Screen: hyprlock" { spawn "hyprlock"; }
+    Mod+Shift+T hotkey-overlay-title="Toggle Dark/Light Theme" { spawn "~/.config/quickshell/Celona/scripts/matugen-toggle.sh"; }
 
     // Volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
