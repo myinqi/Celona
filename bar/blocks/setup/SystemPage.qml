@@ -37,10 +37,10 @@ Item {
     command: ["bash","-lc",
       // Prefer the active session process, then fall back to installed binaries
       "if pgrep -x niri >/dev/null 2>&1; then echo NAME=Niri; niri --version 2>/dev/null | head -n1; exit 0; fi; " +
-      "if pgrep -x Hyprland >/dev/null 2>&1; then echo NAME=Hyprland; (hyprctl -v 2>/dev/null || Hyprland -v 2>/dev/null) | head -n1; exit 0; fi; " +
+      "if pgrep -x Hyprland >/dev/null 2>&1; then echo NAME=Hyprland; (hyprctl version 2>/dev/null || Hyprland --version 2>/dev/null) | head -n1; exit 0; fi; " +
       "if command -v niri >/dev/null 2>&1; then echo NAME=Niri; niri --version 2>/dev/null | head -n1; exit 0; fi; " +
-      "if command -v hyprctl >/dev/null 2>&1; then echo NAME=Hyprland; hyprctl -v 2>/dev/null | head -n1; exit 0; fi; " +
-      "if command -v Hyprland >/dev/null 2>&1; then echo NAME=Hyprland; Hyprland -v 2>/dev/null | head -n1; exit 0; fi; " +
+      "if command -v hyprctl >/dev/null 2>&1; then echo NAME=Hyprland; hyprctl version 2>/dev/null | head -n1; exit 0; fi; " +
+      "if command -v Hyprland >/dev/null 2>&1; then echo NAME=Hyprland; Hyprland --version 2>/dev/null | head -n1; exit 0; fi; " +
       "echo NAME=Unknown; echo __MISSING__"
     ]
     stdout: SplitParser {
@@ -55,7 +55,21 @@ Item {
           compositorVersionProc.running = false
           return
         }
-        if (line.length) page.compositorVersion = line
+        if (line.length) {
+          // Normalize to: "<Name> <X.Y.Z>" if possible
+          try {
+            const name = page.compositorName || ""
+            const m = line.match(/\b\d+(?:\.\d+)+\b/)
+            if (name && m && m[0]) {
+              page.compositorVersion = name + " " + m[0]
+            } else {
+              // Fallback to the first line as-is
+              page.compositorVersion = line
+            }
+          } catch (e) {
+            page.compositorVersion = line
+          }
+        }
       }
     }
   }
