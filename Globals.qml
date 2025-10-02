@@ -43,6 +43,8 @@ Singleton {
   // Exposed version info
   property string celonaVersion: "dev"
   property string celonaReleaseNotes: ""
+  // All versions parsed from VERSION.yaml (array of {version: "...", notes: "..."})
+  property var celonaVersionHistory: []
   // Global main UI font (user configurable)
   property string mainFontFamily: "JetBrains Mono Nerd Font"
   // Global main UI font size (px). Currently used for tooltip text size.
@@ -110,40 +112,87 @@ Singleton {
     } catch (e) { return String(p||'') }
   }
 
-  // Load and parse VERSION.yaml (very lightweight YAML reader for two keys: version, release_notes)
+  // Load and parse VERSION.yaml - now supports multiple versions
   FileView {
     id: versionView
     path: versionFile
     onLoaded: {
       try {
         const t = String(versionView.text()||"")
-        let v = celonaVersion
-        let notes = celonaReleaseNotes
-        // version: 1.0 (Luna)
-        const m = t.match(/^[ \t]*version:[ \t]*\"?([^\n\"]+)\"?/m)
-        if (m && m[1]) v = m[1].trim()
-        // release_notes: |- or |
-        let r = t.match(/^[ \t]*release_notes[ \t]*:[ \t]*\|\-?[ \t]*\n([\s\S]*)/m)
-        if (r && r[1]) {
-          // Stop at first non-indented line
-          const lines = r[1].split(/\n/)
-          let out = []
-          for (let i = 0; i < lines.length; i++) {
-            const ln = lines[i]
-            if (ln.length && !/^\s/.test(ln)) break
-            out.push(ln.replace(/^\s{2}/, ''))
+        const history = []
+        
+        // Find all version blocks manually
+        const lines = t.split('\n')
+        let currentVersion = null
+        let currentNotes = []
+        let inNotes = false
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i]
+          
+          // Check for version: line
+          const vMatch = line.match(/^version:\s*"?([^"\n]+)"?/)
+          if (vMatch) {
+            // Save previous version if exists
+            if (currentVersion) {
+              history.push({ 
+                version: currentVersion, 
+                notes: currentNotes.join('\n').trim() 
+              })
+            }
+            currentVersion = vMatch[1].trim()
+            currentNotes = []
+            inNotes = false
+            continue
           }
-          notes = out.join("\n").replace(/\n+$/,'')
-        } else {
-          // Or plain scalar: release_notes: "..."
-          const r2 = t.match(/^[ \t]*release_notes:[ \t]*\"([\s\S]*?)\"[ \t]*$/m)
-          if (r2 && r2[1]) notes = r2[1]
+          
+          // Check for release_notes: |- or |
+          if (line.match(/^release_notes:\s*\|[-]?/)) {
+            inNotes = true
+            continue
+          }
+          
+          // Collect indented lines after release_notes
+          if (inNotes) {
+            if (line.match(/^\s/) || line.length === 0) {
+              currentNotes.push(line.replace(/^\s{2}/, ''))
+            } else {
+              // Non-indented line ends the notes block
+              inNotes = false
+            }
+          }
         }
-        if (v && v.length) celonaVersion = v
-        celonaReleaseNotes = notes || ""
-      } catch (e) { /* ignore */ }
+        
+        // Save last version
+        if (currentVersion) {
+          history.push({ 
+            version: currentVersion, 
+            notes: currentNotes.join('\n').trim() 
+          })
+        }
+        
+        // Set latest (first) version as current
+        if (history.length > 0) {
+          celonaVersion = history[0].version
+          celonaReleaseNotes = history[0].notes
+        } else {
+          celonaVersion = "dev"
+          celonaReleaseNotes = ""
+        }
+        celonaVersionHistory = history
+        
+        console.log("[Globals] Loaded", history.length, "version(s) from VERSION.yaml:", 
+                    history.map(h => h.version).join(", "))
+      } catch (e) { 
+        console.warn("[Globals] Error parsing VERSION.yaml:", e)
+        celonaVersion = "dev"
+        celonaReleaseNotes = ""
+        celonaVersionHistory = []
+      }
     }
-    onLoadFailed: (error) => { /* optional */ }
+    onLoadFailed: (error) => { 
+      console.warn("[Globals] Failed to load VERSION.yaml:", error)
+    }
   }
   
 

@@ -9,26 +9,27 @@ import "root:/"
 
 Item {
   id: page
-  // Size provided by parent SwipeView; avoid setting anchors to prevent conflicts
   width: parent ? parent.width : 0
   height: parent ? parent.height : 0
-  // When the page opens, refresh current avatar and clear any pending new selection
   Component.onCompleted: {
     try {
       if (avatarRow) {
-        avatarRow._filePath = ""
+        // Lightweight reader for defaults file
       }
-      if (newAvatar) newAvatar.source = ""
-      if (curAvatarProc) curAvatarProc.running = true
     } catch (e) {}
   }
-  // Toggle for viewing release notes
+  // Toggle for viewing all release notes
   property bool showReleaseNotes: false
+  onVisibleChanged: {
+    if (visible) {
+      // Optionally, reload version file to catch external updates
+      // versionView.reload()
+    }
+  }
   // Dynamic compositor version (Niri or Hyprland)
   property string compositorName: ""
   property string compositorVersion: ""
   readonly property string compositorLabel: (compositorName && compositorName.length ? (compositorName + " Version:") : "Compositor Version:")
-
   // Detect active compositor and fetch version once
   Process {
     id: compositorVersionProc
@@ -130,7 +131,7 @@ Item {
             }
           }
 
-          // Release Notes header row (aligned to other rows)
+          // Release Notes header row
           RowLayout {
             Layout.fillWidth: true
             spacing: 10
@@ -144,20 +145,28 @@ Item {
             Button {
               id: toggleNotesBtn
               text: page.showReleaseNotes ? "hide" : "show"
-              enabled: (Globals.celonaReleaseNotes && Globals.celonaReleaseNotes.length > 0)
+              enabled: Globals.celonaVersionHistory && Globals.celonaVersionHistory.length > 0
               onClicked: page.showReleaseNotes = !page.showReleaseNotes
-              contentItem: Label { text: parent.text; color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"; font.family: Globals.mainFontFamily; font.pixelSize: Globals.mainFontSize }
-              background: Rectangle { radius: 6; color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button; border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light; border.width: 1 }
+              contentItem: Label { 
+                text: parent.text
+                color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                font.family: Globals.mainFontFamily
+                font.pixelSize: Globals.mainFontSize
+              }
+              background: Rectangle { 
+                radius: 6
+                color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button
+                border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+                border.width: 1
+              }
             }
           }
 
-          // Release Notes body (collapsible)
+          // All Release Notes (collapsible)
           Rectangle {
             Layout.fillWidth: true
-            // Height depends on content length; add 24px padding (12 top + 12 bottom)
-            Layout.preferredHeight: page.showReleaseNotes ? (notesText.paintedHeight + 24) : 0
-            visible: page.showReleaseNotes && (Globals.celonaReleaseNotes && Globals.celonaReleaseNotes.length > 0)
-            // Add space below the release notes block
+            Layout.preferredHeight: page.showReleaseNotes ? allNotesColumn.implicitHeight + 24 : 0
+            visible: page.showReleaseNotes && Globals.celonaVersionHistory && Globals.celonaVersionHistory.length > 0
             Layout.bottomMargin: 12
             radius: 6
             color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.toolTipBase
@@ -165,17 +174,54 @@ Item {
             border.width: 1
             clip: true
 
-            Text {
-              id: notesText
-              anchors.left: parent.left
-              anchors.right: parent.right
-              anchors.top: parent.top
+            Flickable {
+              anchors.fill: parent
               anchors.margins: 12
-              anchors.topMargin: 12
-              text: Globals.celonaReleaseNotes
-              color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-              wrapMode: Text.Wrap
-              font.pixelSize: 13
+              contentHeight: allNotesColumn.implicitHeight
+              clip: true
+              ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+              ColumnLayout {
+                id: allNotesColumn
+                width: parent.width
+                spacing: 16
+
+                Repeater {
+                  model: Globals.celonaVersionHistory
+                  delegate: ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    // Version header
+                    Label {
+                      text: modelData.version
+                      color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                      font.family: "monospace"
+                      font.pixelSize: 14
+                      font.bold: index === 0 // Bold for latest version
+                    }
+
+                    // Release notes text
+                    Text {
+                      Layout.fillWidth: true
+                      text: modelData.notes || "(no notes)"
+                      color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
+                      wrapMode: Text.Wrap
+                      font.pixelSize: 12
+                      opacity: 0.9
+                    }
+
+                    // Separator (except for last item)
+                    Rectangle {
+                      Layout.fillWidth: true
+                      Layout.preferredHeight: 1
+                      color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
+                      opacity: 0.3
+                      visible: index < Globals.celonaVersionHistory.length - 1
+                    }
+                  }
+                }
+              }
             }
           }
 
