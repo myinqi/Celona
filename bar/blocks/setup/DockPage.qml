@@ -455,7 +455,7 @@ Item {
                         id: iconFileDialog
                         title: "Choose icon image"
                         nameFilters: [
-                          "Images (*.png *.jpg *.jpeg *.webp *.bmp *.gif)",
+                          "Images (*.png *.jpg *.jpeg *.svg *.webp *.bmp *.gif)",
                           "All files (*)"
                         ]
                         folder: {

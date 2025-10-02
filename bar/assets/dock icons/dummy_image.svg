@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Dummy Placeholder – Bildsymbol (mit heller Innenfüllung)</title>
+  <desc>1:1, transparenter Hintergrund; zentriertes Dummy-Logo mit Rahmen, heller Innenfläche und Bildsymbol.</desc>
+  <style>:root { color: #5F5791; }</style>
+  <!-- Transparenter Hintergrund -->
+  <rect width="100%" height="100%" fill="none"/>
+  
+  <!-- Rahmen -->
+  <rect x="160" y="200" width="704" height="624" rx="48" fill="none" stroke="currentColor" stroke-width="32"/>
+  
+  <!-- Helle Innenfläche (leicht vom Rahmen eingerückt) -->
+  <rect x="176" y="216" width="672" height="592" rx="32" fill="#ECEEF3"/>
+  
+  <!-- Sonne -->
+  <circle cx="336" cy="356" r="56" fill="#FFFFFF" stroke="currentColor" stroke-width="8"/>
+  
+  <!-- Berge -->
+  <path d="M 224 744 L 416 528 L 560 680 L 640 600 L 800 744 Z"
+        fill="none" stroke="currentColor" stroke-width="32" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>
