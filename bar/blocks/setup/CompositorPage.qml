@@ -119,23 +119,14 @@ Item {
 
       Item { Layout.fillWidth: true }
 
-      // Compositor indicator
-      Rectangle {
-        Layout.preferredWidth: compositorLabel.implicitWidth + 16
-        Layout.preferredHeight: 28
-        radius: 6
-        color: Globals.popupBg !== "" ? Globals.popupBg : palette.active.button
-        border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
-        border.width: 1
-
-        Label {
-          id: compositorLabel
-          anchors.centerIn: parent
-          text: page.isHyprland ? "Hyprland" : "Niri"
-          color: Globals.popupText !== "" ? Globals.popupText : "#FFFFFF"
-          font.family: Globals.mainFontFamily
-          font.pixelSize: Globals.mainFontSize
-        }
+      // Compositor indicator (simple text, no button style)
+      Label {
+        id: compositorLabel
+        text: page.isHyprland ? "Hyprland" : "Niri"
+        color: Globals.barBorderColor !== "" ? Globals.barBorderColor : "#00bee7"
+        font.family: Globals.mainFontFamily
+        font.pixelSize: Globals.mainFontSize
+        font.bold: true
       }
     }
 
@@ -282,7 +273,7 @@ Item {
         }
         background: Rectangle {
           radius: 6
-          color: parent.enabled ? "#ff9800" : "#333333"
+          color: parent.enabled ? (Globals.barBorderColor !== "" ? Globals.barBorderColor : "#00bee7") : "#333333"
           border.color: Globals.popupBorder !== "" ? Globals.popupBorder : palette.active.light
           border.width: 1
           opacity: parent.enabled ? 1.0 : 0.3
