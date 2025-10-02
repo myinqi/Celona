@@ -84,12 +84,14 @@ Window {
           id: nav
           Layout.preferredWidth: 180
           Layout.fillHeight: true
+          currentIndex: 0
           model: [
             { name: "Layout", comp: "LayoutPage" },            
             { name: "Theme", comp: "ThemePage" },
             { name: "Wallpaper", comp: "WallpapersPage" },
             { name: "Modules", comp: "ModulesPage" },
             { name: "Dock", comp: "DockPage" },
+            { name: "Compositor", comp: "CompositorPage" },
             { name: "System", comp: "SystemPage" }
           ]
           delegate: Rectangle {
@@ -108,16 +110,7 @@ Window {
             }
             MouseArea { anchors.fill: parent; onClicked: nav.currentIndex = index }
           }
-          onCurrentIndexChanged: {
-            switch (currentIndex) {
-              case 0: stack.currentIndex = 1; break // Theme
-              case 1: stack.currentIndex = 0; break // Layout
-              case 2: stack.currentIndex = 3; break // Modules
-              case 3: stack.currentIndex = 2; break // Wallpaper
-              case 4: stack.currentIndex = 4; break // Dock
-              case 5: stack.currentIndex = 5; break // System
-            }
-          }
+          onCurrentIndexChanged: stack.currentIndex = currentIndex
         }
 
         // Pages (non-swipe, to avoid internal ListView polish loops)
@@ -127,11 +120,12 @@ Window {
           Layout.fillHeight: true
           currentIndex: 0
 
-          Pages.ThemePage {}
           Pages.LayoutPage {}
-          Pages.ModulesPage {}
+          Pages.ThemePage {}
           Pages.WallpapersPage {}
+          Pages.ModulesPage {}
           Pages.DockPage {}
+          Pages.CompositorPage {}
           Pages.SystemPage {}
         }
       }
